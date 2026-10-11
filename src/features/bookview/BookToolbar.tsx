@@ -2,7 +2,6 @@
 import type { ReactNode } from 'react';
 import { Button } from '@/ui/Button';
 import { SlidersIcon } from '@/ui/icons';
-import { Tooltip } from '@/ui/Tooltip';
 
 export function BookToolbar({
   pairCount,
@@ -15,6 +14,7 @@ export function BookToolbar({
   onPrintColouring,
   onPrintCover,
   onGenerate,
+  backupSlot,
   generateChip,
 }: {
   pairCount: number;
@@ -27,17 +27,9 @@ export function BookToolbar({
   onPrintColouring: () => void;
   onPrintCover: () => void;
   onGenerate: () => void;
+  backupSlot: ReactNode;
   generateChip?: ReactNode;
 }) {
-  const unavailable = (label: string, phase: number) => (
-    <Tooltip content={`Available in Phase ${phase}`}>
-      <span>
-        <Button disabled title={`${label} — available in Phase ${phase}`} variant="secondary">
-          {label}
-        </Button>
-      </span>
-    </Tooltip>
-  );
   return (
     <div aria-label="Book actions" className="book-toolbar">
       <Button disabled={disabled} onClick={onPrintBook} variant="secondary">
@@ -49,7 +41,7 @@ export function BookToolbar({
       <Button disabled={disabled} onClick={onPrintCover} variant="secondary">
         Print cover
       </Button>
-      {unavailable('Download all / backup', 11)}
+      {backupSlot}
       <Button disabled={disabled} onClick={onGenerate} variant="secondary">
         Generate
       </Button>

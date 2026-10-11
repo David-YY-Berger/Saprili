@@ -15,12 +15,14 @@ export function SheetView({
   images,
   showGuides,
   last,
+  pageNumber,
 }: {
   book: Book;
   sheet: SheetModel;
   images: ResolvedImages;
   showGuides: boolean;
   last: boolean;
+  pageNumber: number;
 }) {
   const spec = getPrintSpec(book);
   const bleed = sheet.bleedMm;
@@ -41,8 +43,8 @@ export function SheetView({
         sheet.isCover
           ? 'Cover print sheet'
           : sheet.pageRef
-            ? `${sheet.pageRef.kind} print sheet`
-            : 'Blank fallback print sheet'
+            ? `${sheet.pageRef.kind} print sheet ${pageNumber}`
+            : `Blank fallback print sheet ${pageNumber}`
       }
       className="print-sheet"
       data-page-kind={sheet.isCover ? 'cover' : (sheet.pageRef?.kind ?? 'blank')}

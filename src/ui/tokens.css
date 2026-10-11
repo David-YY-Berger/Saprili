@@ -359,6 +359,38 @@ a {
   margin-block-end: 1rem;
 }
 
+.library-toolbar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.backup-control {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.last-backup-badge {
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: var(--color-mint);
+  font-size: 0.8rem;
+}
+
+.last-backup-badge--nudge {
+  background: var(--color-yellow);
+}
+
+.backup-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
 .book-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
@@ -807,6 +839,11 @@ a {
   gap: 0.55rem;
 }
 
+.restore-file-list {
+  max-height: 55vh;
+  overflow: auto;
+}
+
 .generate-chip {
   padding: 0.35rem 0.8rem;
   border: 1px solid var(--color-line);
@@ -900,6 +937,17 @@ a {
 
 .settings-advanced {
   margin-block-start: 1rem;
+}
+
+.storage-usage {
+  margin-block-start: 1.5rem;
+  padding-block-start: 1rem;
+  border-block-start: 1px solid var(--color-line);
+}
+
+.storage-usage h3 {
+  margin-block: 0 0.35rem;
+  font-size: 1rem;
 }
 
 .book-settings-layout {

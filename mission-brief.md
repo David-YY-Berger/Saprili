@@ -145,8 +145,8 @@ Icons first with tooltips; text labels on primary actions. **My settings = perso
 ## 8. Import and export
 
 - **CSV (one-time, get-started):** columns title, English text, Hebrew text; headers are optional and case-insensitive (including `Title`, `eng_descrip`, and `heb_descr`); chosen via file picker. First data row = intro page; the colophon is not in the CSV. Entirely blank records are ignored. A row with only hyphens in the title cell and no English or Hebrew text is an ignored pair separator (not page content); separators may follow the intro or a complete story pair. Remaining story rows stay in source order and pair consecutively; the data rows must be one intro plus an even number of story pages. Clear errors for wrong columns, odd counts or separators that split a pair, an empty file, and bad Hebrew encoding; on error nothing is created.
-- **Backup / "Download all files":** one zip with everything: original photos, illustrations, colouring pages, all text, page order, book settings, cover and colophon data. The same file restores the book. Show "last backed up N days ago".
-- **Per-page download:** same structure for one page.
+- **Backup / "Download all files":** one ZIP contains the full book record, a versioned manifest, a map of image records, and human-readable page text and image files, including original and AI photos, current and historical illustrations, colouring pages, cover art, and the colophon QR image. The same file restores the book; restore migrates older supported schemas, refuses newer schemas, and asks whether to restore as a new copy or replace a matching book. Restore stages image data and commits the book and images atomically so a failed restore does not replace existing data. Show "last backed up N days ago"; a backup does not change the book's modification date. Backup files are local, unencrypted downloads.
+- **Per-page download:** a ZIP with that page's text and associated photos (original and AI copies), illustration versions, and colouring page. The intro and colophon page exports include their associated images; the colophon export includes its generated Hebrew date and text.
 
 ---
 

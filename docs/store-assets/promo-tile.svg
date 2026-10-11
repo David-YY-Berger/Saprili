@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="440" height="280" viewBox="0 0 440 280">
+  <rect width="440" height="280" rx="28" fill="#dff3ff"/>
+  <circle cx="385" cy="54" r="25" fill="#ffdf73"/>
+  <path d="M0 214c77-28 133-12 195 8s128 17 245-12v70H0z" fill="#a9e6cb"/>
+  <text x="34" y="67" fill="#26384b" font-family="Segoe UI, sans-serif" font-size="31" font-weight="700">Saprili</text>
+  <text x="34" y="96" fill="#52677b" font-family="Segoe UI, sans-serif" font-size="16">Your storybook scribe</text>
+  <text x="34" y="131" fill="#26384b" font-family="Segoe UI, sans-serif" font-size="15">Photos + two languages</text>
+  <text x="34" y="152" fill="#26384b" font-family="Segoe UI, sans-serif" font-size="15">A storybook to keep.</text>
+  <g transform="translate(210 72)">
+    <path d="M0 24c28-17 61-17 91 0v104c-30-16-63-16-91 0z" fill="#fffdf8" stroke="#52677b" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M91 24c30-17 63-17 91 0v104c-30-16-63-16-91 0z" fill="#fffdf8" stroke="#52677b" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M91 24v104" stroke="#ff9b88" stroke-width="4"/>
+    <circle cx="44" cy="57" r="14" fill="#ff9b88"/>
+    <circle cx="138" cy="57" r="14" fill="#d7c5f3"/>
+    <circle cx="68" cy="68" r="11" fill="#ffdf73"/>
+    <circle cx="114" cy="68" r="11" fill="#a9e6cb"/>
+    <path d="M27 100c6-20 29-20 35 0m59 0c6-20 29-20 35 0M53 107c4-14 21-14 25 0m20 0c4-14 21-14 25 0" fill="none" stroke="#52677b" stroke-width="4" stroke-linecap="round"/>
+    <path d="M21 137h142" stroke="#52677b" stroke-width="3" stroke-linecap="round"/>
+  </g>
+  <path d="M195 43l6 13 14 2-10 9 3 14-13-7-12 7 2-14-10-9 14-2z" fill="#ff9b88"/>
+  <circle cx="400" cy="122" r="6" fill="#d7c5f3"/>
+  <circle cx="181" cy="181" r="7" fill="#ffdf73"/>
+</svg>

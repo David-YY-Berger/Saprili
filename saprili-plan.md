@@ -61,8 +61,8 @@ Tick each task checkbox as that task is completed. Tick a phase in the Status tr
 | P8 | Cover editor and cover PDF | 5 | [ ] |
 | P9 | AI generation: provider, prompts, retry, history | 6 | [~] (P9.1–P9.7 and P9.9 implemented; P9.8 real-key owner test pending) |
 | P10 | Background job queue and Generate dialog | 7 | [ ] |
-| P11 | Backup, restore, per-page download | 7 | [ ] |
-| P12 | Hardening, user test, Web Store | 8 | [ ] |
+| P11 | Backup, restore, per-page download | 7 | [~] (P11.1–P11.5 implemented and tested; P11.6 real-book verification pending) |
+| P12 | Hardening, user test, Web Store | 8 | [~] (P12.1, P12.4, route accessibility checks, storage display, and packaging tooling done; user test, remaining audits, publication, and print acceptance pending) |
 
 ### 1.1 Dependency map (what can run in parallel)
 
@@ -814,22 +814,26 @@ Generic DoD plus: no job is lost or run twice after an interruption; queue state
 **Needs:** P1, P4 (best placed after P10 per the brief, but independent of AI; **may be pulled earlier**). **Produces:** `features/backup/*`.
 **Touches earlier files:** `features/bookview/BookToolbar.tsx` (enable Download all/backup); `features/pageview/PageActionsBar.tsx` (Download page files); `features/library/LibraryPage.tsx` (Restore button per O-14).
 
-- [ ] **P11.1 [ASYNC] Backup format** (`features/backup/backupFormat.ts`).
+- [x] **P11.1 [ASYNC] Backup format** (`features/backup/backupFormat.ts`).
   - Zip layout: `manifest.json` (`formatVersion`, `appVersion`, `schemaVersion`, `createdAt`, `bookId`, file list with sizes); `book.json` (the full `Book` record, source of truth); human-readable files: `pages/00-intro/photo-1.jpg`, `pages/03/photo-1.jpg`, `pages/03/illustration.png`, `pages/03/colouring.png`, `pages/03/text-en.txt`, `pages/03/text-he.txt`, `cover/…`, `colophon/qr.png`; `images.json` maps every `ImageRecord` id to its zip path and `kind`/`meta`. Names: `BACKUP_FORMAT_VERSION`, `buildBackupFilePlan(book, imageRecords)`, `zipPathForImage(record, book)`.
   - Rules: JSON files in the zip carry no header comment (exports).
-- [ ] **P11.2 [ASYNC] Export and restore.**
+- [x] **P11.2 [ASYNC] Export and restore.**
   - Files: `backupExport.ts`, `backupRestore.ts`.
   - Names: `exportBookBackup(bookId, onProgress)` → Blob (streamed zip with `fflate`, images added one at a time to limit memory); `downloadBlob(blob, fileName)`; `restoreBookBackup(file, onProgress)` → `RestoreResult`; `validateBackup(manifest, book)`; `RestoreConflictDialog.tsx` (same book id already exists: restore as a new copy or replace).
   - Rules: restore is **atomic** (stage under a temporary id, validate, then commit; on any failure remove staged images and leave existing data untouched); newer `schemaVersion` than supported raises `BACKUP_TOO_NEW`; older versions are migrated through the migration registry; invalid file raises `BACKUP_INVALID`; export sets `lastBackupAt` through `save(book, 'system')` (does not change the modified date).
-- [ ] **P11.3 [ASYNC] Per-page download.** `downloadPageFiles(bookId, pageId)`: same folder structure for one page (photos, illustration, colouring, both texts).
-- [ ] **P11.4 [ASYNC] UI.** `BackupButton.tsx` (progress, cancel), `LastBackupBadge.tsx` ("Last backed up N days ago", via `formatDaysAgo(iso, now)`; gentle nudge colour after 14 days), `RestoreBackupButton.tsx` in the Library header, `RestoreProgressDialog.tsx`.
-- [ ] **P11.5 [ASYNC] Tests.** Round trip: build a fixture book with images, export, wipe storage, restore, deep-compare the book and per-image hashes; corrupted zip; future schema version; conflict paths; memory sanity on a book with 40 pages of images.
+- [x] **P11.3 [ASYNC] Per-page download.** `downloadPageFiles(bookId, pageId)`: same folder structure for one page (photos, illustration, colouring, both texts).
+- [x] **P11.4 [ASYNC] UI.** `BackupButton.tsx` (progress, cancel), `LastBackupBadge.tsx` ("Last backed up N days ago", via `formatDaysAgo(iso, now)`; gentle nudge colour after 14 days), `RestoreBackupButton.tsx` in the Library header, `RestoreProgressDialog.tsx`.
+- [x] **P11.5 [ASYNC] Tests.** Round trip: build a fixture book with images, export, wipe storage, restore, deep-compare the book and per-image hashes; corrupted zip; future schema version; conflict paths; memory sanity on a book with 40 pages of images.
 - [ ] **P11.6 [SYNC] Real round trip.** Back up a real book, clear the extension's data (or reinstall), restore, compare visually. Confirm the Restore button placement (O-14).
 
 ### Phase 11 Definition of Done
 Generic DoD plus: round-trip test green; a failed restore leaves existing data unchanged.
 ### Phase 11 log
-_(agent fills)_
+- Added a versioned ZIP format with a manifest, full book JSON, image metadata, readable text files, and all original/AI photos, current/historical illustrations, colouring art, cover art, and QR image records. Image blobs are fetched and added to the ZIP one at a time.
+- Restore validates paths, file sizes, book invariants, referenced images, and supported schema versions; older records use the migration registry. Images are staged under a temporary id and the final book/image replacement commits atomically. Same-id restore offers a separate copy or replacement; failed commits remove staged records and preserve the previous book.
+- Wired full backup/restore into the book toolbar and Library, per-page ZIP downloads into page actions, a cancellable progress UI, and a 14-day backup nudge. System saves update `lastBackupAt` without changing `modifiedAt`.
+- Tests cover byte-hash round trips, old-schema migration, corrupt/future backups, both conflict choices, failed commit atomicity, per-page file plans, and a 40-story-page/three-photos-per-page export.
+- Validation: 252 unit tests passed; backup-specific tests cover round-trip SHA-256 hashes, older-schema migration, conflicts and rollback. Typecheck, lint, header check, production build, manifest permission check, and the axe/accessibility Playwright run passed. P11.6 remains a human task: back up and restore a real book, compare it visually, and confirm Restore placement.
 
 ---
 
@@ -838,7 +842,7 @@ _(agent fills)_
 **Goal:** a non-technical relative can finish a book unaided; the extension is ready for the Chrome Web Store.
 **Needs:** all phases. **Produces:** fixes, `docs/privacy-policy.md`, store assets, release package.
 
-- [ ] **P12.1 [ASYNC] Usability script.** `docs/usability-test-script.md`: tasks for a non-technical relative (open app, set up key, import, add photos, generate, fix a page, print preview, back up) with observation sheet and success criteria.
+- [x] **P12.1 [ASYNC] Usability script.** `docs/usability-test-script.md`: tasks for a non-technical relative (open app, set up key, import, add photos, generate, fix a page, print preview, back up) with observation sheet and success criteria.
 - [ ] **P12.2 [SYNC] Run the usability test** with a relative; collect issues in `docs/usability-findings.md`. Triage into must-fix and later.
 - [ ] **P12.3 [ASYNC] Fix pass** for must-fix items plus audits:
   - Plain-language errors: `docs/error-messages.md` generated from `en.ts` for review; every error has a next step.
@@ -847,7 +851,7 @@ _(agent fills)_
   - Data safety review: autosave failure paths, quota exceeded, undo windows, backup nudges.
   - Security: key never logged, no remote code, extension CSP intact, no analytics; `check-manifest-permissions` passes.
   - Hebrew RTL correctness spot-check in every screen.
-- [ ] **P12.4 [ASYNC] Store assets and documents.**
+- [x] **P12.4 [ASYNC] Store assets and documents.**
   - `docs/privacy-policy.md` (photos and API keys handled; photos and English text sent only to the user's chosen provider; stored locally only; no accounts, no analytics), `docs/store-listing.md` (name, short and long description, single purpose statement, justification for each permission), screenshots generated from the end-to-end fixture book (no real family photos), icons 16/32/48/128, promo tile; `scripts/package.mjs` → `saprili-<version>.zip`.
 - [ ] **P12.5 [SYNC] Publish.** Host the privacy policy at a public URL; submit in the developer account; choose visibility (O-13, default unlisted); answer review questions.
 - [ ] **P12.6 [SYNC] Final acceptance.** Produce and print one real book end to end (interior, colouring book, cover); confirm with the shop proof.
@@ -855,7 +859,13 @@ _(agent fills)_
 ### Phase 12 Definition of Done
 Generic DoD plus: usability must-fixes closed; store listing submitted; package built from a clean checkout.
 ### Phase 12 log
-_(agent fills)_
+- Added the relative usability script and observation sheet; no participant test was run and no findings file was fabricated.
+- Added the privacy-policy and Web Store listing drafts, plus an error-message review generated from `src/i18n/en.ts`.
+- Added a Playwright axe check for Library, settings, import, setup, book view/settings, cover, colophon, page editor, print pre-flight, and print view. It also tab-navigates to and activates a story link, then tabs to the English text field. Fixed visible-label naming, the hidden photo file-input label, the QR placeholder role, and repeated print-sheet landmark names. The route test passes.
+- Added estimated local-storage usage to My settings. The route test generates `docs/store-assets/book-outline.png`, `page-editor.png`, `print-preview.png`, and `promo-tile.png` from a synthetic SVG fixture; no family photos are used. The existing 16/32/48/128 icons are included in the production build.
+- Replaced the Phase 12 package placeholder with `scripts/package.mjs` and `npm run package`. A temporary package was built and checked for required extension files, version, and absence of source maps; no upload or publication was attempted.
+- Validation: all 252 unit tests, typecheck, lint, header check, production build, manifest permission check, and the Playwright axe run passed. The package command was tested against a temporary output file, which was removed after inspection.
+- Remaining for the owner: run the relative test and triage must-fixes; complete performance/data-safety/RTL audits after findings; publish the privacy-policy URL; submit the listing and choose visibility; produce and print a real book and confirm the shop proof. The owner will handle deployment and publication.
 
 ---
 

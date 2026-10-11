@@ -162,6 +162,7 @@ export function PrintApp() {
             images={assets.images}
             key={`${sheet.pageRef?.kind ?? 'blank'}:${sheet.pageRef?.id ?? index}`}
             last={index === model.sheets.length - 1}
+            pageNumber={index + 1}
             sheet={sheet}
             showGuides={showGuides}
           />

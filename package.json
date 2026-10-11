@@ -13,15 +13,18 @@
     "lint:headers": "node scripts/check-headers.mjs",
     "test": "vitest run",
     "e2e:print": "npm run build && playwright test tests/e2e/print-pdf.spec.ts",
+    "e2e:accessibility": "npm run build && playwright test tests/e2e/accessibility.spec.ts",
     "e2e:jobs": "node scripts/e2e-phase10.mjs",
     "format": "prettier --write .",
     "icons": "node scripts/generate-icons.mjs",
     "e2e": "npm run build && node scripts/e2e-phase2.mjs && node scripts/e2e-phase3.mjs && node scripts/e2e-phase4.mjs",
-    "package": "node scripts/pending.mjs package 12"
+    "docs:errors": "node scripts/generate-error-messages.mjs",
+    "package": "node scripts/package.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
+    "fflate": "^0.8.3",
     "idb": "^8.0.4",
     "papaparse": "^5.7.0",
     "react": "^19.3.0",

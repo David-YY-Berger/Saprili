@@ -34,6 +34,7 @@ export function PhotoDropZone({
       }}
     >
       <input
+        aria-label="Choose page photos"
         accept="image/*"
         className="visually-hidden"
         disabled={disabled}

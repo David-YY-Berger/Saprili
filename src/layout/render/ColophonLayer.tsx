@@ -44,6 +44,7 @@ export function ColophonLayer({
       <div
         aria-label={qrImageUrl ? 'QR code' : 'QR code placeholder'}
         data-colophon-qr=""
+        role="img"
         style={{
           display: 'grid',
           width: mmToCss(38),

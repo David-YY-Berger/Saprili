@@ -22,6 +22,7 @@ import { startPrint, type PrintOutput } from '@/print/printJob';
 import { GenerateDialog } from '@/features/generate/GenerateDialog';
 import { GenerateStatusChip } from '@/features/generate/GenerateStatusChip';
 import { useBookJobs } from '@/features/generate/useBookJobs';
+import { BackupButton } from '@/features/backup/BackupButton';
 
 export function BookViewPage({ book: initialBook }: { book: Book }) {
   const [book, setBook] = useState(initialBook);
@@ -126,6 +127,13 @@ export function BookViewPage({ book: initialBook }: { book: Book }) {
           setPrintOutput('cover');
           setPreflightOpen(true);
         }}
+        backupSlot={
+          <BackupButton
+            bookId={book.id}
+            disabled={hasPendingDelete}
+            lastBackupAt={book.lastBackupAt}
+          />
+        }
         onSettings={() => {
           window.location.hash = `#/book/${encodeURIComponent(book.id)}/settings`;
         }}

@@ -11,6 +11,7 @@ import { useToast } from '@/ui/ToastHost';
 import { BookCard } from './BookCard';
 import { EmptyLibraryState } from './EmptyLibraryState';
 import { useBookSummaries } from './useBookSummaries';
+import { RestoreBackupButton } from '@/features/backup/RestoreBackupButton';
 
 export function LibraryPage() {
   const { books, setBooks, loading, error, refresh } = useBookSummaries();
@@ -102,15 +103,16 @@ export function LibraryPage() {
         <h2 id="library-heading">Your library</h2>
         <p>Your family’s stories, ready to grow.</p>
       </header>
+      <div className="library-toolbar">
+        <span>{visibleBooks.length ? `${visibleBooks.length} ${visibleBooks.length === 1 ? 'book' : 'books'}` : ''}</span>
+        <div className="library-toolbar__actions">
+          <RestoreBackupButton onRestored={() => void refresh()} />
+        </div>
+      </div>
       {visibleBooks.length === 0 ? (
         <EmptyLibraryState allowImport={books.length === 0} />
       ) : (
         <>
-          <div className="library-toolbar">
-            <p>
-              {visibleBooks.length} {visibleBooks.length === 1 ? 'book' : 'books'}
-            </p>
-          </div>
           <div className="book-grid">
             {visibleBooks.map((book) => (
               <BookCard

@@ -14,6 +14,7 @@ import { ApiKeyField } from './ApiKeyField';
 import { ModelDropdown } from './ModelDropdown';
 import { JobHostModeField } from './JobHostModeField';
 import { PrivacyNotice } from './PrivacyNotice';
+import { StorageUsage } from './StorageUsage';
 
 const EMPTY_SETTINGS = createDefaultUserSettings();
 
@@ -109,6 +110,7 @@ export function MySettingsPage() {
           <PrivacyNotice />
           <JobHostModeField />
         </form>
+        <StorageUsage />
       </div>
     </section>
   );
