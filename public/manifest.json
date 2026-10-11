@@ -21,5 +21,6 @@
     "service_worker": "service-worker.js",
     "type": "module"
   },
-  "permissions": ["storage", "unlimitedStorage"]
+  "permissions": ["storage", "unlimitedStorage"],
+  "optional_host_permissions": ["https://generativelanguage.googleapis.com/*"]
 }

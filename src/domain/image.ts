@@ -12,6 +12,8 @@ export interface ImageMeta {
   source: 'uploaded' | 'generated';
   modelId?: string;
   generatedAt?: string;
+  /** Percentage of an image edge removed to match the book's picture shape. */
+  croppedEdgePercent?: number;
 }
 
 export interface ImageRecord {

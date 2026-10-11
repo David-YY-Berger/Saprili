@@ -12,7 +12,7 @@ export function ApiKeyField({
   const [visible, setVisible] = useState(false);
   return (
     <div className="field">
-      <label htmlFor="api-key">Provider API key</label>
+      <label htmlFor="api-key">Gemini API key</label>
       <div className="api-key-control">
         <input
           autoComplete="off"

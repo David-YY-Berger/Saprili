@@ -25,7 +25,7 @@ Saprili is a Chrome extension that turns family photos plus short bilingual (Heb
 
 - **Chrome extension; no Python or other stack.** The app is a single full browser tab. The toolbar icon opens it, or focuses it if already open. No side panel. Desktop Chromium only.
 - **Distribution:** Chrome Web Store (owner has a developer account). Needs a privacy policy (photos and API keys are handled).
-- **Permissions (minimal):** storage, unlimited storage, network access to the chosen AI provider, background script.
+- **Permissions (minimal):** storage, unlimited storage, background script, and the Gemini API host permission requested only when the user starts generation.
 - **Storage:** extension local storage with the unlimited-storage permission. One record per book (text, order, settings), one record per image, small thumbnails stored separately, full images loaded only on demand. All storage sits behind one layer so it can be swapped. Records carry a data version so old data can be upgraded.
 - **Backup/restore:** mandatory (uninstalling or clearing data erases everything). See Section 8.
 - **Fonts:** font files packaged inside the extension; openly licensed, child-friendly, **Hebrew with nikud** support.
@@ -117,7 +117,7 @@ See Section 3. Same theme and margins as every other page.
 Icons first with tooltips; text labels on primary actions. **My settings = person icon; Book settings = sliders icon; no gear.**
 
 - **Library:** books by last modified (title, page count, date, thumbnail); person icon opens My settings; one-time "Import book1 from CSV" button, shown only while no book exists; friendly empty state.
-- **My settings:** model dropdown (image-capable models only; placeholder for now), masked API key with show toggle, autosave with "Saved" indicator, notice of what is sent to the AI provider.
+- **My settings:** separate image-capable model dropdowns for illustrations and colouring pages, a masked **Gemini API key** with show toggle, autosave with "Saved" indicator, and a notice of what is sent to Google.
 - **Setup:** Section 4.
 - **Book view:** fixed top-to-bottom: Cover row (shows whether a cover illustration exists), Intro page (separated), story pages in visible pairs, Colophon row (separated). Row indicators (not checkboxes): English text, Hebrew text, original-photo count, illustration, colouring page (with "outdated" mark). Click a row to open; drag handle plus move up/down (story pages only). Toolbar: Print book, Print colouring book, Print cover, Download all/backup, Generate, Add pages, Delete pages, Book settings.
 - **Page view:** full-screen spread editor, mirrored for a right-opening book; intro and colophon shown alone. Per page: private title, Hebrew and English text, original photos, illustration, colouring page, and a print-accurate preview with margin guides. Click any picture for a full-size overlay (Escape closes). Add pictures by drag-and-drop, file picker, or paste. Actions: Generate/Retry (custom prompt), Make colouring page, Download page files, Print page.
@@ -129,8 +129,10 @@ Icons first with tooltips; text labels on primary actions. **My settings = perso
 
 ## 7. AI generation
 
-- **Provider/model:** not chosen. Both AI steps output images, and many popular language models can only read images, so the dropdown lists image-capable models only. Provider isolated behind one interface; choice made in the first test phase.
+- **Provider/model:** Google Gemini API. Illustration generation defaults to Gemini 3 Pro Image (`gemini-3-pro-image`); colouring generation defaults to Gemini 3.1 Flash Lite Image (`gemini-3.1-flash-lite-image`). My settings keeps separate selectors for the two image-capable models, with Gemini 3.1 Flash Image (`gemini-3.1-flash-image`) also available. Both calls use the user's Gemini API key.
 - **Keys and privacy:** each user supplies a paid-tier key. My settings states what leaves the computer (photos and English text go to the provider). Provider refusals (real people, children) are shown as a normal, explained result with a retry suggestion.
+- **Cost guardrail:** every image request follows an explicit user action; there are no automatic retries or background/batch calls in Phase 9. A retry or colouring-page action is a new provider call. Saprili does not promise a dollar estimate; users can check usage and billing in their Google AI account.
+- **Picture-shape handling:** when Gemini cannot return the book's exact picture shape, Saprili centre-crops the smallest excess edge. Pre-flight warns when more than 3% of an edge was removed.
 - **Every call stands alone.** Image reduction per Section 2.
 - **Illustration call:** sends intro English text + intro original photos + current page English text + current page original photos. Not sent: Hebrew, other pages, any illustration. Instructions: learn characters from the intro; use page text and photos to decide who appears and what happens; include intro characters mentioned on the page plus others present; match people in photos to the text; cute simple cartoon style (book art-style text); reuse real objects and places from the photos; **no written text in the picture**; generate at the fixed picture shape; leave calm space at the edges for the frame. Known risk: characters may drift between pages (a labelled "cast list" on the intro is the later fix).
 - **Colouring call:** sends only that page's illustration. Asks for pure black-and-white line art for a 4-year-old: thick clean outlines, big shapes, no shading or grey, no text, same shape. Disabled without an illustration. Add a clean-up step forcing true black and white if models return grey.

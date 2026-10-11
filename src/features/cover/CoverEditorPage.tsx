@@ -89,7 +89,12 @@ export function CoverEditorPage({ initialBook }: { initialBook: Book }) {
           value={book.cover.subtitleHe}
         />
         <SpineTextField book={book} onChange={(spineTextHe) => updateCover({ spineTextHe })} />
-        <CoverIllustrationControl book={book} onOwnImage={setOwnImage} />
+        <CoverIllustrationControl
+          beforeGeneration={() => autosave.flush()}
+          book={book}
+          onBookChange={setBook}
+          onOwnImage={setOwnImage}
+        />
         <BackCoverNote />
         <div className="modal__actions">
           <Button

@@ -6,6 +6,11 @@ import { defineConfig } from 'vitest/config';
 const fromRoot = (path: string) => fileURLToPath(new URL(path, import.meta.url));
 
 export default defineConfig({
+  define: {
+    __SAPRILI_PROVIDER__: JSON.stringify(
+      process.env.SAPRILI_PROVIDER === 'mock' ? 'mock' : 'gemini',
+    ),
+  },
   plugins: [react()],
   resolve: { alias: { '@': fromRoot('./src') } },
   build: {

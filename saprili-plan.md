@@ -59,7 +59,7 @@ Tick each task checkbox as that task is completed. Tick a phase in the Status tr
 | P6 | Previews, Book settings, pre-flight, colophon | 4 | [~] (P6.1–P6.7 implementation and tests complete; P6.8 human verification pending) |
 | P7 | Print export: page, book, colouring book | 4 | [~] (P7.1–P7.6 complete using documented fallback assumptions; owner verification pending) |
 | P8 | Cover editor and cover PDF | 5 | [ ] |
-| P9 | AI generation: provider, prompts, retry, history | 6 | [ ] |
+| P9 | AI generation: provider, prompts, retry, history | 6 | [~] (P9.1–P9.7 and P9.9 implemented; P9.8 real-key owner test pending) |
 | P10 | Background job queue and Generate dialog | 7 | [ ] |
 | P11 | Backup, restore, per-page download | 7 | [ ] |
 | P12 | Hardening, user test, Web Store | 8 | [ ] |
@@ -80,7 +80,7 @@ Tick each task checkbox as that task is completed. Tick a phase in the Status tr
 | P6 | P5 | P0-D (date rules), colophon wording, QR image |
 | P7 | P5, P6 | P0-B findings and S1, S3, S4, S5, S7 answers, or owner-authorized fallback policy |
 | P8 | P5, P7 | shop answers S6, S8; cover wording |
-| P9 | P4, P5, P8 | **P0-A decision (D-AI)** |
+| P9 | P4, P5, P8 | **P0-A decision (D-AI), settled for Gemini** |
 | P10 | P9 | **P0-C decision (D-BG)** |
 | P11 | P1, P4 (can move earlier) | none |
 | P12 | all | privacy-policy hosting, Web Store account |
@@ -103,10 +103,11 @@ Status values: **open**, **assumed** (default in use), **settled**. When the hum
 | D-04 | PDF method | print-styled page `print.html` + `window.print()`; user picks "Save as PDF" | brief 5.4; avoids the scary `debugger` permission |
 | D-05 | Internationalisation | small own module `src/i18n` with `t(key)` and an `en` catalogue; direction from locale | interface English now, Hebrew RTL later |
 | D-06 | Tooling | Vitest + Testing Library + `fake-indexeddb`; Playwright (Chromium, extension loaded) for end-to-end and automated PDF checks; `papaparse` (CSV), `fflate` (zip), `pdf-lib` (test-time PDF inspection only) | |
-| D-AI | AI provider and model | **open**, decided by P0-A | brief 7 |
+| D-AI | AI provider and models | **settled:** Google Gemini API; Gemini 3 Pro Image (`gemini-3-pro-image`) for illustrations and Gemini 3.1 Flash Lite Image (`gemini-3.1-flash-lite-image`) for colouring by default. Gemini 3.1 Flash Image (`gemini-3.1-flash-image`) is an additional selectable image model. | P9 owner choice; image-capable models verified against Google's Gemini API image-generation documentation |
 | D-BG | Where jobs run | **open**, decided by P0-C. Fallback: in-tab runner with same saved state | brief 7 |
 | D-RGB | Is RGB PDF accepted by the shop | **open**, shop answer S5 | brief 5.4 |
 | D-FONT | Hebrew (with nikud) and English font families | **assumed** (P5): Noto Sans Hebrew + Nunito, owner still to confirm; see `docs/font-licenses.md` | brief 2 |
+| D-AI-SHAPE | Gemini output does not match the fixed picture ratio | **settled:** centre-crop the smallest excess edge; pre-flight warns when more than 3% of an edge is removed. | Owner decision during P9 |
 
 ### 2.2 Print-shop questions (send now; they block P7 and P8)
 
@@ -280,7 +281,7 @@ All defined under `src/domain` and `src/shared` in Phase 1 (5.1 to 5.7), and ext
 
 **`Spread`**: `index`, `kind` (`'intro'`,`'pair'`,`'colophon'`), `left: PageRef | null`, `right: PageRef | null`. Built only by `buildSpreads(book)` (right-binding: intro on left; pairs `right` = first page, `left` = second; colophon on right. Left-binding mirrors all of this).
 
-**`UserSettings`**: `schemaVersion`, `modelId` or null, `apiKey` or null.
+**`UserSettings`**: `schemaVersion`, `illustrationModelId`, `colouringModelId`, `apiKey` or null. Defaults are `gemini-3-pro-image` and `gemini-3.1-flash-lite-image`.
 
 **`Job`**: `id`, `batchId`, `bookId`, `kind` (`'illustration'`,`'colouring'`,`'coverIllustration'`), `target` (`{ kind: 'story', pageId }` or `{ kind: 'cover' }`), `overwrite`, `dependsOnJobId` or null, `status` (`'queued'`,`'running'`,`'succeeded'`,`'failed'`,`'cancelled'`,`'paused'`), `step` (`'pending'`,`'generating'`,`'postprocessing'`,`'saving'`,`'done'`), `attempts`, `errorCode?`, `errorMessage?`, `createdAt`, `updatedAt`.
 **`JobBatch`**: `id`, `bookId`, `jobIds`, `createdAt`, `state` (`'running'`,`'paused'`,`'completed'`,`'cancelled'`), `pauseReason?`.
@@ -304,6 +305,7 @@ One exported object `PRINT_SPEC` plus named constants. Every value that depends 
 | `AI_COPY_LONG_EDGE_PX` | 1024 |
 | `THUMB_LONG_EDGE_PX` | 256 |
 | `ILLUSTRATION_HISTORY_MAX` | 3 |
+| `MAX_AI_CROP_PERCENT` | 3 (pre-flight warning threshold) |
 | `JOB_CONCURRENCY` | 2 |
 | `UNDO_WINDOW_MS` | 8000 |
 | `AUTOSAVE_DEBOUNCE_MS` | 500 |
@@ -736,35 +738,37 @@ Generic DoD plus: cover numbers match the brief; text never inside bleed band or
 
 **Goal:** generate and retry illustrations, cover illustration and colouring pages for a single target at a time, store results with history, with clear explained failures. Runs in the tab for now; the code is written so P10 can move it into the service worker unchanged.
 **Needs:** P4, P5, P8; **D-AI (P0-A)**. **Produces:** `src/ai/*`, AI UI parts.
-**Touches earlier files:** `public/manifest.json` (host permissions); `scripts/check-manifest-permissions.mjs` (allowed list); `ai/modelCatalog.ts` (real list); `features/pageview/IllustrationSection.tsx`, `ColouringSection.tsx`, `PageActionsBar.tsx`; `features/cover/CoverIllustrationControl.tsx`.
+**Touches earlier files:** `public/manifest.json` (optional Gemini host permission); `scripts/check-manifest-permissions.mjs` (allowed list); `ai/modelCatalog.ts` (real list); `features/pageview/IllustrationSection.tsx`, `ColouringSection.tsx`, `PageActionsBar.tsx`; `features/cover/CoverIllustrationControl.tsx`; `features/settings/*` and settings migrations (separate model selectors and Gemini key label).
 
-- [ ] **P9.1 [SYNC] Gate and permissions.** Confirm D-AI; approve the provider hosts for `host_permissions` (or `optional_host_permissions` requested when a key is saved, which keeps install warnings smaller); confirm cost guardrails. *Default:* optional host permissions requested when the key is saved.
-- [ ] **P9.2 [ASYNC] Provider interface.**
-  - Files: `ai/ImageProvider.ts`, `ai/providers/<Chosen>Provider.ts`, `ai/providers/MockImageProvider.ts`, `ai/errors.ts`, `ai/modelCatalog.ts`.
-  - Names: `ImageProvider` with `generateImage(request)` and, if the model supports it, `editImage(request)`; `ImageGenRequest` (`instructions`, `referenceImages: Blob[]`, `targetAspect`, `sizeHint`, `qualityTier`); `ImageGenResult` (`image`, `widthPx`, `heightPx`, `modelId`, `usage?`); `createProvider(modelId, apiKey)`; `mapProviderError(response)` → `AppError` (`AI_NO_KEY`, `AI_AUTH`, `AI_QUOTA`, `AI_REFUSED`, `AI_TEMPORARY`, `AI_BAD_RESPONSE`); `MODEL_CATALOG` with real image-capable models only.
+- [x] **P9.1 [SYNC] Gate and permissions.** Owner selected Gemini and approved its API host. Request the optional host permission only when the user starts generation (to keep install warnings smaller). Cost guardrail: each image call is user-triggered; no automatic retries or batches in P9; the UI identifies each action as a provider call. No dollar estimate is promised; the user checks Google AI account usage.
+- [x] **P9.2 [ASYNC] Provider interface.**
+  - Files: `ai/ImageProvider.ts`, `ai/providers/GeminiImageProvider.ts`, `ai/providers/MockImageProvider.ts`, `ai/errors.ts`, `ai/modelCatalog.ts`.
+  - Names: `ImageProvider` with `generateImage(request)` and `editImage(request)`; `ImageGenRequest` (`instructions`, `referenceImages: Blob[]`, `targetAspect`, `sizeHint`, `qualityTier`); `ImageGenResult` (`image`, `widthPx`, `heightPx`, `modelId`, `usage?`); `createProvider(modelId, apiKey)`; `mapProviderError(response)` → `AppError` (`AI_NO_KEY`, `AI_AUTH`, `AI_QUOTA`, `AI_REFUSED`, `AI_TEMPORARY`, `AI_BAD_RESPONSE`); `MODEL_CATALOG` with real image-capable models only.
   - `MockImageProvider`: deterministic generated placeholder images with correct aspect; fault injection (`refuse`, `rateLimit`, `timeout`, `badResponse`) for tests; selected with the build flag `SAPRILI_PROVIDER=mock`.
   - Rules: the provider is the **only** module that knows vendor request formats; key passed in, never logged; medium image-quality tier if available; honour prompt caching for the repeated intro if the vendor offers it.
-- [ ] **P9.3 [ASYNC] Prompts.**
+- [x] **P9.3 [ASYNC] Prompts.**
   - Files: `ai/promptTemplates.ts` (named constants `ILLUSTRATION_INSTRUCTIONS`, `COLOURING_INSTRUCTIONS`, `COVER_INSTRUCTIONS`, `EDIT_INSTRUCTIONS` written from brief section 7, easy for the owner to tune), `ai/prompts.ts`.
   - Names: `buildIllustrationRequest(book, pageId, options)` (intro English text + intro AI-copy photos + page English text + page AI-copy photos; caps via `getAiPhotoSelection`; art-style text; custom prompt **appended to instructions, never to page text**; target aspect from `getPictureZoneSpec`); `buildColouringRequest(book, pageId)` (only that page's illustration); `buildCoverIllustrationRequest(book)` (intro English text + intro photos + art-style text; aspect from `getCoverPictureZoneSpec`); `buildEditRequest(book, pageId, customPrompt)`; `describeRequestForDebug(request)` (no keys, no image bytes).
   - Rules: instructions include: learn characters from the intro; use page text and photos to decide who appears and what happens; match people in photos to text; cute simple cartoon in the art style; reuse real objects and places from photos; **no written text in the picture**; calm space at the edges; colouring: pure black-and-white line art for a 4-year-old, thick clean outlines, big shapes, no shading or grey, no text, same shape.
   - **Payload tests (mandatory):** assert no Hebrew characters in any request, no other pages' text or photos, no illustration in an illustration request, only that page's illustration in a colouring request.
-- [ ] **P9.4 [ASYNC] Post-processing** (`ai/postprocess.ts`, worker-safe).
+- [x] **P9.4 [ASYNC] Post-processing** (`ai/postprocess.ts`, worker-safe).
   - Names: `measureImage(blob)`, `fitToShape(blob, aspect)` (resolve any aspect mismatch with the smallest edge crop or calm-colour padding; **ask the human first** if the provider cannot produce the needed aspect: see P9.9), `detectGreyLevels(blob)`, `forceBlackWhite(blob, threshold)` (applied only when grey is detected).
-- [ ] **P9.5 [ASYNC] Generation service** (`ai/generationService.ts`; takes a `deps` object `{ providerFactory, imageRepository, bookRepository, clock }`, no DOM, no React).
+- [x] **P9.5 [ASYNC] Generation service** (`ai/generationService.ts`; takes a `deps` object `{ providerFactory, imageRepository, bookRepository, settingsRepository, clock }`, no DOM, no React).
   - Names: `generateIllustrationForPage(bookId, pageId, options)`; `generateColouringForPage(bookId, pageId)`; `generateCoverIllustration(bookId, options)`; `restoreIllustrationVersion(bookId, pageId, imageId)`; `uploadOwnIllustration(bookId, pageId, file)`; `pushIllustrationVersion(state, newImageId, nowIso)` (keeps at most 3 older versions, deletes older images after expiry); `markColouringOutdated(page)`.
   - Rules: stores generated images as returned (`meta.source = 'generated'`, model, date); replacing an illustration moves the previous one into history and marks that page's colouring `outdated`; colouring generation requires a current illustration (no AI call is made otherwise); saves with reason `'generation'` only after success; refusals and quota problems return explained `AppError`s.
-- [ ] **P9.6 [ASYNC] UI wiring.**
+- [x] **P9.6 [ASYNC] UI wiring.**
   - Files: `features/pageview/RetryPanel.tsx` (custom prompt remembered per page in `illustration.customPrompt`; checkbox "edit current illustration", disabled with reason when the model lacks edit support), `VersionHistoryStrip.tsx` (up to 3 older versions with restore), `GenerateButton.tsx`, `MakeColouringButton.tsx` (disabled without an illustration, with reason), `OutdatedBadge.tsx`, `ProviderResultNotice.tsx` (refusals explained as a normal result with a retry suggestion; missing key links to My settings; quota stops clearly), `useGenerationRun.ts` (single-target run state in the tab).
   - Cover editor: enable Generate/Retry in `CoverIllustrationControl`.
-- [ ] **P9.7 [ASYNC] Tests.** Payload-composition tests (above); version-history cap; outdated flag; colouring gating; post-processing tests on synthetic images (grey becomes pure black/white); end-to-end with `MockImageProvider`: generate, retry with a custom prompt, restore version, make colouring page, refusal path, no-key path.
-- [ ] **P9.8 [SYNC] Live test with a real key.** Run the real provider on your real pages (cost-limited): check likeness, drift, edges, picture shape, colouring quality. Tune `promptTemplates.ts` wording and the default art-style text. *Default:* ship prompts as written.
-- [ ] **P9.9 [SYNC] Aspect-ratio decision.** If the chosen model cannot return the exact picture shape, decide: tiny crop (safe because of calm edges), padding, or choose a different model. *Default:* smallest crop, flagged in pre-flight if more than 3 percent of an edge.
+- [x] **P9.7 [ASYNC] Tests.** Payload-composition tests (above); version-history cap; outdated flag; colouring gating; post-processing tests on synthetic pixel data; generation-service tests with `MockImageProvider`: generate, retry with a custom prompt, restore version, make colouring page, refusal path, no-key path. Full UI and build checks are covered by the phase validation run.
+- [ ] **P9.8 [SYNC] Live test with a real key.** Owner to run the real provider on selected pages (one user-triggered request at a time): check likeness, drift, edges, picture shape, colouring quality. Tune `promptTemplates.ts` wording and the default art-style text. No live call was made during this implementation.
+- [x] **P9.9 [SYNC] Aspect-ratio decision.** Owner approved centre-cropping the smallest excess edge, with a pre-flight warning when more than 3 percent of an edge is removed.
 
 ### Phase 9 Definition of Done
-Generic DoD plus: payload tests green; key never appears in logs or stored images; `generationService.ts` imports nothing from React or the DOM.
+Generic DoD plus: payload tests green; key never appears in logs or stored images; `generationService.ts` imports nothing from React or the DOM. Human live-provider verification is still pending.
 ### Phase 9 log
-_(agent fills)_
+Implementation: Gemini provider, isolated image prompts, post-processing, single-target generation and retry/history, per-task model settings and UI. Settings schema migrated to separate illustration and colouring model IDs. The owner confirmed per-call cost guardrails and the crop/warning policy.
+
+Owner verification still pending: P9.8 (real-key live quality/cost test). P9.9's crop-and-warning policy was confirmed by the owner and implemented; actual output behavior should still be observed during P9.8. No live API request was made during implementation.
 
 ---
 

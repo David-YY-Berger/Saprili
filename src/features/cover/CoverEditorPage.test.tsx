@@ -13,7 +13,7 @@ afterEach(() => {
 });
 
 describe('CoverEditorPage', () => {
-  it('autosaves cover text, shows the flat preview, and keeps Generate disabled until Phase 9', async () => {
+  it('autosaves cover text, shows the flat preview, and wires cover generation', async () => {
     setStorageForTests(createTestStorage());
     const book = createEmptyBook({ id: 'cover-book', nowIso: '2026-01-01T00:00:00.000Z' });
     book.format.lockedAt = book.createdAt;
@@ -22,12 +22,7 @@ describe('CoverEditorPage', () => {
     render(<CoverEditorPage initialBook={book} />);
 
     expect(screen.getByLabelText('Flat cover preview')).toBeTruthy();
-    expect((screen.getByRole('button', { name: 'Generate' }) as HTMLButtonElement).disabled).toBe(
-      true,
-    );
-    expect((screen.getByRole('button', { name: 'Retry' }) as HTMLButtonElement).disabled).toBe(
-      true,
-    );
+    expect(screen.getByRole('button', { name: 'Generate cover illustration' })).toBeTruthy();
 
     fireEvent.change(screen.getByLabelText('Title (Hebrew)'), { target: { value: 'כותרת חדשה' } });
     fireEvent.change(screen.getByLabelText(/^Spine text \(Hebrew\)/), {

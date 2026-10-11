@@ -15,12 +15,25 @@ export const bookMigrations: MigrationRegistry = {
       lastBackupAt: record.lastBackupAt ?? null,
     };
   },
+  1: (record) => ({ ...record }),
 };
 
 export const imageMigrations: MigrationRegistry = {
   0: (record) => ({ ...record, meta: record.meta ?? { source: 'uploaded' } }),
+  1: (record) => ({ ...record }),
 };
 
 export const settingsMigrations: MigrationRegistry = {
-  0: (record) => ({ ...record, modelId: record.modelId ?? null, apiKey: record.apiKey ?? null }),
+  0: (record) => ({
+    ...record,
+    illustrationModelId: 'gemini-3-pro-image',
+    colouringModelId: 'gemini-3.1-flash-lite-image',
+    apiKey: record.apiKey ?? null,
+  }),
+  1: (record) => ({
+    ...record,
+    illustrationModelId: record.illustrationModelId ?? 'gemini-3-pro-image',
+    colouringModelId: record.colouringModelId ?? 'gemini-3.1-flash-lite-image',
+    apiKey: record.apiKey ?? null,
+  }),
 };

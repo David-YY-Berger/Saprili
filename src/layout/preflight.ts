@@ -1,6 +1,10 @@
 // bisiyata dishmaya, leharbot ahava biyisral
 import type { Book } from '@/domain/book';
-import { COLOPHON_PAGE_ID, SAFE_MARGIN_FLOOR_MM } from '@/domain/constants';
+import {
+  COLOPHON_PAGE_ID,
+  MAX_AI_CROP_PERCENT,
+  SAFE_MARGIN_FLOOR_MM,
+} from '@/domain/constants';
 import type { ImageRecord } from '@/domain/image';
 import { getPageRefsInReadingOrder } from '@/domain/ordering';
 import { buildSpreads } from '@/domain/spreads';
@@ -20,6 +24,7 @@ export type PreflightIssueCode =
   | 'OUTDATED_COLOURING'
   | 'TEXT_OVERFLOW'
   | 'LOW_RESOLUTION'
+  | 'AI_ASPECT_CROP'
   | 'PAGE_COUNT'
   | 'MISSING_QR'
   | 'COVER_TEXT_IN_UNSAFE_AREA'
@@ -186,6 +191,18 @@ export function runPreflight(
     for (const { id, widthMm } of imageTargets) {
       const image = resolvedImages.get(id);
       if (!image) continue;
+      if (
+        image.meta.croppedEdgePercent !== undefined &&
+        image.meta.croppedEdgePercent > MAX_AI_CROP_PERCENT
+      ) {
+        add({
+          code: 'AI_ASPECT_CROP',
+          severity: 'warning',
+          pageRef,
+          message: `${image.meta.croppedEdgePercent.toFixed(1)}% of an image edge was cropped to fit the picture shape.`,
+          nextStep: 'Review the artwork edges. If important content is missing, try a different model or regenerate.',
+        });
+      }
       const dpi = computeEffectiveDpi(image.widthPx, widthMm);
       if (dpi < LOW_RESOLUTION_DPI) {
         add({
@@ -288,6 +305,18 @@ function runCoverPreflight(
   } else {
     const image = resolvedImages.get(coverImageId);
     if (image) {
+      if (
+        image.meta.croppedEdgePercent !== undefined &&
+        image.meta.croppedEdgePercent > MAX_AI_CROP_PERCENT
+      ) {
+        issues.push({
+          code: 'AI_ASPECT_CROP',
+          severity: 'warning',
+          pageRef: COVER_REF,
+          message: `${image.meta.croppedEdgePercent.toFixed(1)}% of a cover-image edge was cropped to fit the picture shape.`,
+          nextStep: 'Review the artwork edges. If important content is missing, try a different model or regenerate.',
+        });
+      }
       const dpi = computeEffectiveDpi(image.widthPx, geometry.frontPictureRect.width);
       if (dpi < LOW_RESOLUTION_DPI) {
         issues.push({

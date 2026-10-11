@@ -80,7 +80,12 @@ export function createDefaultCover(): Cover {
 }
 
 export function createDefaultUserSettings(): UserSettings {
-  return { schemaVersion: CURRENT_SCHEMA_VERSION, modelId: null, apiKey: null };
+  return {
+    schemaVersion: CURRENT_SCHEMA_VERSION,
+    illustrationModelId: 'gemini-3-pro-image',
+    colouringModelId: 'gemini-3.1-flash-lite-image',
+    apiKey: null,
+  };
 }
 
 export function createEmptyBook(init: CreateBookInit): Book {

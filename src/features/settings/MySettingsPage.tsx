@@ -76,7 +76,7 @@ export function MySettingsPage() {
     <section aria-labelledby="settings-heading">
       <header className="page-heading">
         <h2 id="settings-heading">My settings</h2>
-        <p>Choose how Saprili will connect when picture generation becomes available.</p>
+        <p>Choose the Gemini image models Saprili uses for illustrations and colouring pages.</p>
       </header>
       <div className="surface-card">
         <div className="library-toolbar">
@@ -91,7 +91,16 @@ export function MySettingsPage() {
           <SaveErrorBanner error={autosave.error} onRetry={() => void autosave.flush()} />
         )}
         <form className="settings-form" onSubmit={(event) => event.preventDefault()}>
-          <ModelDropdown onChange={(modelId) => update({ modelId })} value={settings.modelId} />
+          <ModelDropdown
+            onChange={(illustrationModelId) => update({ illustrationModelId })}
+            role="illustration"
+            value={settings.illustrationModelId}
+          />
+          <ModelDropdown
+            onChange={(colouringModelId) => update({ colouringModelId })}
+            role="colouring"
+            value={settings.colouringModelId}
+          />
           <ApiKeyField
             onChange={(apiKey) => update({ apiKey: apiKey || null })}
             value={settings.apiKey ?? ''}

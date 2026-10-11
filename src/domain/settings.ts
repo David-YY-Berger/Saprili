@@ -1,6 +1,7 @@
 // bisiyata dishmaya, leharbot ahava biyisral
 export interface UserSettings {
   schemaVersion: number;
-  modelId: string | null;
+  illustrationModelId: string;
+  colouringModelId: string;
   apiKey: string | null;
 }

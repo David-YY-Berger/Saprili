@@ -184,8 +184,17 @@ describe('settings store double', () => {
   it('returns defaults, then what was saved', async () => {
     const repo = new InMemorySettingsRepository();
     expect((await repo.getUserSettings()).apiKey).toBeNull();
-    await repo.saveUserSettings({ schemaVersion: 1, modelId: 'm', apiKey: 'k' });
-    expect(await repo.getUserSettings()).toMatchObject({ modelId: 'm', apiKey: 'k' });
+    await repo.saveUserSettings({
+      schemaVersion: 2,
+      illustrationModelId: 'gemini-3-pro-image',
+      colouringModelId: 'gemini-3.1-flash-lite-image',
+      apiKey: 'k',
+    });
+    expect(await repo.getUserSettings()).toMatchObject({
+      illustrationModelId: 'gemini-3-pro-image',
+      colouringModelId: 'gemini-3.1-flash-lite-image',
+      apiKey: 'k',
+    });
   });
 });
 

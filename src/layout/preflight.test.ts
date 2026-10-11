@@ -61,6 +61,19 @@ describe('preflight', () => {
     expect(report.issues.find((issue) => issue.code === 'LOW_RESOLUTION')?.severity).toBe('info');
   });
 
+  it('warns when more than three percent of a generated image edge was cropped', () => {
+    const book = makeBook();
+    const page = book.storyPages[0]!;
+    page.illustration.currentImageId = 'illustration';
+    const illustration = image('illustration', 1800);
+    illustration.meta.croppedEdgePercent = 3.1;
+    const report = runPreflight(book, 'colour', new Map([['illustration', illustration]]));
+    expect(report.issues.find((issue) => issue.code === 'AI_ASPECT_CROP')).toMatchObject({
+      severity: 'warning',
+      pageRef: { kind: 'story', id: page.id },
+    });
+  });
+
   it('flags an odd story-page count', () => {
     const book = makeBook();
     book.storyPages.pop();
@@ -99,6 +112,19 @@ describe('preflight', () => {
       const notice = report.issues.find((issue) => issue.code === 'LOW_RESOLUTION');
       expect(notice?.severity).toBe('info');
       expect(notice?.pageRef.kind).toBe('cover');
+    });
+
+    it('warns about a cover illustration cropped beyond the threshold', () => {
+      const book = makeBook();
+      book.cover.illustration.currentImageId = 'cover';
+      const cover = image('cover', 3000);
+      cover.kind = 'coverIllustration';
+      cover.meta.croppedEdgePercent = 4.25;
+      expect(
+        runPreflight(book, 'colour', new Map([['cover', cover]]), 'cover').issues.map(
+          (issue) => issue.code,
+        ),
+      ).toContain('AI_ASPECT_CROP');
     });
 
     it('does not add cover issues to the interior report', () => {

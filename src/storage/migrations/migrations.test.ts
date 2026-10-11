@@ -37,7 +37,8 @@ describe('migrations', () => {
     expect(migrateSettings({ apiKey: 'k' })).toEqual({
       schemaVersion: CURRENT_SCHEMA_VERSION,
       apiKey: 'k',
-      modelId: null,
+      illustrationModelId: 'gemini-3-pro-image',
+      colouringModelId: 'gemini-3.1-flash-lite-image',
     });
     expect(migrateSettings(createDefaultUserSettings())).toEqual(createDefaultUserSettings());
   });

@@ -1,33 +1,36 @@
 // bisiyata dishmaya, leharbot ahava biyisral
-import { imageModels } from '@/ai/modelCatalog';
+import { MODEL_CATALOG } from '@/ai/modelCatalog';
 
 export function ModelDropdown({
+  role,
   value,
   onChange,
 }: {
-  value: string | null;
-  onChange: (value: string | null) => void;
+  role: 'illustration' | 'colouring';
+  value: string;
+  onChange: (value: string) => void;
 }) {
-  const availableModels = imageModels.filter((model) => model.imageCapable);
+  const availableModels = MODEL_CATALOG.filter(
+    (model) => model.imageCapable && model.roles.includes(role),
+  );
+  const id = `${role}-model-id`;
   return (
     <div className="field">
-      <label htmlFor="model-id">Image model</label>
+      <label htmlFor={id}>
+        {role === 'illustration' ? 'Illustration image model' : 'Colouring image model'}
+      </label>
       <select
-        id="model-id"
-        onChange={(event) => onChange(event.target.value || null)}
-        value={value ?? ''}
+        id={id}
+        onChange={(event) => onChange(event.target.value)}
+        value={value}
       >
-        <option value="">Choose an image model</option>
         {availableModels.map((model) => (
           <option key={model.id} value={model.id}>
             {model.label}
           </option>
         ))}
       </select>
-      <p className="field__hint">
-        The provider will be chosen after the image-quality tests. This placeholder can be replaced
-        later.
-      </p>
+      <p className="field__hint">This model uses your Gemini API key.</p>
     </div>
   );
 }

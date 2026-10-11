@@ -67,6 +67,11 @@ export function PageViewPage({ book: initialBook, pageId }: { book: Book; pageId
   const [importing, setImporting] = useState(false);
   const importingRef = useRef(false);
   const canEditPhotos = storeReady && selectedPageRef?.kind !== 'colophon';
+  const beforeGeneration = useCallback(() => commit('userEdit'), [commit]);
+  const afterGeneration = useCallback(
+    () => loadBook(initialBook.id),
+    [initialBook.id, loadBook],
+  );
 
   useEffect(() => {
     let active = true;
@@ -165,6 +170,17 @@ export function PageViewPage({ book: initialBook, pageId }: { book: Book; pageId
 
   const handlePhotosChange = (photos: PhotoRef[]) => {
     if (selectedPageRef) updateBook((current) => updatePhotos(current, selectedPageRef, photos));
+  };
+
+  const updateIllustration = (targetPageId: string, patch: Partial<Book['storyPages'][number]['illustration']>) => {
+    updateBook((current) => ({
+      ...current,
+      storyPages: current.storyPages.map((page) =>
+        page.id === targetPageId
+          ? { ...page, illustration: { ...page.illustration, ...patch } }
+          : page,
+      ),
+    }));
   };
 
   const handlePhotoRemove = (photo: PhotoRef, index: number) => {
@@ -275,9 +291,12 @@ export function PageViewPage({ book: initialBook, pageId }: { book: Book; pageId
             book={book}
             importDisabled={importing}
             onImportPhotos={(files) => void importPhotos(files)}
+            onIllustrationChange={updateIllustration}
             onPhotoRemove={handlePhotoRemove}
             onPhotosChange={handlePhotosChange}
             onUpdate={updatePage}
+            beforeGeneration={beforeGeneration}
+            onGenerationComplete={afterGeneration}
             pageRef={activePage}
           />
         </>
