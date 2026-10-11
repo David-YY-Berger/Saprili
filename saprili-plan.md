@@ -3,7 +3,7 @@
 # Saprili: Development Plan
 *Your storybook scribe. Implementation plan derived from `mission-brief.md`.*
 
-**Audience:** a human owner and GitHub Copilot (or any coding agent). Nothing in this file is code. It names files, classes, functions and rules so an agent can implement without guessing.
+**Audience:** a human owner and GitHub Copilot (or any coding agent). Nothing in this file is code. It names files, classes, functions and rules so an agent can implement without guessing. foo
 
 ---
 
