@@ -11,6 +11,7 @@ export interface JobRepository {
   getBatch(id: string): Promise<JobBatch | null>;
   /** Batches that are still running or paused. */
   listOpenBatches(): Promise<JobBatch[]>;
+  listBatchesForBook(bookId: string): Promise<JobBatch[]>;
 }
 
 export function createJobRepository({ storage }: RepositoryDeps): JobRepository {
@@ -20,6 +21,7 @@ export function createJobRepository({ storage }: RepositoryDeps): JobRepository 
     listJobsForBatch: (batchId) => storage().getAllByIndex('jobs', 'batchId', batchId),
     putBatch: (batch) => storage().apply([putOp('batches', batch)]),
     getBatch: async (id) => (await storage().get('batches', id)) ?? null,
+    listBatchesForBook: (bookId) => storage().getAllByIndex('batches', 'bookId', bookId),
     async listOpenBatches() {
       const all = await storage().getAll('batches');
       return all.filter((b) => b.state === 'running' || b.state === 'paused');

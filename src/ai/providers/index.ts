@@ -13,7 +13,7 @@ export function createProvider(
   mode: ProviderMode = __SAPRILI_PROVIDER__,
 ): ImageProvider {
   if (!getImageModel(modelId)) throw new AppError('AI_UNSUPPORTED_MODEL');
-  if (mode === 'mock') return new MockImageProvider(modelId);
+  if (mode === 'mock') return new MockImageProvider(modelId, null, __SAPRILI_MOCK_DELAY_MS__);
   if (mode === 'gemini') return new GeminiImageProvider(modelId, apiKey);
   throw new AppError('AI_UNSUPPORTED_MODEL');
 }

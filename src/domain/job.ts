@@ -15,6 +15,8 @@ export interface Job {
   status: JobStatus;
   step: JobStep;
   attempts: number;
+  /** Earliest time a retried job may run again. */
+  retryAfter?: string;
   errorCode?: string;
   errorMessage?: string;
   createdAt: string;
@@ -30,4 +32,26 @@ export interface JobBatch {
   createdAt: string;
   state: JobBatchState;
   pauseReason?: string;
+}
+
+/** One job in a plan; `key` lets a colouring job point at its illustration job. */
+export interface PlannedJob {
+  key: string;
+  kind: JobKind;
+  target: JobTarget;
+  overwrite: boolean;
+  dependsOnKey: string | null;
+}
+
+export interface SkippedJob {
+  kind: JobKind;
+  target: JobTarget;
+  reason: string;
+}
+
+export interface JobPlan {
+  bookId: string;
+  jobs: PlannedJob[];
+  summary: { illustrations: number; colourings: number; totalCalls: number };
+  skipped: SkippedJob[];
 }

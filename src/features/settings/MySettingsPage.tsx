@@ -12,6 +12,7 @@ import { SaveErrorBanner } from '@/ui/SaveErrorBanner';
 import { Spinner } from '@/ui/Spinner';
 import { ApiKeyField } from './ApiKeyField';
 import { ModelDropdown } from './ModelDropdown';
+import { JobHostModeField } from './JobHostModeField';
 import { PrivacyNotice } from './PrivacyNotice';
 
 const EMPTY_SETTINGS = createDefaultUserSettings();
@@ -106,6 +107,7 @@ export function MySettingsPage() {
             value={settings.apiKey ?? ''}
           />
           <PrivacyNotice />
+          <JobHostModeField />
         </form>
       </div>
     </section>

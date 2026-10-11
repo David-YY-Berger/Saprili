@@ -1,4 +1,5 @@
 // bisiyata dishmaya, leharbot ahava biyisral
+import type { ReactNode } from 'react';
 import { Button } from '@/ui/Button';
 import { SlidersIcon } from '@/ui/icons';
 import { Tooltip } from '@/ui/Tooltip';
@@ -13,6 +14,8 @@ export function BookToolbar({
   onPrintBook,
   onPrintColouring,
   onPrintCover,
+  onGenerate,
+  generateChip,
 }: {
   pairCount: number;
   disabled: boolean;
@@ -23,6 +26,8 @@ export function BookToolbar({
   onPrintBook: () => void;
   onPrintColouring: () => void;
   onPrintCover: () => void;
+  onGenerate: () => void;
+  generateChip?: ReactNode;
 }) {
   const unavailable = (label: string, phase: number) => (
     <Tooltip content={`Available in Phase ${phase}`}>
@@ -45,7 +50,10 @@ export function BookToolbar({
         Print cover
       </Button>
       {unavailable('Download all / backup', 11)}
-      {unavailable('Generate', 9)}
+      <Button disabled={disabled} onClick={onGenerate} variant="secondary">
+        Generate
+      </Button>
+      {generateChip}
       <Button disabled={disabled} onClick={onPreflight} variant="secondary">
         Pre-flight
       </Button>

@@ -79,4 +79,11 @@ export default tseslint.config(
       [{ group: [...layer('domain', 'storage'), ...UI_LAYERS, ...ENGINE_LAYERS] }],
     ),
   },
+  // The jobs messaging contract is typed with domain job records (plan section 5.5).
+  {
+    files: ['src/shared/messaging.ts'],
+    rules: restrictImports([IDB_ONLY_IN_STORAGE], [
+      { group: [...layer('storage'), ...UI_LAYERS, ...ENGINE_LAYERS] },
+    ]),
+  },
 );

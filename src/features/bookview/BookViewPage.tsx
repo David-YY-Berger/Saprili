@@ -19,9 +19,19 @@ import { PairGroup } from './PairGroup';
 import { useStoryReorder } from './useStoryReorder';
 import { PreflightDialog } from '@/print/PreflightDialog';
 import { startPrint, type PrintOutput } from '@/print/printJob';
+import { GenerateDialog } from '@/features/generate/GenerateDialog';
+import { GenerateStatusChip } from '@/features/generate/GenerateStatusChip';
+import { useBookJobs } from '@/features/generate/useBookJobs';
 
 export function BookViewPage({ book: initialBook }: { book: Book }) {
   const [book, setBook] = useState(initialBook);
+  const [generateOpen, setGenerateOpen] = useState(false);
+  const jobsState = useBookJobs(initialBook.id, () => {
+    // Saved results are re-read so later edits here start from the generated pictures.
+    void bookRepository.getBook(initialBook.id).then((stored) => {
+      if (stored) setBook(stored);
+    });
+  });
   const [pendingDelete, setPendingDelete] = useState<Set<string> | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -119,6 +129,10 @@ export function BookViewPage({ book: initialBook }: { book: Book }) {
         onSettings={() => {
           window.location.hash = `#/book/${encodeURIComponent(book.id)}/settings`;
         }}
+        generateChip={
+          <GenerateStatusChip jobsState={jobsState} onOpen={() => setGenerateOpen(true)} />
+        }
+        onGenerate={() => setGenerateOpen(true)}
         pairCount={book.storyPages.length / 2}
       />
       <div className="book-outline surface-card">
@@ -166,6 +180,12 @@ export function BookViewPage({ book: initialBook }: { book: Book }) {
         onConfirm={deletePairs}
         open={deleteOpen}
         pairs={reorder.pairs}
+      />
+      <GenerateDialog
+        book={book}
+        jobsState={jobsState}
+        onClose={() => setGenerateOpen(false)}
+        open={generateOpen}
       />
       <PreflightDialog
         book={book}

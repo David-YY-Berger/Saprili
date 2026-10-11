@@ -81,6 +81,20 @@ function setStoryPage(book: Book, pageId: string, update: (page: StoryPage) => S
   };
 }
 
+// Concurrent batch jobs on one book must not overwrite each other's saved results.
+const bookLocks = new Map<string, Promise<unknown>>();
+
+function withBookLock<T>(bookId: string, work: () => Promise<T>): Promise<T> {
+  const previous = bookLocks.get(bookId) ?? Promise.resolve();
+  const run = previous.then(work, work);
+  const tail = run.catch(() => undefined);
+  bookLocks.set(bookId, tail);
+  void tail.then(() => {
+    if (bookLocks.get(bookId) === tail) bookLocks.delete(bookId);
+  });
+  return run;
+}
+
 export function createGenerationService(deps: GenerationServiceDeps) {
   const postprocess = deps.postprocess ?? {
     fitToShape,
@@ -170,13 +184,31 @@ export function createGenerationService(deps: GenerationServiceDeps) {
     return saved;
   }
 
+  /** Applies a generated image to the latest saved book; removes the image if that fails. */
+  async function applyToLatestBook(
+    bookId: string,
+    newImageId: string,
+    build: (latest: Book) => { book: Book; expired: readonly string[] },
+  ): Promise<Book> {
+    return withBookLock(bookId, async () => {
+      let built: { book: Book; expired: readonly string[] };
+      try {
+        built = build(await getBook(bookId));
+      } catch (error) {
+        await deps.imageRepository.deleteImage(newImageId).catch(() => undefined);
+        throw error;
+      }
+      return storeBookAndCleanup(built.book, newImageId, built.expired);
+    });
+  }
+
   async function generateIllustrationForPage(
     bookId: string,
     pageId: string,
     options: GenerationOptions = {},
   ): Promise<GenerationResult> {
     const { book, apiKey, illustrationModelId } = await getBookAndSettings(bookId);
-    const page = getStoryPage(book, pageId);
+    getStoryPage(book, pageId);
     const modelId = options.modelId ?? illustrationModelId;
     const provider = deps.providerFactory(modelId, options.apiKey ?? apiKey);
     const request = options.useEditMode
@@ -199,15 +231,24 @@ export function createGenerationService(deps: GenerationServiceDeps) {
       { ...result, image },
       croppedEdgePercent,
     );
-    const expired = [
-      ...(page.illustration.currentImageId ? [page.illustration.currentImageId] : []),
-      ...page.illustration.history.map((entry) => entry.imageId),
-    ].slice(ILLUSTRATION_HISTORY_MAX);
-    const nextState = pushIllustrationVersion(page.illustration, record.id, deps.clock.nowIso());
-    const nextBook = setStoryPage(book, pageId, (current) =>
-      markColouringOutdated({ ...current, illustration: nextState }),
-    );
-    const saved = await storeBookAndCleanup(nextBook, record.id, expired);
+    const saved = await applyToLatestBook(bookId, record.id, (latest) => {
+      const latestPage = getStoryPage(latest, pageId);
+      const expired = [
+        ...(latestPage.illustration.currentImageId ? [latestPage.illustration.currentImageId] : []),
+        ...latestPage.illustration.history.map((entry) => entry.imageId),
+      ].slice(ILLUSTRATION_HISTORY_MAX);
+      const nextState = pushIllustrationVersion(
+        latestPage.illustration,
+        record.id,
+        deps.clock.nowIso(),
+      );
+      return {
+        book: setStoryPage(latest, pageId, (current) =>
+          markColouringOutdated({ ...current, illustration: nextState }),
+        ),
+        expired,
+      };
+    });
     return {
       book: saved,
       imageId: record.id,
@@ -245,19 +286,20 @@ export function createGenerationService(deps: GenerationServiceDeps) {
       { ...result, image },
       croppedEdgePercent,
     );
-    const nextBook = setStoryPage(book, pageId, (current) => ({
-      ...current,
-      colouring: {
-        imageId: record.id,
-        sourceIllustrationImageId: current.illustration.currentImageId,
-        outdated: false,
-      },
-    }));
-    const saved = await storeBookAndCleanup(
-      nextBook,
-      record.id,
-      page.colouring.imageId ? [page.colouring.imageId] : [],
-    );
+    const saved = await applyToLatestBook(bookId, record.id, (latest) => {
+      const latestPage = getStoryPage(latest, pageId);
+      return {
+        book: setStoryPage(latest, pageId, (current) => ({
+          ...current,
+          colouring: {
+            imageId: record.id,
+            sourceIllustrationImageId: current.illustration.currentImageId,
+            outdated: false,
+          },
+        })),
+        expired: latestPage.colouring.imageId ? [latestPage.colouring.imageId] : [],
+      };
+    });
     return { book: saved, imageId: record.id, omittedPhotoCount: 0 };
   }
 
@@ -289,17 +331,15 @@ export function createGenerationService(deps: GenerationServiceDeps) {
       { ...result, image },
       croppedEdgePercent,
     );
-    const previousState = book.cover.illustration;
-    const expired = [
-      ...(previousState.currentImageId ? [previousState.currentImageId] : []),
-      ...previousState.history.map((entry) => entry.imageId),
-    ].slice(ILLUSTRATION_HISTORY_MAX);
-    const illustration = pushIllustrationVersion(previousState, record.id, deps.clock.nowIso());
-    const nextBook = {
-      ...book,
-      cover: { ...book.cover, illustration },
-    };
-    const saved = await storeBookAndCleanup(nextBook, record.id, expired);
+    const saved = await applyToLatestBook(bookId, record.id, (latest) => {
+      const previousState = latest.cover.illustration;
+      const expired = [
+        ...(previousState.currentImageId ? [previousState.currentImageId] : []),
+        ...previousState.history.map((entry) => entry.imageId),
+      ].slice(ILLUSTRATION_HISTORY_MAX);
+      const illustration = pushIllustrationVersion(previousState, record.id, deps.clock.nowIso());
+      return { book: { ...latest, cover: { ...latest.cover, illustration } }, expired };
+    });
     return { book: saved, imageId: record.id, omittedPhotoCount: request.omittedPhotoCount };
   }
 

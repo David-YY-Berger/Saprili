@@ -10,6 +10,7 @@ export default defineConfig({
     __SAPRILI_PROVIDER__: JSON.stringify(
       process.env.SAPRILI_PROVIDER === 'mock' ? 'mock' : 'gemini',
     ),
+    __SAPRILI_MOCK_DELAY_MS__: JSON.stringify(Number(process.env.SAPRILI_MOCK_DELAY_MS ?? 0) || 0),
   },
   plugins: [react()],
   resolve: { alias: { '@': fromRoot('./src') } },

@@ -13,6 +13,7 @@
     "lint:headers": "node scripts/check-headers.mjs",
     "test": "vitest run",
     "e2e:print": "npm run build && playwright test tests/e2e/print-pdf.spec.ts",
+    "e2e:jobs": "node scripts/e2e-phase10.mjs",
     "format": "prettier --write .",
     "icons": "node scripts/generate-icons.mjs",
     "e2e": "npm run build && node scripts/e2e-phase2.mjs && node scripts/e2e-phase3.mjs && node scripts/e2e-phase4.mjs",
