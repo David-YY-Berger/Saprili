@@ -5,6 +5,12 @@ import type { PageRef } from '@/domain/page';
 import { getIntroPhotoCount } from './introPhotos';
 import type { Edition } from '../theme';
 
+/** The cover picture: the user's own image wins over a generated illustration. */
+export function getCoverImageIds(book: Book): string[] {
+  const id = book.cover.ownImageId ?? book.cover.illustration.currentImageId;
+  return id ? [id] : [];
+}
+
 /** Image ids the page needs for the given edition. Intro always prints the original photos. */
 export function getPageImageIds(book: Book, pageRef: PageRef, edition: Edition): string[] {
   if (pageRef.kind === 'intro') {

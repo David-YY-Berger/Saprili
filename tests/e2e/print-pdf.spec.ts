@@ -88,6 +88,34 @@ test('prints an exact-size, multi-page interior PDF', async () => {
     assert.equal(await colouringPage.locator('.print-sheet [data-edition="colouring"]').count(), 4);
     await colouringPage.close();
 
+    await app.getByRole('button', { name: 'Print cover' }).click();
+    await app.getByRole('button', { name: 'Continue to print' }).waitFor();
+    const coverPagePromise = context.waitForEvent('page');
+    await app.getByRole('button', { name: 'Continue to print' }).click();
+    const coverPage = await coverPagePromise;
+    coverPage.on('pageerror', (error) => pageErrors.push(error.message));
+    await coverPage.waitForURL(/print\.html\?job=/);
+    await coverPage.locator('.print-sheet[data-page-kind="cover"]').waitFor();
+    await coverPage.evaluate(() => document.fonts.ready);
+    assert.equal(await coverPage.locator('.print-sheet').count(), 1);
+    assert.equal(await coverPage.locator('[data-editor-only]').count(), 0);
+    const coverClient = await context.newCDPSession(coverPage);
+    const coverPdf = await coverClient.send('Page.printToPDF', {
+      displayHeaderFooter: false,
+      preferCSSPageSize: true,
+      printBackground: true,
+    });
+    const coverResult = await inspectPdf(Buffer.from(coverPdf.data, 'base64'), {
+      pageCount: 1,
+      widthMm: 482,
+      heightMm: 343,
+      // Chrome rounds PDF page sizes to whole points (up to 0.18 mm).
+      toleranceMm: 0.2,
+    });
+    assert.equal(coverResult.hasEmbeddedFont, true);
+    await coverClient.detach();
+    await coverPage.close();
+
     await app.locator('.story-row__link').first().click();
     await app.getByRole('button', { name: 'Print page' }).click();
     await app.getByRole('button', { name: 'Continue to print' }).waitFor();

@@ -112,6 +112,10 @@ export function BookViewPage({ book: initialBook }: { book: Book }) {
           setPrintOutput('colouring');
           setPreflightOpen(true);
         }}
+        onPrintCover={() => {
+          setPrintOutput('cover');
+          setPreflightOpen(true);
+        }}
         onSettings={() => {
           window.location.hash = `#/book/${encodeURIComponent(book.id)}/settings`;
         }}
@@ -166,7 +170,11 @@ export function BookViewPage({ book: initialBook }: { book: Book }) {
       <PreflightDialog
         book={book}
         edition="colour"
-        onConfirm={printOutput ? () => startPrint(book.id, printOutput) : undefined}
+        onConfirm={
+          printOutput
+            ? ({ coverEdition }) => startPrint(book.id, printOutput, undefined, coverEdition)
+            : undefined
+        }
         onClose={() => {
           setPreflightOpen(false);
           setPrintOutput(undefined);

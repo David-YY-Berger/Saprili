@@ -3,6 +3,7 @@ import type { Book } from '@/domain/book';
 import { computePageGeometry } from '@/layout/geometry';
 import { getPrintSpec } from '@/layout/specs';
 import { PageSheet } from '@/layout/render/PageSheet';
+import { CoverSheet } from '@/layout/render/CoverSheet';
 import type { ResolvedImages } from '@/layout/render/useBlobUrl';
 import { mmToCss } from '@/shared/units';
 import { computeCropMarkSegments, CropMarks } from './CropMarks';
@@ -22,7 +23,7 @@ export function SheetView({
   last: boolean;
 }) {
   const spec = getPrintSpec(book);
-  const bleed = spec.bleedMm;
+  const bleed = sheet.bleedMm;
   const p = sheet.placementMm;
   const marks = computeCropMarkSegments(
     sheet.trimRect,
@@ -37,10 +38,14 @@ export function SheetView({
   return (
     <section
       aria-label={
-        sheet.pageRef ? `${sheet.pageRef.kind} print sheet` : 'Blank fallback print sheet'
+        sheet.isCover
+          ? 'Cover print sheet'
+          : sheet.pageRef
+            ? `${sheet.pageRef.kind} print sheet`
+            : 'Blank fallback print sheet'
       }
       className="print-sheet"
-      data-page-kind={sheet.pageRef?.kind ?? 'blank'}
+      data-page-kind={sheet.isCover ? 'cover' : (sheet.pageRef?.kind ?? 'blank')}
       style={{
         position: 'relative',
         width: mmToCss(sheet.sheetSizeMm.widthMm),
@@ -51,7 +56,7 @@ export function SheetView({
         pageBreakAfter: last ? 'auto' : 'always',
       }}
     >
-      {sheet.pageRef && (
+      {(sheet.pageRef || sheet.isCover) && (
         <div
           className="print-page-placement"
           style={{
@@ -62,14 +67,20 @@ export function SheetView({
             height: mmToCss(p.heightMm),
           }}
         >
-          <PageSheet
-            book={book}
-            edition={sheet.edition}
-            images={images}
-            pageRef={sheet.pageRef}
-            showBleed
-            side={sheet.side}
-          />
+          {sheet.isCover ? (
+            <CoverSheet book={book} edition={sheet.edition} images={images} />
+          ) : (
+            sheet.pageRef && (
+              <PageSheet
+                book={book}
+                edition={sheet.edition}
+                images={images}
+                pageRef={sheet.pageRef}
+                showBleed
+                side={sheet.side}
+              />
+            )
+          )}
           {showGuides && (
             <svg
               aria-label="Trim and bleed guides"

@@ -5,7 +5,9 @@ import type { ImageRecord } from '@/domain/image';
 import { getPageRefsInReadingOrder } from '@/domain/ordering';
 import { buildSpreads } from '@/domain/spreads';
 import type { PageRef } from '@/domain/page';
-import { computePageGeometry } from './geometry';
+import { computePageGeometry, type Rect } from './geometry';
+import { computeCoverGeometry, computeCoverTextFits, fitSpineText } from './coverGeometry';
+import { getCoverImageIds } from './render/pageImages';
 import { computePageTextLayout } from './pageText';
 import { getDefaultMeasurer } from './textFit';
 import type { Edition } from './theme';
@@ -19,12 +21,25 @@ export type PreflightIssueCode =
   | 'TEXT_OVERFLOW'
   | 'LOW_RESOLUTION'
   | 'PAGE_COUNT'
-  | 'MISSING_QR';
+  | 'MISSING_QR'
+  | 'COVER_TEXT_IN_UNSAFE_AREA'
+  | 'COVER_SPINE_TEXT_TOO_WIDE'
+  | 'MISSING_COVER_ILLUSTRATION';
+
+/** Stands in for a page when an issue belongs to the cover. */
+export interface CoverRef {
+  kind: 'cover';
+  id: 'cover';
+}
+export const COVER_REF: CoverRef = { kind: 'cover', id: 'cover' };
+
+/** `interior` checks the pages; `cover` checks only the flat cover. */
+export type PreflightScope = 'interior' | 'cover';
 
 export interface PreflightIssue {
   code: PreflightIssueCode;
   severity: 'warning' | 'info';
-  pageRef: PageRef;
+  pageRef: PageRef | CoverRef;
   message: string;
   nextStep: string;
 }
@@ -47,7 +62,10 @@ export function computeEffectiveDpi(imageWidthPx: number, pictureWidthMm: number
   return (imageWidthPx * 25.4) / pictureWidthMm;
 }
 
-function contains(outer: { x: number; y: number; width: number; height: number }, inner: typeof outer) {
+function contains(
+  outer: { x: number; y: number; width: number; height: number },
+  inner: typeof outer,
+) {
   const epsilon = 0.001;
   return (
     inner.x >= outer.x - epsilon &&
@@ -61,7 +79,9 @@ export function runPreflight(
   book: Book,
   edition: Edition,
   resolvedImages: ReadonlyMap<string, ImageRecord> = new Map(),
+  scope: PreflightScope = 'interior',
 ): PreflightReport {
+  if (scope === 'cover') return runCoverPreflight(book, resolvedImages);
   const issues: PreflightIssue[] = [];
   const add = (issue: PreflightIssue) => issues.push(issue);
   const pages = getPageRefsInReadingOrder(book);
@@ -106,7 +126,8 @@ export function runPreflight(
           code: 'MISSING_COLOURING',
           severity: 'warning',
           pageRef,
-          message: 'This page has no colouring illustration; it will print with a blank picture area.',
+          message:
+            'This page has no colouring illustration; it will print with a blank picture area.',
           nextStep: 'Create or add a colouring illustration for this page.',
         });
       } else if (
@@ -159,8 +180,7 @@ export function runPreflight(
       });
     } else if (pageRef.kind === 'story') {
       const page = book.storyPages.find((item) => item.id === pageRef.id);
-      const id =
-        edition === 'colour' ? page?.illustration.currentImageId : page?.colouring.imageId;
+      const id = edition === 'colour' ? page?.illustration.currentImageId : page?.colouring.imageId;
       if (id) imageTargets.push({ id, widthMm: geometry.pictureRect.width });
     }
     for (const { id, widthMm } of imageTargets) {
@@ -212,6 +232,72 @@ export function runPreflight(
         nextStep: 'Correct the margins in Book settings before printing.',
       });
       break;
+    }
+  }
+  return { issues, exportAllowed: true };
+}
+
+function runCoverPreflight(
+  book: Book,
+  resolvedImages: ReadonlyMap<string, ImageRecord>,
+): PreflightReport {
+  const issues: PreflightIssue[] = [];
+  const geometry = computeCoverGeometry(book);
+  const measurer = getDefaultMeasurer();
+  const fits = computeCoverTextFits(book, geometry, measurer);
+  const items: Rect[] = [geometry.titleRect, geometry.subtitleRect, geometry.frontPictureRect];
+  if (
+    !items.every((rect) => contains(geometry.safeRects.front, rect)) ||
+    fits.title.overflow ||
+    fits.subtitle.overflow
+  ) {
+    issues.push({
+      code: 'COVER_TEXT_IN_UNSAFE_AREA',
+      severity: 'warning',
+      pageRef: COVER_REF,
+      message: 'The cover title or subtitle does not fit inside the safe area of the front cover.',
+      nextStep: 'Shorten the title or subtitle in the Cover editor.',
+    });
+  }
+  const spineFit = fitSpineText(
+    book.cover.spineTextHe,
+    geometry.spineWidthMm,
+    book.typography.hebrewFontId,
+    {
+      measurer,
+    },
+  );
+  if (!spineFit.fits) {
+    issues.push({
+      code: 'COVER_SPINE_TEXT_TOO_WIDE',
+      severity: 'warning',
+      pageRef: COVER_REF,
+      message: `The spine text does not fit the ${geometry.spineWidthMm} mm spine, even at the smallest size.`,
+      nextStep: 'Shorten the spine text in the Cover editor.',
+    });
+  }
+  const [coverImageId] = getCoverImageIds(book);
+  if (!coverImageId) {
+    issues.push({
+      code: 'MISSING_COVER_ILLUSTRATION',
+      severity: 'warning',
+      pageRef: COVER_REF,
+      message: 'The cover has no illustration; it will print with a blank picture area.',
+      nextStep: 'Use your own image in the Cover editor, or generate an illustration later.',
+    });
+  } else {
+    const image = resolvedImages.get(coverImageId);
+    if (image) {
+      const dpi = computeEffectiveDpi(image.widthPx, geometry.frontPictureRect.width);
+      if (dpi < LOW_RESOLUTION_DPI) {
+        issues.push({
+          code: 'LOW_RESOLUTION',
+          severity: 'info',
+          pageRef: COVER_REF,
+          message: `The cover picture may look soft at print size (${Math.round(dpi)} effective DPI).`,
+          nextStep: 'You can continue, or replace it with a higher-resolution image.',
+        });
+      }
     }
   }
   return { issues, exportAllowed: true };

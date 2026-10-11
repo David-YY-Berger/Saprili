@@ -2,7 +2,13 @@
 import type { Book } from '@/domain/book';
 import type { PageRef } from '@/domain/page';
 import { buildSpreads } from '@/domain/spreads';
-import { INTERIOR_BLEED_MM, CROP_MARK_LENGTH_MM, CROP_MARK_OFFSET_MM } from '@/domain/constants';
+import {
+  INTERIOR_BLEED_MM,
+  COVER_BLEED_MM,
+  CROP_MARK_LENGTH_MM,
+  CROP_MARK_OFFSET_MM,
+} from '@/domain/constants';
+import { computeCoverGeometry } from '@/layout/coverGeometry';
 import { newId } from '@/shared/ids';
 import { AppError } from '@/shared/errors';
 import { bookRepository, metaRepository } from '@/storage/repositories';
@@ -48,6 +54,10 @@ export interface SheetModel extends SheetLayout {
   pageRef: PageRef | null;
   side: 'left' | 'right';
   edition: Edition;
+  /** Bleed around the trim for this sheet; the cover's is larger than a page's. */
+  bleedMm: number;
+  /** True for the flat cover sheet, which has no page reference. */
+  isCover?: boolean;
 }
 
 export interface PrintDocumentModel {
@@ -107,10 +117,27 @@ export function buildPrintDocument(
   },
 ): PrintDocumentModel {
   if (spec.output === 'cover') {
-    throw new AppError('PRINT_ASSET_FAILED', {
-      userMessage: 'Cover printing is not available yet.',
-      nextStep: 'Print the interior pages, then return after cover export is available.',
-    });
+    const { cutRect } = computeCoverGeometry(book);
+    const layout = computeSheetLayout(
+      {
+        trim: { widthMm: cutRect.width, heightMm: cutRect.height },
+        bleedMm: COVER_BLEED_MM,
+        cropMark: printSpec.cropMark,
+      },
+      spec.sheetMode,
+    );
+    return {
+      sheets: [
+        {
+          ...layout,
+          pageRef: null,
+          side: 'right',
+          edition: spec.coverEdition ?? 'colour',
+          bleedMm: COVER_BLEED_MM,
+          isCover: true,
+        },
+      ],
+    };
   }
   const layout = computeSheetLayout(printSpec, spec.sheetMode);
   const edition: Edition = spec.output === 'colouring' ? 'colouring' : 'colour';
@@ -132,6 +159,7 @@ export function buildPrintDocument(
       pageRef,
       side: pageRef ? getPageSide(book, pageRef) : 'right',
       edition,
+      bleedMm: printSpec.bleedMm,
     })),
   };
 }
@@ -175,6 +203,7 @@ export async function startPrint(
   bookId: string,
   output: PrintOutput,
   pageId?: string,
+  coverEdition?: Edition,
 ): Promise<void> {
   const popup = window.open('', '_blank');
   try {
@@ -184,6 +213,7 @@ export async function startPrint(
       bookId,
       output,
       ...(pageId ? { pageId } : {}),
+      ...(output === 'cover' ? { coverEdition: coverEdition ?? 'colour' } : {}),
       sheetMode: book.print.sheetMode,
     };
     const job = await createPrintJob(spec);

@@ -12,6 +12,7 @@ export function BookToolbar({
   onPreflight,
   onPrintBook,
   onPrintColouring,
+  onPrintCover,
 }: {
   pairCount: number;
   disabled: boolean;
@@ -21,6 +22,7 @@ export function BookToolbar({
   onPreflight: () => void;
   onPrintBook: () => void;
   onPrintColouring: () => void;
+  onPrintCover: () => void;
 }) {
   const unavailable = (label: string, phase: number) => (
     <Tooltip content={`Available in Phase ${phase}`}>
@@ -39,7 +41,9 @@ export function BookToolbar({
       <Button disabled={disabled} onClick={onPrintColouring} variant="secondary">
         Print colouring book
       </Button>
-      {unavailable('Print cover', 8)}
+      <Button disabled={disabled} onClick={onPrintCover} variant="secondary">
+        Print cover
+      </Button>
       {unavailable('Download all / backup', 11)}
       {unavailable('Generate', 9)}
       <Button disabled={disabled} onClick={onPreflight} variant="secondary">

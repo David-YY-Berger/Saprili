@@ -66,4 +66,45 @@ describe('preflight', () => {
     book.storyPages.pop();
     expect(runPreflight(book, 'colour').issues.map((issue) => issue.code)).toContain('PAGE_COUNT');
   });
+
+  describe('cover scope', () => {
+    const codes = (book: ReturnType<typeof makeBook>, images = new Map<string, ImageRecord>()) =>
+      runPreflight(book, 'colour', images, 'cover').issues.map((issue) => issue.code);
+
+    it('only flags the missing cover illustration for the default cover', () => {
+      expect(codes(makeBook())).toEqual(['MISSING_COVER_ILLUSTRATION']);
+    });
+
+    it('is clean once the cover has an image and does not mention interior issues', () => {
+      const book = makeBook();
+      book.cover.ownImageId = 'own';
+      expect(codes(book, new Map([['own', image('own', 3000)]]))).toEqual([]);
+    });
+
+    it('flags a spine text that is too wide and a title outside the safe area', () => {
+      const book = makeBook();
+      book.cover.ownImageId = 'own';
+      book.cover.spineTextHe = 'א'.repeat(900);
+      book.cover.titleHe = 'א'.repeat(900);
+      const result = codes(book);
+      expect(result).toContain('COVER_SPINE_TEXT_TOO_WIDE');
+      expect(result).toContain('COVER_TEXT_IN_UNSAFE_AREA');
+      expect(result).not.toContain('MISSING_COVER_ILLUSTRATION');
+    });
+
+    it('gives a gentle low-resolution notice for the cover picture', () => {
+      const book = makeBook();
+      book.cover.ownImageId = 'own';
+      const report = runPreflight(book, 'colour', new Map([['own', image('own', 300)]]), 'cover');
+      const notice = report.issues.find((issue) => issue.code === 'LOW_RESOLUTION');
+      expect(notice?.severity).toBe('info');
+      expect(notice?.pageRef.kind).toBe('cover');
+    });
+
+    it('does not add cover issues to the interior report', () => {
+      expect(runPreflight(makeBook(), 'colour').issues.map((issue) => issue.code)).not.toContain(
+        'MISSING_COVER_ILLUSTRATION',
+      );
+    });
+  });
 });

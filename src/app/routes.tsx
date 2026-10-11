@@ -15,6 +15,7 @@ import { MySettingsPage } from '@/features/settings/MySettingsPage';
 import { PageViewPage } from '@/features/pageview/PageViewPage';
 import { BookSettingsPage } from '@/features/booksettings/BookSettingsPage';
 import { ColophonEditorPage } from '@/features/colophon/ColophonEditorPage';
+import { CoverEditorPage } from '@/features/cover/CoverEditorPage';
 import { ComingSoonPage } from './ComingSoonPage';
 import { NotFoundPage } from './NotFoundPage';
 
@@ -85,6 +86,7 @@ function BookRoute({ bookId, subroute }: { bookId: string; subroute: string }) {
   if (subroute === '') return <BookViewPage book={currentBook} />;
   if (subroute === '/settings') return <BookSettingsPage initialBook={currentBook} />;
   if (subroute === '/colophon') return <ColophonEditorPage initialBook={currentBook} />;
+  if (subroute === '/cover') return <CoverEditorPage initialBook={currentBook} />;
   if (subroute.startsWith('/page/')) {
     const pageId = decodeRoutePart(subroute.slice('/page/'.length));
     if (pageId === null) return <NotFoundPage />;

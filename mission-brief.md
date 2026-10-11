@@ -105,9 +105,10 @@ See Section 3. Same theme and margins as every other page.
 - Keep text and key art away from hinges and edges (placeholder 1 cm inset). Spine text must fit in 0.8 cm.
 - **Front:** Hebrew only. Title "משפחת ברגר, גבעת מרדכי, 5787", subtitle "צילום מצב מהחיים שלנו" (proposed split and wording, to confirm). Cover illustration generated from the **intro page's original photos**, framed in the theme, not running to the edge. Text is typeset by the app, never drawn by the AI.
 - **Back: TODO.** Themed background and border until designed.
-- **Spine:** short title (for example "משפחת ברגר 5787"), decided with a mock-up.
-- Colouring book uses the same cover plus a small Hebrew "colouring" marker (wording TBD).
-- Cover export has crop marks outside the bleed band, so the page is a bit larger than 46.6 × 32.7.
+- **Spine:** short title (for example "משפחת ברגר 5787"), decided with a mock-up. One rotated line, shrunk to fit and warned about if it cannot fit; placeholder direction: counter-clockwise, so the Hebrew starts at the top and reads downwards (to confirm with the mock-up).
+- Colouring book uses the same cover plus a small Hebrew "colouring" marker (placeholder wording "ספר צביעה", to confirm).
+- Cover export has crop marks outside the bleed band, so the page is a bit larger than 46.6 × 32.7: with the placeholder crop marks (3 mm offset, 5 mm long) it is 48.2 × 34.3 cm.
+- Until the shop's spine-width rule is known, every page count uses the 40-page width (0.8 cm). The cover editor lets the owner use an own image on the front; a generated illustration is used when there is none.
 
 ---
 

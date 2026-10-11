@@ -2,6 +2,7 @@
 export * from './specs';
 export * from './geometry';
 export * from './shape';
+export * from './coverGeometry';
 export * from './textFit';
 export * from './pageText';
 export * from './theme';

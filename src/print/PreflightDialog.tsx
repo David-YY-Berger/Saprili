@@ -8,11 +8,13 @@ import { toAppError } from '@/shared/errors';
 import { Banner } from '@/ui/Banner';
 import { Button } from '@/ui/Button';
 import { Modal } from '@/ui/Modal';
-import { runPreflight } from '@/layout/preflight';
+import { runPreflight, type CoverRef } from '@/layout/preflight';
 import type { Edition } from '@/layout/theme';
+import { CoverEditionSwitch } from './CoverEditionSwitch';
 import type { PrintOutput } from './printJob';
 
-function pageTitle(book: Book, pageRef: PageRef): string {
+function pageTitle(book: Book, pageRef: PageRef | CoverRef): string {
+  if (pageRef.kind === 'cover') return 'Cover';
   if (pageRef.kind === 'intro') return 'Intro page';
   if (pageRef.kind === 'colophon') return 'Colophon';
   return (
@@ -34,13 +36,14 @@ export function PreflightDialog({
   edition: Edition;
   output?: PrintOutput;
   pageId?: string;
-  onConfirm?: () => Promise<void>;
+  onConfirm?: (options: { coverEdition: Edition }) => Promise<void>;
   open: boolean;
   onClose: () => void;
 }) {
   const [images, setImages] = useState<ReadonlyMap<string, ImageRecord> | null>(null);
   const [error, setError] = useState<unknown>(null);
   const [selectedEdition, setSelectedEdition] = useState(edition);
+  const [coverEdition, setCoverEdition] = useState<Edition>('colour');
   const [confirming, setConfirming] = useState(false);
   const [confirmError, setConfirmError] = useState<unknown>(null);
   const reportEdition: Edition =
@@ -68,13 +71,16 @@ export function PreflightDialog({
   }, [book.id, open]);
 
   const report = useMemo(
-    () => (images ? runPreflight(book, reportEdition, images) : null),
-    [book, images, reportEdition],
+    () =>
+      images
+        ? runPreflight(book, reportEdition, images, output === 'cover' ? 'cover' : 'interior')
+        : null,
+    [book, images, output, reportEdition],
   );
   const grouped = useMemo(() => {
     const groups = new Map<
       string,
-      { pageRef: PageRef; title: string; issues: NonNullable<typeof report>['issues'] }
+      { pageRef: PageRef | CoverRef; title: string; issues: NonNullable<typeof report>['issues'] }
     >();
     for (const issue of report?.issues ?? []) {
       if (output === 'page' && pageId && issue.pageRef.id !== pageId) continue;
@@ -90,9 +96,12 @@ export function PreflightDialog({
     return [...groups.values()];
   }, [book, output, pageId, report]);
 
-  const jumpToPage = (pageRef: PageRef) => {
-    const pageId = encodeURIComponent(pageRef.id);
-    window.location.hash = `#/book/${encodeURIComponent(book.id)}/page/${pageId}`;
+  const jumpToPage = (pageRef: PageRef | CoverRef) => {
+    const bookHash = `#/book/${encodeURIComponent(book.id)}`;
+    window.location.hash =
+      pageRef.kind === 'cover'
+        ? `${bookHash}/cover`
+        : `${bookHash}/page/${encodeURIComponent(pageRef.id)}`;
     onClose();
   };
   const confirmPrint = async () => {
@@ -100,7 +109,7 @@ export function PreflightDialog({
     setConfirming(true);
     setConfirmError(null);
     try {
-      await onConfirm();
+      await onConfirm({ coverEdition });
       onClose();
     } catch (printError) {
       setConfirmError(printError);
@@ -124,7 +133,9 @@ export function PreflightDialog({
             ? 'Colouring book'
             : output === 'page'
               ? 'Single page'
-              : 'Print book'}
+              : output === 'cover'
+                ? 'Cover'
+                : 'Print book'}
         </p>
       ) : (
         <label className="field">
@@ -138,6 +149,7 @@ export function PreflightDialog({
           </select>
         </label>
       )}
+      {output === 'cover' && <CoverEditionSwitch onChange={setCoverEdition} value={coverEdition} />}
       {confirmError !== null && (
         <Banner type="error" title={toAppError(confirmError, 'PRINT_ASSET_FAILED').userMessage}>
           {toAppError(confirmError, 'PRINT_ASSET_FAILED').nextStep}

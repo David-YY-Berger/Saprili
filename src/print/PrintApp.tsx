@@ -13,9 +13,21 @@ import type { PrintDocumentModel, StoredPrintJob } from './printJob';
 import { buildPrintDocument } from './printJob';
 import { usePrintAssets, waitForPrintAssets } from './usePrintAssets';
 
-export function buildPrintFileName(book: Book, output: StoredPrintJob['output']): string {
+export function buildPrintFileName(
+  book: Book,
+  output: StoredPrintJob['output'],
+  coverEdition?: StoredPrintJob['coverEdition'],
+): string {
   const suffix =
-    output === 'colouring' ? 'colouring book' : output === 'page' ? 'page' : 'print book';
+    output === 'colouring'
+      ? 'colouring book'
+      : output === 'page'
+        ? 'page'
+        : output === 'cover'
+          ? coverEdition === 'colouring'
+            ? 'colouring book cover'
+            : 'cover'
+          : 'print book';
   const safeTitle = book.title.replace(/[<>:"/\\|?*]/g, '-').trim() || 'Saprili';
   return `${safeTitle} - ${suffix}`;
 }
@@ -81,12 +93,6 @@ export function PrintApp() {
       return;
     }
     try {
-      if (job.output === 'cover') {
-        throw new AppError('PRINT_ASSET_FAILED', {
-          userMessage: 'Cover printing is not available yet.',
-          nextStep: 'Print the interior pages, then return after cover export is available.',
-        });
-      }
       setModel(buildPrintDocument(book, job, getPrintSpec(book)));
     } catch (buildError) {
       setError(toAppError(buildError, 'PRINT_ASSET_FAILED'));
@@ -103,7 +109,7 @@ export function PrintApp() {
         heightMm: getPrintSpec(book).trim.heightMm,
       },
     );
-    document.title = buildPrintFileName(book, job.output);
+    document.title = buildPrintFileName(book, job.output, job.coverEdition);
   }, [book, job, model]);
 
   const print = async () => {

@@ -1,14 +1,13 @@
 // bisiyata dishmaya, leharbot ahava biyisral
 import type { Book, BookShape } from '@/domain/book';
-import { COVER_PANEL_WIDTH_MM, COVER_HEIGHT_MM, COVER_SAFE_INSET_MM } from '@/domain/constants';
 import { systemClock, type Clock } from '@/shared/clock';
+import { computeCoverGeometry } from './coverGeometry';
 import {
   computeDefaultPictureAspect,
   computePageGeometry,
   getEffectivePictureAspect,
 } from './geometry';
 import { computeTextZoneHeightMm, getDefaultMeasurer, type TextMeasurer } from './textFit';
-import { BORDER_BAND_MM } from './specs';
 
 export { computePictureRect } from './geometry';
 
@@ -69,10 +68,8 @@ export function getPictureZoneSpec(book: Book): PictureZoneSpec {
   return { widthMm: pictureRect.width, heightMm: pictureRect.height, aspect };
 }
 
-/** Provisional until P8: the front panel inside the safe inset and border band. */
-export function getCoverPictureZoneSpec(_book: Book): PictureZoneSpec {
-  const inset = COVER_SAFE_INSET_MM + BORDER_BAND_MM;
-  const widthMm = COVER_PANEL_WIDTH_MM - 2 * inset;
-  const heightMm = (COVER_HEIGHT_MM - 2 * inset) * 0.6;
-  return { widthMm, heightMm, aspect: widthMm / heightMm };
+/** The cover picture the AI must draw: the front panel's picture zone. */
+export function getCoverPictureZoneSpec(book: Book): PictureZoneSpec {
+  const { width, height } = computeCoverGeometry(book).frontPictureRect;
+  return { widthMm: width, heightMm: height, aspect: width / height };
 }

@@ -832,6 +832,60 @@ a {
   margin: 0;
 }
 
+.cover-editor-preview,
+.cover-flat-preview {
+  max-width: 100%;
+}
+
+.cover-editor-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.cover-editor-preview {
+  display: grid;
+  gap: 0.75rem;
+  overflow-x: auto;
+}
+
+.cover-guides {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.cover-guides [data-guide] {
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+
+.cover-guides [data-guide='bleed'] {
+  stroke: #cf4550;
+  stroke-dasharray: 4 3;
+}
+
+.cover-guides [data-guide='trim'] {
+  stroke: #236c9c;
+  stroke-dasharray: 6 3;
+}
+
+.cover-guides [data-guide='hinge'] {
+  stroke: #8b51a2;
+  fill: rgba(139, 81, 162, 0.12);
+}
+
+.cover-guides [data-guide='safe'] {
+  stroke: #23734d;
+  stroke-dasharray: 3 2;
+}
+
+.cover-guides [data-guide='mark'] {
+  stroke: #000;
+}
+
 .preflight-group {
   display: grid;
   gap: 0.5rem;

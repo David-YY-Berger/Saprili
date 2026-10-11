@@ -1,8 +1,8 @@
 // bisiyata dishmaya, leharbot ahava biyisral
 import { describe, expect, it } from 'vitest';
 import { createEmptyBook, createStoryPage } from '@/domain/factories';
-import { AppError } from '@/shared/errors';
 import { buildPrintDocument, computeSheetLayout } from './printJob';
+import { computeCropMarkSegments } from './CropMarks';
 
 const shop = {
   trim: { widthMm: 206, heightMm: 291 },
@@ -73,10 +73,43 @@ describe('print job layout', () => {
     expect(colouring.sheets.every((sheet) => sheet.edition === 'colouring')).toBe(true);
   });
 
-  it('rejects cover jobs until the cover renderer is implemented', () => {
+  it('builds a single cover sheet larger than the bleed rectangle, with marks outside the bleed', () => {
     const book = createEmptyBook({ id: 'cover', nowIso: '2026-01-01T00:00:00.000Z' });
-    expect(() =>
-      buildPrintDocument(book, { bookId: book.id, output: 'cover', sheetMode: 'exact' }),
-    ).toThrow(AppError);
+    const doc = buildPrintDocument(book, {
+      bookId: book.id,
+      output: 'cover',
+      sheetMode: 'exact',
+      coverEdition: 'colouring',
+    });
+    expect(doc.sheets).toHaveLength(1);
+    const sheet = doc.sheets[0]!;
+    expect(sheet.isCover).toBe(true);
+    expect(sheet.pageRef).toBeNull();
+    expect(sheet.edition).toBe('colouring');
+    expect(sheet.bleedMm).toBe(15);
+    // 436 x 297 cut + 2 x (15 bleed + 3 offset + 5 mark length)
+    expect(sheet.sheetSizeMm).toEqual({ widthMm: 482, heightMm: 343 });
+    expect(sheet.placementMm).toEqual({ leftMm: 8, topMm: 8, widthMm: 466, heightMm: 327 });
+    expect(sheet.trimRect).toEqual({ x: 23, y: 23, width: 436, height: 297 });
+    const marks = computeCropMarkSegments(sheet.trimRect, sheet.bleedMm, 3, 5);
+    expect(marks).toHaveLength(8);
+    const bleedLeft = sheet.trimRect.x - sheet.bleedMm;
+    const bleedRight = sheet.trimRect.x + sheet.trimRect.width + sheet.bleedMm;
+    for (const mark of marks.filter((m) => m.y1 === m.y2)) {
+      for (const x of [mark.x1, mark.x2]) expect(x <= bleedLeft || x >= bleedRight).toBe(true);
+    }
+  });
+
+  it('defaults the cover to the colour edition', () => {
+    const book = createEmptyBook({ id: 'cover2', nowIso: '2026-01-01T00:00:00.000Z' });
+    const doc = buildPrintDocument(book, { bookId: book.id, output: 'cover', sheetMode: 'exact' });
+    expect(doc.sheets[0]?.edition).toBe('colour');
+  });
+
+  it('gives interior sheets the interior bleed', () => {
+    const book = createEmptyBook({ id: 'interior', nowIso: '2026-01-01T00:00:00.000Z' });
+    book.storyPages = [createStoryPage(), createStoryPage()];
+    const doc = buildPrintDocument(book, { bookId: book.id, output: 'book', sheetMode: 'exact' });
+    expect(doc.sheets.every((sheet) => sheet.bleedMm === 3 && !sheet.isCover)).toBe(true);
   });
 });
