@@ -10,6 +10,14 @@ import { deleteOp, putOp } from './StorageProvider';
 export interface ImageRepository {
   /** Stores the image and its optional thumbnail in one transaction. */
   putImage(record: ImageRecord, thumb?: ThumbPayload): Promise<void>;
+  /** Stores originals, AI copies, and original thumbnails atomically. */
+  putPhotoBundles(
+    bundles: readonly {
+      original: ImageRecord;
+      aiCopy: ImageRecord;
+      thumbnail: ThumbPayload;
+    }[],
+  ): Promise<void>;
   getImage(id: string): Promise<ImageRecord | null>;
   getThumb(id: string): Promise<ThumbRecord | null>;
   deleteImage(id: string): Promise<void>;
@@ -28,6 +36,19 @@ export function createImageRepository({ storage }: RepositoryDeps): ImageReposit
           ? [putOp('thumbs', { imageId: record.id, bookId: record.bookId, ...thumb })]
           : []),
       ]);
+    },
+
+    async putPhotoBundles(bundles) {
+      const ops = bundles.flatMap(({ original, aiCopy, thumbnail }) => [
+        putOp('images', { ...original, schemaVersion: CURRENT_SCHEMA_VERSION }),
+        putOp('images', { ...aiCopy, schemaVersion: CURRENT_SCHEMA_VERSION }),
+        putOp('thumbs', {
+          imageId: original.id,
+          bookId: original.bookId,
+          ...thumbnail,
+        }),
+      ]);
+      await storage().apply(ops);
     },
 
     async getImage(id) {

@@ -533,27 +533,27 @@ P3.8 human verification is complete; the owner reports that the real CSV import 
 **Goal:** open any page, edit its text and photos, see pictures full size, and have everything autosave. Preview area is a plug-in slot filled by P6.
 **Needs:** P3. **Produces:** `images/*`, `features/pageview/*`.
 
-- [ ] **P4.1 [ASYNC] Photo import pipeline** (`src/images`).
+- [x] **P4.1 [ASYNC] Photo import pipeline** (`src/images`).
   - Files: `importPhoto.ts`, `imageOps.ts`, `aiCopy.ts`.
   - Names: `PhotoImportService.importFiles(bookId, files)` → `PhotoRef[]`; `decodeImageFile(file)` (honour camera orientation metadata; unsupported formats such as HEIC raise `IMAGE_DECODE_FAILED` with a "save as JPEG or PNG" next step); `resizeToLongEdge(bitmap, longEdgePx, mime, quality)`; `makeOriginal(bitmap)` (about `ORIGINAL_LONG_EDGE_PX`, never upscale); `makeAiCopy(bitmap)` (about `AI_COPY_LONG_EDGE_PX`, moderate JPEG compression); `createThumbnail` from P1.
   - Rules: per photo store three records: `original`, linked `aiCopy`, and a thumbnail of the original; all in one storage transaction; all functions worker-safe (use `createImageBitmap` and `OffscreenCanvas`, no DOM `Image`), because P9 and P10 reuse them in the service worker.
   - `getAiPhotoSelection(page, cap)` → `{ used: PhotoRef[], flaggedExtra: PhotoRef[] }` (first N photos used, rest flagged, never silently dropped; caps `MAX_AI_PHOTOS_INTRO` / `MAX_AI_PHOTOS_PAGE`).
-- [ ] **P4.2 [ASYNC] Photo inputs and strip.**
+- [x] **P4.2 [ASYNC] Photo inputs and strip.**
   - Files: `features/pageview/PhotoDropZone.tsx` (drag and drop, file picker button, accepts images only), `usePasteImages.ts` (clipboard paste anywhere on the page view), `PhotoStrip.tsx` (thumbnails, remove with undo, drag to reorder, badge "Not sent to AI (limit 3)" on flagged extras), `useThumb(imageId)`.
   - Rules: thumbnails in lists, full images only on demand.
-- [ ] **P4.3 [ASYNC] Image overlay.**
+- [x] **P4.3 [ASYNC] Image overlay.**
   - Files: `ui/ImageOverlay.tsx`, `images/useFullImage.ts` (loads the full blob on demand and revokes the object URL on close).
   - Rules: click any picture opens a full-size overlay; Escape closes; focus returns to the trigger.
-- [ ] **P4.4 [ASYNC] Book working copy and autosave.**
+- [x] **P4.4 [ASYNC] Book working copy and autosave.**
   - Files: `features/pageview/useBookStore.ts` (zustand: `loadBook(id)`, `updateBook(mutator)`, `commit(reason)`), `useBookAutosave.ts` (uses `useAutosave` from P2; debounced `bookRepository.save(book, 'userEdit')`), `SaveStatusBar.tsx`.
   - Rules: only real changes bump the modified date (compare before saving); photo imports save immediately; failure shows the loud banner with retry.
-- [ ] **P4.5 [ASYNC] Spread editor.**
+- [x] **P4.5 [ASYNC] Spread editor.**
   - Files: `features/pageview/PageViewPage.tsx`, `SpreadEditor.tsx` (reads `buildSpreads`; **mirrored for right binding**: intro alone on the left, colophon alone on the right), `SpreadFrame.tsx`, `PageSlot.tsx` (shows the page's preview slot, click selects the page being edited), `SpreadNavigator.tsx` (previous/next spread; arrow keys mirrored for right binding), `PageEditorPanel.tsx`.
   - Panel parts: `PrivateTitleField.tsx`, `HebrewTextField.tsx` (`dir="rtl"`, `lang="he"`), `EnglishTextField.tsx`, `PhotosSection.tsx`, `IntroPhotoLayoutPicker.tsx` (intro only: first photo large or collage of up to 4), `IllustrationSection.tsx` and `ColouringSection.tsx` (read-only placeholders now; P9 fills actions), `PreviewSlot.tsx` (renders a `PagePreviewPlaceholder` until P6 swaps in the real preview; the slot prop interface is `{ book, pageRef, edition }`).
   - Colophon page: the panel shows a link to `#/book/:id/colophon` (editor built in P6). Intro has no illustration/colouring sections.
   - `PageActionsBar.tsx`: Generate/Retry, Make colouring page, Download page files, Print page, all disabled with tooltips naming their phase.
   - Rules: paragraphs allowed, no rich formatting; text edits keep paragraph breaks.
-- [ ] **P4.6 [ASYNC] Tests.**
+- [x] **P4.6 [ASYNC] Tests.**
   - Unit: `getAiPhotoSelection`, `resizeToLongEdge` dimension math.
   - End-to-end (Chromium): import a rotated phone-style JPEG fixture and verify displayed orientation and stored sizes; drag/drop, paste, remove with undo; edit Hebrew and English, reload, verify persistence; overlay opens and Escape closes.
 - [ ] **P4.7 [SYNC] Human verification.** Use real phone photos (very large, rotated, PNG, one HEIC) and confirm speed and sizes; confirm the intro photo layout default; confirm mirrored spread feels right for a right-opening book.
@@ -561,7 +561,9 @@ P3.8 human verification is complete; the owner reports that the real CSV import 
 ### Phase 4 Definition of Done
 Generic DoD plus: no full-size image loaded in lists; photo functions contain no DOM `Image` usage (worker-safe).
 ### Phase 4 log
-_(agent fills)_
+Implemented worker-safe photo decoding/resizing and atomic original/AI-copy/thumbnail storage; AI photo selection flags overflow without dropping it. Added drag/drop, picker, paste, sortable thumbnail strip with undo, and an on-demand full-size overlay. Added the Zustand book working copy with debounced autosave, mirrored spread navigation, bilingual text editing, intro photo layout, preview placeholders, and phase-disabled actions. Unit, editor-flow, and Chromium extension tests cover photo dimensions/orientation, persistence, paste, undo, and overlay dismissal.
+
+P4.7 human verification remains: confirm speed and sizes with real phone photos (including HEIC), the intro layout default, and right-binding spread feel.
 
 ---
 

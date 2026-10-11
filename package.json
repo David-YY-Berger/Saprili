@@ -14,7 +14,7 @@
     "test": "vitest run",
     "format": "prettier --write .",
     "icons": "node scripts/generate-icons.mjs",
-    "e2e": "npm run build && node scripts/e2e-phase2.mjs && node scripts/e2e-phase3.mjs",
+    "e2e": "npm run build && node scripts/e2e-phase2.mjs && node scripts/e2e-phase3.mjs && node scripts/e2e-phase4.mjs",
     "package": "node scripts/pending.mjs package 12"
   },
   "dependencies": {
@@ -23,7 +23,8 @@
     "idb": "^8.0.4",
     "papaparse": "^5.7.0",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react-dom": "^19.3.0",
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

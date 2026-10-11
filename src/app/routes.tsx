@@ -12,6 +12,7 @@ import { Banner } from '@/ui/Banner';
 import { Spinner } from '@/ui/Spinner';
 import { LibraryPage } from '@/features/library/LibraryPage';
 import { MySettingsPage } from '@/features/settings/MySettingsPage';
+import { PageViewPage } from '@/features/pageview/PageViewPage';
 import { ComingSoonPage } from './ComingSoonPage';
 import { NotFoundPage } from './NotFoundPage';
 
@@ -28,8 +29,9 @@ function useHashRoute(): string {
 function BookRoute({ bookId, subroute }: { bookId: string; subroute: string }) {
   const [book, setBook] = useState<Book | null>(null);
   const [loadedId, setLoadedId] = useState<string | null>(null);
+  const [loadedRoute, setLoadedRoute] = useState<string | null>(null);
   const [error, setError] = useState<AppError | null>(null);
-  const currentBook = loadedId === bookId ? book : null;
+  const currentBook = loadedId === bookId && loadedRoute === subroute ? book : null;
   const isSetup = subroute === '/setup';
   useSetupGuard(bookId, isSetup ? null : currentBook);
 
@@ -42,6 +44,7 @@ function BookRoute({ bookId, subroute }: { bookId: string; subroute: string }) {
         if (!active) return;
         setBook(result);
         setLoadedId(bookId);
+        setLoadedRoute(subroute);
       })
       .catch((loadError: unknown) => {
         if (active) setError(toAppError(loadError));
@@ -49,7 +52,7 @@ function BookRoute({ bookId, subroute }: { bookId: string; subroute: string }) {
     return () => {
       active = false;
     };
-  }, [bookId]);
+  }, [bookId, subroute]);
 
   if (error) {
     return (
@@ -61,7 +64,7 @@ function BookRoute({ bookId, subroute }: { bookId: string; subroute: string }) {
       </section>
     );
   }
-  if (loadedId !== bookId) {
+  if (loadedId !== bookId || loadedRoute !== subroute) {
     return (
       <div aria-label="Loading book" className="surface-card" role="status">
         <Spinner /> Loading book…
@@ -78,6 +81,11 @@ function BookRoute({ bookId, subroute }: { bookId: string; subroute: string }) {
     );
   }
   if (subroute === '') return <BookViewPage book={currentBook} />;
+  if (subroute.startsWith('/page/')) {
+    const pageId = decodeRoutePart(subroute.slice('/page/'.length));
+    if (pageId === null) return <NotFoundPage />;
+    return <PageViewPage book={currentBook} key={pageId} pageId={pageId} />;
+  }
   return <ComingSoonPage />;
 }
 

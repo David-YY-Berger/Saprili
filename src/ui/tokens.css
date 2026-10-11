@@ -51,7 +51,8 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -315,7 +316,8 @@ a {
 }
 
 .field input,
-.field select {
+.field select,
+.field textarea {
   width: 100%;
   min-height: 2.75rem;
   padding: 0.6rem 0.75rem;
@@ -323,6 +325,12 @@ a {
   border-radius: var(--radius-control);
   background: white;
   color: var(--color-ink);
+}
+
+.field textarea {
+  min-height: 8rem;
+  resize: vertical;
+  line-height: 1.5;
 }
 
 .field__hint {
@@ -521,6 +529,233 @@ a {
 .book-view {
   display: grid;
   gap: 1rem;
+}
+
+.page-view {
+  display: grid;
+  gap: 1rem;
+}
+
+.page-view__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.page-save-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.8rem;
+  color: var(--color-ink-soft);
+}
+
+.spread-editor,
+.page-editor {
+  display: grid;
+  gap: 1rem;
+}
+
+.spread-navigator {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+}
+
+.spread-frame {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 0.7rem minmax(0, 1fr);
+  min-height: 20rem;
+  overflow: hidden;
+  padding: 0.8rem;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  background: #d7e7ef;
+  box-shadow: var(--shadow-card);
+}
+
+.spread-frame__gutter {
+  background: linear-gradient(90deg, #9eb4c1, #eaf1f4 50%, #9eb4c1);
+}
+
+.page-slot {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  min-height: 18rem;
+  place-items: center;
+  padding: 1rem;
+  border: 2px solid transparent;
+  background: var(--color-paper);
+  cursor: pointer;
+}
+
+.page-slot--selected {
+  border-color: #236c9c;
+  box-shadow: inset 0 0 0 2px #236c9c;
+}
+
+.page-slot--empty {
+  cursor: default;
+}
+
+.page-slot__side {
+  position: absolute;
+  inset-block-start: 0.5rem;
+  color: var(--color-ink-soft);
+  font-size: 0.75rem;
+  text-transform: capitalize;
+}
+
+.page-preview-placeholder {
+  display: grid;
+  width: min(100%, 15rem);
+  aspect-ratio: 206 / 291;
+  place-items: center;
+  overflow: hidden;
+  border: 1px dashed var(--color-line);
+  background: white;
+  color: var(--color-ink-soft);
+  text-align: center;
+}
+
+.page-preview-placeholder img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.page-editor {
+  align-content: start;
+}
+
+.page-editor__section {
+  display: grid;
+  gap: 0.8rem;
+  padding-block: 1rem;
+  border-block-start: 1px solid var(--color-line);
+}
+
+.page-editor__section h3,
+.page-editor__section p {
+  margin: 0;
+}
+
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  padding-block-start: 0.5rem;
+}
+
+.photo-drop-zone {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 2px dashed var(--color-line);
+  border-radius: var(--radius-control);
+  background: #f8fcff;
+}
+
+.photo-drop-zone--active {
+  border-color: #236c9c;
+  background: var(--color-sky);
+}
+
+.photo-drop-zone .field__hint {
+  flex-basis: 100%;
+}
+
+.photo-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+}
+
+.photo-tile {
+  display: grid;
+  width: 9rem;
+  gap: 0.35rem;
+  align-content: start;
+}
+
+.photo-tile__image-button {
+  display: grid;
+  width: 100%;
+  aspect-ratio: 1;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--color-line);
+  border-radius: 0.65rem;
+  background: white;
+  cursor: zoom-in;
+}
+
+.photo-tile__image-button img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-tile__actions {
+  display: flex;
+  justify-content: space-between;
+}
+
+.photo-tile__badge {
+  padding: 0.25rem 0.4rem;
+  border-radius: 0.4rem;
+  background: var(--color-warning-bg);
+  color: var(--color-ink);
+  font-size: 0.75rem;
+}
+
+.image-overlay {
+  position: fixed;
+  z-index: 15;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(25 42 57 / 82%);
+}
+
+.image-overlay__dialog {
+  display: grid;
+  width: min(90vw, 80rem);
+  max-height: 94vh;
+  gap: 0.75rem;
+  overflow: auto;
+  padding: 1rem;
+  border-radius: var(--radius-card);
+  background: var(--color-paper);
+}
+
+.image-overlay__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.image-overlay__toolbar h2 {
+  margin: 0;
+}
+
+.image-overlay__image {
+  display: block;
+  max-width: 100%;
+  max-height: calc(94vh - 6rem);
+  justify-self: center;
+  object-fit: contain;
 }
 
 .book-toolbar {
