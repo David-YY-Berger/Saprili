@@ -1,8 +1,16 @@
 // bisiyata dishmaya, leharbot ahava biyisral
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { t } from '@/i18n';
 import { toAppError } from '@/shared/errors';
 import { bookRepository } from '@/storage/repositories';
+
+// Developer-only layout review page; dropped from production builds.
+const LayoutDevPage =
+  import.meta.env.MODE === 'production'
+    ? null
+    : lazy(() =>
+        import('@/features/devlayout/LayoutDevPage').then((m) => ({ default: m.LayoutDevPage })),
+      );
 
 // Placeholder shell; the real header, routes and pages arrive in Phase 2.
 export function AppRoot() {
@@ -17,6 +25,14 @@ export function AppRoot() {
         setStatus(`${t('app.storage.failed')} ${appError.userMessage} ${appError.nextStep}`);
       });
   }, []);
+
+  if (LayoutDevPage && window.location.hash === '#/dev/layout') {
+    return (
+      <Suspense fallback={null}>
+        <LayoutDevPage />
+      </Suspense>
+    );
+  }
 
   return (
     <main>

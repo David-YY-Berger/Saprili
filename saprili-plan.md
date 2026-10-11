@@ -55,7 +55,7 @@ Tick each task checkbox as that task is completed. Tick a phase in the Status tr
 | P2 | UI kit, My settings, Library | 1 | [ ] |
 | P3 | CSV import, Setup, Book view | 2 | [ ] |
 | P4 | Page view: spread editor, text, photos | 3 | [ ] |
-| P5 | Layout engine core, theme, borders | 4 | [ ] |
+| P5 | Layout engine core, theme, borders | 4 | [ ] (ASYNC done; P5.1 and P5.8 human checks pending) |
 | P6 | Previews, Book settings, pre-flight, colophon | 4 | [ ] |
 | P7 | Print export: page, book, colouring book | 4 | [ ] |
 | P8 | Cover editor and cover PDF | 5 | [ ] |
@@ -106,7 +106,7 @@ Status values: **open**, **assumed** (default in use), **settled**. When the hum
 | D-AI | AI provider and model | **open**, decided by P0-A | brief 7 |
 | D-BG | Where jobs run | **open**, decided by P0-C. Fallback: in-tab runner with same saved state | brief 7 |
 | D-RGB | Is RGB PDF accepted by the shop | **open**, shop answer S5 | brief 5.4 |
-| D-FONT | Hebrew (with nikud) and English font families | **open**, owner picks in P0-B | brief 2 |
+| D-FONT | Hebrew (with nikud) and English font families | **assumed** (P5): Noto Sans Hebrew + Nunito, owner still to confirm; see `docs/font-licenses.md` | brief 2 |
 
 ### 2.2 Print-shop questions (send now; they block P7 and P8)
 
@@ -564,27 +564,27 @@ _(agent fills)_
 **Touches earlier files:** `features/setup/formatLockHook.ts` (fill the hook with `ensureBookShape`); `features/pageview/PreviewSlot.tsx` is left for P6.
 
 - [ ] **P5.1 [SYNC] Provide fonts and review the palette inputs.** Confirm D-FONT files and licences (record in `docs/font-licenses.md`), the 4 theme presets' colour values, and the default for text panel on or off. *Default:* palette from brief 5.3 chosen by the agent, panel off.
-- [ ] **P5.2 [ASYNC] Print spec and geometry.**
+- [x] **P5.2 [ASYNC] Print spec and geometry.**
   - Files: `layout/specs.ts`, `layout/geometry.ts`.
   - Names: `getPrintSpec(book)` → `{ trim, bleedMm, safeFloorMm, sheetMode, cropMark {lengthMm, offsetMm, strokeMm} }` from constants and book settings; `Rect` type; `insetRect`, `unionRects`; `clampLayoutSettings(settings)` (enforce `SAFE_MARGIN_FLOOR_MM`, return what was clamped); `computePageGeometry(book, pageRef, side)` where `side` is `'left'` or `'right'` of the spread, so the gutter margin sits on the spine side; returns `PageGeometry` with `trimRect`, `bleedRect`, `safeRect`, `borderRect`, `pictureRect`, `textRect`, `pageNumberRect`, all in page-local mm with origin at trim top-left.
   - Rules: the gutter margin always sits on the **inner edge** (toward the centre fold): the right edge of a left-hand page and the left edge of a right-hand page. Binding side does not change this rule; it only changes which pages are left or right, through `buildSpreads`. So a right-opening book has the intro on the left (gutter on its right edge) and the colophon on the right (gutter on its left edge).
-- [ ] **P5.3 [ASYNC] Fixed picture shape and text zone.**
+- [x] **P5.3 [ASYNC] Fixed picture shape and text zone.**
   - Files: `layout/shape.ts`, `layout/textFit.ts`.
   - Names: `TextMeasurer` interface (`measureBlockHeightMm(text, fontFamily, sizePt, widthMm, direction)`); `DomTextMeasurer` (hidden DOM element, waits for fonts via `ensureFontsLoaded(fontIds)`); `FakeTextMeasurer` (tests); `computeTextZoneHeightMm(book, measurer)` (measures **every page's real text** at `minFontSizePt` including Hebrew above English and spacing, takes the maximum, adds padding, caps at a maximum page fraction and reports a warning if capped); `computeSizeStepThresholds(book)` (3 fixed steps chosen by text length distribution); `chooseFontStep(textLength, thresholds)`; `fitTextInZone(page, zone, steps, measurer)` → `TextFitResult { stepIndex, overflow, usedHeightMm }` (shrink to minimum, then flag overflow; **never cut text**).
   - `ensureBookShape(book, measurer)` → book with `shape` set **once** (`textZoneHeightMm`, `pictureAspect` derived from the picture zone at default margins) and never recomputed silently. Wire it into `onFormatLocked` (P3 hook).
   - `computePictureRect(availableRect, aspect)`: uniform scaling: margin changes **scale the picture zone evenly** (aspect never changes); `getPictureZoneSpec(book)` and (stub for P8) `getCoverPictureZoneSpec(book)`.
   - `recomputeBookShape(book, measurer)`: explicit user action only; documented to invalidate illustration fit and warn (used by P6 Book settings).
-- [ ] **P5.4 [ASYNC] Theme and borders.**
+- [x] **P5.4 [ASYNC] Theme and borders.**
   - Files: `layout/theme.ts`, `layout/borders.ts`, `layout/render/BorderLayer.tsx`.
   - Names: `THEME_PRESETS` (sky default, mint, peach, lavender: background, accent list, text colour, panel colour); `resolveTheme(book, edition)` (colouring edition: white background, black outlines); border generators `buildScallopedBorderPath(rect, params)`, `buildDottedBorderPath`, `buildCloudsBorderPath`, `buildStarsBorderPath` returning vector path data; `BorderLayer` draws them in palette colours (or black outline in colouring edition) inside the safe margin.
   - Rules: sharp at any size, no raster images, no AI calls; soft colours so CMYK conversion stays safe.
-- [ ] **P5.5 [ASYNC] Renderers** (`layout/render/`, all positioned in `mm` via geometry).
+- [x] **P5.5 [ASYNC] Renderers** (`layout/render/`, all positioned in `mm` via geometry).
   - Components: `PageSheet.tsx` (props: `book`, `pageRef`, `side`, `edition`, `showBleed`), `BackgroundLayer.tsx` (floods to bleed), `PictureLayer.tsx` (rounded corners, thin frame, empty frame when missing), `TextLayer.tsx` (Hebrew block above English, Hebrew RTL, each in its own font, size step from `fitTextInZone`, optional soft white rounded panel), `PageNumberLayer.tsx`, `IntroPhotoLayer.tsx` with `computeIntroPhotoLayout(photoCount, mode, pictureRect)` (first photo large, or collage grid for up to 4).
   - Rules: intro prints the original photos (as-is, also in colouring edition). Illustration and colouring images come from `ImageRepository` through a `useBlobUrl(imageId)` hook for screen and a synchronous `ResolvedImages` map for print.
-- [ ] **P5.6 [ASYNC] Fonts packaging.**
+- [x] **P5.6 [ASYNC] Fonts packaging.**
   - Files: `public/fonts/*.woff2`, `layout/fonts.css` (`@font-face` for the chosen families), `layout/fontRegistry.ts` (`FONT_REGISTRY`, `getFontFamilyCss(fontId)`, `ensureFontsLoaded`), `docs/font-licenses.md`.
   - Rules: files packaged inside the extension; no remote font loading; nikud verified in a test page.
-- [ ] **P5.7 [ASYNC] Tests.**
+- [ ] **P5.7 [ASYNC] Tests.** (unit tests done; Playwright visual baselines deferred, see Phase 5 log)
   - Unit: `computePageGeometry` for left and right pages with both binding sides (spine-side margin correct, safe floor respected); `clampLayoutSettings`; picture scaling keeps aspect; text-zone maximum from sample texts with `FakeTextMeasurer`; step choice; overflow flag.
   - Visual: Playwright screenshots of `PageSheet` for intro, story, long-text story, colouring edition (stored as baselines).
 - [ ] **P5.8 [SYNC] Human verification.** Review rendered sample pages (screenshots or a dev route `#/dev/layout`): colours, border styles, text sizes for a small child, nikud correctness, panel on/off, minimum font size (O-11).
@@ -592,7 +592,15 @@ _(agent fills)_
 ### Phase 5 Definition of Done
 Generic DoD plus: geometry numbers for the 206 by 291 page match hand calculation in the tests; `ensureBookShape` runs once at setup and never changes an existing shape.
 ### Phase 5 log
-_(agent fills)_
+- **Files:** `src/layout/{specs,geometry,shape,textFit,pageText,theme,borders,fontRegistry,index}.ts`, `layout/fonts.css`, `layout/render/{PageSheet,BackgroundLayer,BorderLayer,PictureLayer,TextLayer,PageNumberLayer,IntroPhotoLayer}.tsx`, `render/{introPhotos,pageImages,useBlobUrl,useFontsReady,layerStyle}.ts`, tests beside each module (69 new tests), `public/fonts/*.woff2` (Noto Sans Hebrew 400/700, Nunito latin 400/700), `docs/font-licenses.md`, dev page `src/features/devlayout/*` (`#/dev/layout`, only in non-production builds; one lazy import added to `app/AppRoot.tsx`). ESLint now ignores unused args and vars that start with `_`.
+- **Page model:** safe rect = trim minus margins (gutter on the inner edge); border band (7 mm) sits inside the safe rect; content = safe rect inset 9 mm; a 6 mm page-number band is always reserved at the bottom (so toggling numbers never moves anything); text zone under the picture; picture area gets the rest and the picture is fitted centred with the book's aspect. Default 206 x 291 numbers are hand-checked in `geometry.test.ts`. Constants (`BORDER_BAND_MM`, `PAGE_NUMBER_BAND_MM`, `TEXT_ZONE_PADDING_MM`, `MAX_TEXT_ZONE_FRACTION` 0.4, `MIN_TEXT_ZONE_HEIGHT_MM`, `DEFAULT_TEXT_ZONE_HEIGHT_MM` 60) are in `layout/specs.ts`.
+- **Shape:** `ensureBookShape(book, measurer?, clock?)` returns the same object when a shape exists; `recomputeBookShape` is the only way to replace it. `createBookMeasurer(book)` awaits the fonts and returns the DOM measurer; call it before `ensureBookShape` in the browser. Before a shape exists, geometry uses a provisional 60 mm text zone.
+- **Deviations / additions:** `computePictureRect` lives in `geometry.ts` (avoids an import cycle) and is re-exported from `shape.ts`. `TextFitResult` also has `fontSizePt`. Border generators are one `buildBorderShapes(style, rect, theme)` returning shape data (paths and circles) instead of four path functions. `PageSheet` takes optional `images` (the print `ResolvedImages` map) and `measurer`. Intro and story page numbers: only story pages show a number (position in the printed interior, intro = 1). Photos and illustrations use `object-fit: contain` (never cropped). Font ids stay `hebrew-default` and `english-default` so books made in P1 keep working. The colophon renders background and border only; its content is P6.
+- **Not done:**
+  - `features/setup/formatLockHook.ts` does not exist yet (P2 to P4 are not built), so `ensureBookShape` is not wired into `onFormatLocked`. P3 must call `await createBookMeasurer(book)` then `ensureBookShape(book, measurer)` when the format is locked.
+  - Playwright visual baselines (P5.7): Playwright is not installed yet (e2e arrives later). Rendering is covered by server-render tests, and the dev page was checked in a browser (scalloped, dotted, stars, clouds, colouring edition, nikud text, long page).
+- **Decisions assumed:** D-FONT = Noto Sans Hebrew + Nunito; palette: sky `#DCEFFB`, mint `#DDF6EA`, peach `#FFE8D9`, lavender `#ECE4FA` with sunny/coral/mint/lilac/sky accents; text panel off by default.
+- **For the human:** P5.1 confirm fonts, palette and panel default. P5.8 run `npx vite build --mode development`, load `dist/`, open `app.html#/dev/layout` (switch edition, theme, border, panel, binding, min font; check nikud and text sizes for a small child, and O-11).
 
 ---
 

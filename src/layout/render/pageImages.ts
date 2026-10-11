@@ -1,0 +1,22 @@
+// bisiyata dishmaya, leharbot ahava biyisral
+import type { Book } from '@/domain/book';
+import { findPage } from '@/domain/ordering';
+import type { PageRef } from '@/domain/page';
+import { getIntroPhotoCount } from './introPhotos';
+import type { Edition } from '../theme';
+
+/** Image ids the page needs for the given edition. Intro always prints the original photos. */
+export function getPageImageIds(book: Book, pageRef: PageRef, edition: Edition): string[] {
+  if (pageRef.kind === 'intro') {
+    return book.intro.photos
+      .slice(0, getIntroPhotoCount(book.intro.photos.length, book.intro.photoLayout))
+      .map((p) => p.originalImageId);
+  }
+  if (pageRef.kind === 'story') {
+    const page = findPage(book, pageRef);
+    if (!page || !('illustration' in page)) return [];
+    const id = edition === 'colouring' ? page.colouring.imageId : page.illustration.currentImageId;
+    return id ? [id] : [];
+  }
+  return [];
+}
