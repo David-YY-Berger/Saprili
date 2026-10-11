@@ -1,0 +1,149 @@
+// bisiyata dishmaya, leharbot ahava biyisral
+import { useState } from 'react';
+import { DndContext, closestCenter } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import type { Book } from '@/domain/book';
+import { buildSpreads } from '@/domain/spreads';
+import { addStoryPagePairs, deleteStoryPagePair, moveStoryPage } from '@/domain/ordering';
+import { bookRepository, imageRepository } from '@/storage/repositories';
+import { toAppError, type AppError } from '@/shared/errors';
+import { Banner } from '@/ui/Banner';
+import { undoManager } from '@/ui/UndoManager';
+import { AddPagesDialog } from './AddPagesDialog';
+import { BookToolbar } from './BookToolbar';
+import { ColophonRow } from './ColophonRow';
+import { CoverRow } from './CoverRow';
+import { DeletePagesDialog } from './DeletePagesDialog';
+import { IntroRow } from './IntroRow';
+import { PairGroup } from './PairGroup';
+import { useStoryReorder } from './useStoryReorder';
+
+export function BookViewPage({ book: initialBook }: { book: Book }) {
+  const [book, setBook] = useState(initialBook);
+  const [pendingDelete, setPendingDelete] = useState<Set<string> | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [error, setError] = useState<AppError | null>(null);
+  const hasPendingDelete = pendingDelete !== null;
+
+  const saveBook = async (nextBook: Book) => {
+    try {
+      const saved = await bookRepository.save(nextBook, 'userEdit');
+      setBook(saved);
+      setError(null);
+    } catch (saveError) {
+      setError(toAppError(saveError));
+    }
+  };
+
+  const reorder = useStoryReorder(book, (nextBook) => void saveBook(nextBook));
+  const pairNumbers = buildSpreads({ ...book, storyPages: reorder.pairs.flat() })
+    .filter((spread) => spread.kind === 'pair')
+    .map((spread) => spread.index);
+  const visiblePairs = reorder.pairs
+    .map((pair, index) => ({ pair, pairNumber: pairNumbers[index] ?? index + 1 }))
+    .filter(({ pair }) => !pendingDelete?.has(pair[0].id));
+
+  const addPairs = async (count: number, atPairIndex: number) => {
+    setAddOpen(false);
+    await saveBook(addStoryPagePairs(book, count, atPairIndex));
+  };
+
+  const deletePairs = (pageIds: string[]) => {
+    setDeleteOpen(false);
+    const hiddenIds = new Set(pageIds);
+    const oldBook = book;
+    let deletionCommitted = false;
+    setPendingDelete(hiddenIds);
+    undoManager.registerUndo({
+      label: `${pageIds.length} story pair${pageIds.length === 1 ? '' : 's'} will be deleted`,
+      undo: async () => {
+        if (deletionCommitted) {
+          const restored = await bookRepository.save(oldBook, 'userEdit');
+          setBook(restored);
+        }
+        setPendingDelete(null);
+      },
+      onExpire: async () => {
+        let nextBook = oldBook;
+        for (const pageId of pageIds) nextBook = deleteStoryPagePair(nextBook, pageId);
+        try {
+          const saved = await bookRepository.save(nextBook, 'userEdit');
+          deletionCommitted = true;
+          setBook(saved);
+          await imageRepository.purgeOrphanImages(saved);
+          setPendingDelete(null);
+        } catch (deleteError) {
+          if (!deletionCommitted) setPendingDelete(null);
+          throw deleteError;
+        }
+      },
+    });
+  };
+
+  return (
+    <section aria-labelledby="book-heading" className="book-view">
+      <header className="page-heading">
+        <h2 id="book-heading">{book.title}</h2>
+        <p>Your story, from the cover through the closing page.</p>
+      </header>
+      {error && (
+        <Banner type="error" title={error.userMessage}>
+          {error.nextStep}
+        </Banner>
+      )}
+      <BookToolbar
+        disabled={hasPendingDelete}
+        onAdd={() => setAddOpen(true)}
+        onDelete={() => setDeleteOpen(true)}
+        pairCount={book.storyPages.length / 2}
+      />
+      <div className="book-outline surface-card">
+        <CoverRow book={book} />
+        <IntroRow book={book} />
+        <div aria-label="Story pairs" className="story-pairs">
+          <DndContext
+            collisionDetection={closestCenter}
+            onDragCancel={reorder.handleDragCancel}
+            onDragEnd={reorder.handleDragEnd}
+            onDragOver={reorder.handleDragOver}
+            onDragStart={reorder.handleDragStart}
+            sensors={reorder.sensors}
+          >
+            <SortableContext
+              items={visiblePairs.flatMap(({ pair }) => pair.map((page) => page.id))}
+              strategy={verticalListSortingStrategy}
+            >
+              {visiblePairs.map(({ pair, pairNumber }) => (
+                <PairGroup
+                  bookId={book.id}
+                  disabled={hasPendingDelete}
+                  firstPageNumber={(pairNumber - 1) * 2 + 1}
+                  key={pair[0].id}
+                  onMove={(pageId, newIndex) =>
+                    void saveBook(moveStoryPage(book, pageId, newIndex))
+                  }
+                  pair={pair}
+                  pairNumber={pairNumber}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
+        </div>
+        <ColophonRow book={book} />
+      </div>
+      <AddPagesDialog
+        onClose={() => setAddOpen(false)}
+        onConfirm={(count, position) => void addPairs(count, position)}
+        open={addOpen}
+        pairCount={book.storyPages.length / 2}
+      />
+      <DeletePagesDialog
+        onClose={() => setDeleteOpen(false)}
+        onConfirm={deletePairs}
+        open={deleteOpen}
+        pairs={reorder.pairs}
+      />
+    </section>
+  );
+}

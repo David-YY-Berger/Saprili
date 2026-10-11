@@ -1,14 +1,14 @@
 // bisiyata dishmaya, leharbot ahava biyisral
-import type { ReactNode } from 'react';
+import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react';
 import { Tooltip } from './Tooltip';
 
-interface IconButtonProps {
+interface IconButtonProps
+  extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children' | 'aria-label'> {
+  ref?: Ref<HTMLButtonElement>;
   icon: ReactNode;
   label: string;
   onClick: () => void;
-  disabled?: boolean;
   disabledReason?: string;
-  type?: 'button' | 'submit';
 }
 
 export function IconButton({
@@ -18,15 +18,20 @@ export function IconButton({
   disabled = false,
   disabledReason,
   type = 'button',
+  className = '',
+  ref,
+  ...buttonProps
 }: IconButtonProps) {
   const hint = disabled && disabledReason ? `${label}: ${disabledReason}` : label;
   return (
     <Tooltip content={hint}>
       <button
+        {...buttonProps}
         aria-label={label}
-        className="icon-button"
+        className={`icon-button${className ? ` ${className}` : ''}`}
         disabled={disabled}
         onClick={onClick}
+        ref={ref}
         title={hint}
         type={type}
       >

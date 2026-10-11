@@ -139,7 +139,7 @@ Icons first with tooltips; text labels on primary actions. **My settings = perso
 
 ## 8. Import and export
 
-- **CSV (one-time, get-started):** columns title, English text, Hebrew text; chosen via file picker. First row = intro page, so the file holds 1 + an even number of rows (the colophon is not in the CSV). Clear errors for wrong columns, odd counts, empty rows, bad Hebrew encoding; on error nothing is created.
+- **CSV (one-time, get-started):** columns title, English text, Hebrew text; headers are optional and case-insensitive (including `Title`, `eng_descrip`, and `heb_descr`); chosen via file picker. First data row = intro page; the colophon is not in the CSV. Entirely blank records are ignored. A row with only hyphens in the title cell and no English or Hebrew text is an ignored pair separator (not page content); separators may follow the intro or a complete story pair. Remaining story rows stay in source order and pair consecutively; the data rows must be one intro plus an even number of story pages. Clear errors for wrong columns, odd counts or separators that split a pair, an empty file, and bad Hebrew encoding; on error nothing is created.
 - **Backup / "Download all files":** one zip with everything: original photos, illustrations, colouring pages, all text, page order, book settings, cover and colophon data. The same file restores the book. Show "last backed up N days ago".
 - **Per-page download:** same structure for one page.
 

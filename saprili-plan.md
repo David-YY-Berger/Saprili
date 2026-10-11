@@ -53,7 +53,7 @@ Tick each task checkbox as that task is completed. Tick a phase in the Status tr
 | P0 | Spikes: de-risk (4 independent tracks) | 0 | [ ] |
 | P1 | Scaffold, domain model, storage layer | 1 | [ ] (ASYNC done; P1.8 human check pending) |
 | P2 | UI kit, My settings, Library | 1 | [ ] |
-| P3 | CSV import, Setup, Book view | 2 | [ ] |
+| P3 | CSV import, Setup, Book view | 2 | [x] |
 | P4 | Page view: spread editor, text, photos | 3 | [ ] |
 | P5 | Layout engine core, theme, borders | 4 | [ ] (P5.2–P5.6 and P5.7 unit tests done; P5.1, visual baselines, and P5.8 pending) |
 | P6 | Previews, Book settings, pre-flight, colophon | 4 | [ ] |
@@ -488,39 +488,43 @@ Generic DoD plus: no gear icon; every icon has an accessible name; key not visib
 **Goal:** go from a CSV file to a configured book and a working Book view with pairs, reordering, and add/delete in pairs.
 **Needs:** P1, P2. **Produces:** `features/importcsv`, `features/setup`, `features/bookview`, `domain/ordering.ts` operations.
 
-- [ ] **P3.1 [ASYNC] CSV parsing and validation.**
+- [x] **P3.1 [ASYNC] CSV parsing and validation.**
   - Files: `features/importcsv/csvParser.ts`, `csvErrors.ts`.
   - Names: `decodeCsvBuffer(buffer)` (handles UTF-8 with or without BOM; detects likely wrong encoding, e.g. replacement characters or legacy Hebrew codepage mojibake, and raises `CSV_BAD_ENCODING`), `parseBookCsv(buffer)` → `ParsedCsv`, `validateParsedCsv(parsed)` → `CsvValidationResult`.
-  - Rules: columns are title, English text, Hebrew text (header names matched case-insensitively with a few aliases such as "English", "Hebrew"); first data row is the intro; total rows must be 1 plus an even number; errors with row numbers: wrong columns (`CSV_BAD_COLUMNS`), odd count (`CSV_ODD_ROWS`), empty rows (`CSV_EMPTY_ROWS`), bad encoding. Paragraph line breaks preserved. **Atomic:** nothing is created on any error.
+  - Rules: columns are title, English text, Hebrew text (header names matched case-insensitively; accept aliases including `Title`, `eng_descrip`, and `heb_descr`); first data row is the intro. Ignore entirely blank records. A record whose title is only hyphens and whose English and Hebrew cells are blank is a pair separator, not a page; separators may follow the intro or a complete story pair, and story pages pair in source order. The remaining data rows must be 1 plus an even number. Errors with row numbers: wrong columns (`CSV_BAD_COLUMNS`), odd count or a separator that splits a pair (`CSV_ODD_ROWS`), an empty file (`CSV_EMPTY_ROWS`), or bad encoding. Paragraph line breaks preserved. **Atomic:** nothing is created on any error.
   - `buildBookFromCsv(parsed, nowIso)`: creates the `Book` (title "book1", `format.lockedAt = null`, `shape = null`, first row to `intro`, rest to `storyPages` in order, default colophon and cover).
-- [ ] **P3.2 [ASYNC] Import screen.**
+- [x] **P3.2 [ASYNC] Import screen.**
   - Files: `ImportCsvPage.tsx`, `CsvFilePicker.tsx`, `ImportErrorList.tsx` (plain language, row numbers, next step), `importBookFromCsv(file)` (validate, then `bookRepository.createBook`, then navigate to `#/book/:id/setup`). Page only reachable while no book exists (guard); otherwise redirects to Library.
-- [ ] **P3.3 [ASYNC] Setup screen.**
+- [x] **P3.3 [ASYNC] Setup screen.**
   - Files: `features/setup/SetupPage.tsx`, `TrimSizePicker.tsx` (preset list from `TRIM_PRESETS`), `OrientationPicker.tsx` (portrait selected; landscape shown disabled with tooltip "Not in this version"), `TextPositionPicker.tsx` (below only), `FormatLockNotice.tsx` (exact message: "This can't be changed later, because your illustrations are drawn to fit this exact shape."), `confirmSetup(bookId, choices)`, `useSetupGuard(bookId)` (any edit route redirects to Setup while `format.lockedAt` is null).
   - Rules: `confirmSetup` sets `format` and `lockedAt` through `save(book, 'userEdit')`. It also calls `onFormatLocked(book)`, a hook (initially a no-op in `features/setup/formatLockHook.ts`) that P5 fills with `ensureBookShape`.
   - Duplicate into a new format: `duplicateBookWithNewFormat` is **deferred** (see the Backlog section at the end); this phase only blocks changing format.
-- [ ] **P3.4 [ASYNC] Book view layout.**
+- [x] **P3.4 [ASYNC] Book view layout.**
   - Files: `features/bookview/BookViewPage.tsx`, `CoverRow.tsx`, `IntroRow.tsx`, `StoryRow.tsx`, `PairGroup.tsx`, `ColophonRow.tsx`, `RowIndicators.tsx`, `rowStatus.ts`.
   - Names: `getRowStatus(page)` → `{ hasEnglish, hasHebrew, photoCount, hasIllustration, hasColouring, colouringOutdated }`; indicators are icons with tooltips (not checkboxes), "outdated" mark on colouring.
   - Rules: fixed top-to-bottom order: Cover row (shows whether a cover illustration exists), Intro (visually separated), story pages grouped in visible pairs, Colophon row (separated). Clicking a row routes to its page (`#/book/:id/page/:pageId`, cover row to `#/book/:id/cover`, colophon to `#/book/:id/colophon`). Pair labels from `buildSpreads`.
   - `BookToolbar.tsx`: buttons Print book, Print colouring book, Print cover, Download all/backup, Generate, Add pages, Delete pages, Book settings (sliders icon). Buttons whose feature is not built yet are **disabled with a tooltip** naming the future phase.
-- [ ] **P3.5 [ASYNC] Reordering.**
+- [x] **P3.5 [ASYNC] Reordering.**
   - Pure functions in `domain/ordering.ts`: `moveStoryPage(book, pageId, newIndex)`, `moveStoryPageUp(book, pageId)`, `moveStoryPageDown(book, pageId)`, `previewPairsAfterMove(book, pageId, newIndex)`.
   - UI: `useStoryReorder.ts` with `@dnd-kit` sortable on story rows only (intro and colophon pinned, not draggable); drag handle plus move up/down `IconButton`s; **live pair regrouping** while dragging using `previewPairsAfterMove`; keyboard accessible.
   - Rules: reordering never touches page content; saves with `userEdit`.
-- [ ] **P3.6 [ASYNC] Add and delete in pairs.**
+- [x] **P3.6 [ASYNC] Add and delete in pairs.**
   - Pure functions: `addStoryPagePairs(book, count, atPairIndex?)`, `deleteStoryPagePair(book, pageId)` (deletes the pair containing the page; always even).
   - UI: `AddPagesDialog.tsx` (number of pairs, where), `DeletePagesDialog.tsx` (select pairs, shows what will be removed), delete uses `UndoManager` and delays `purgeOrphanImages` until the undo window expires.
   - Rules: minimum pair count per O-09 (assumed 1 pair); intro and colophon never deletable.
-- [ ] **P3.7 [ASYNC] Tests.**
-  - Unit: CSV fixtures (valid, wrong columns, odd rows, empty row, BOM, Windows-1255 bytes), `buildBookFromCsv`, ordering functions (invariants: always even, intro/colophon unchanged), pairing after moves.
+- [x] **P3.7 [ASYNC] Tests.**
+  -  Unit: CSV fixtures (valid, wrong columns, odd rows, blank records, dashed pair separators, BOM, Windows-1255 bytes), `buildBookFromCsv`, ordering functions (invariants: always even, intro/colophon unchanged), pairing after moves.
   - End-to-end: Library to import (sample CSV) to Setup to Book view; reorder; add a pair; delete a pair and undo.
-- [ ] **P3.8 [SYNC] Human verification.** Import your **real CSV** (O-01) and check text, Hebrew, row count and the first-row-is-intro rule (if the file has a header row or not); confirm the default book title (O-10) and minimum pairs (O-09); try drag reordering and the setup lock message.
+- [x] **P3.8 [SYNC] Human verification.** Owner imported the **real CSV** (O-01), checked text, Hebrew, row count and the first-row-is-intro rule; confirmed the default book title (O-10) and minimum pairs (O-09); tried drag reordering and the setup lock message. Owner reports that it looks great.
 
 ### Phase 3 Definition of Done
 Generic DoD plus: every CSV error case leaves the Library without a new book; any edit route before Setup redirects to Setup.
 ### Phase 3 log
-_(agent fills)_
+P3.1–P3.7 ASYNC work is implemented. CSV import supports UTF-8/BOM, the provided header aliases, ignored blank records, and ignored dashed pair separators; separators are validated at pair boundaries. Setup locks the selected format, and the Book view supports pair regrouping, reordering, add/delete, and undo before orphan cleanup. Added unit, route-flow, and extension-browser coverage.
+
+Owner-approved CSV rule update: entirely blank records are ignored; rows with a hyphen-only title and empty text cells are pair separators, not pages. The provided `data.csv` structure has one intro, 46 story pages (23 pairs), one ignored blank record, and 24 valid separator boundaries.
+
+P3.8 human verification is complete; the owner reports that the real CSV import and UI look great. Phase 3 is complete.
 
 ---
 

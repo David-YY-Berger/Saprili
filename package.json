@@ -14,11 +14,14 @@
     "test": "vitest run",
     "format": "prettier --write .",
     "icons": "node scripts/generate-icons.mjs",
-    "e2e": "npm run build && node scripts/e2e-phase2.mjs",
+    "e2e": "npm run build && node scripts/e2e-phase2.mjs && node scripts/e2e-phase3.mjs",
     "package": "node scripts/pending.mjs package 12"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
     "idb": "^8.0.4",
+    "papaparse": "^5.7.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },

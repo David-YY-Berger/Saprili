@@ -518,6 +518,206 @@ a {
   margin-inline: auto;
 }
 
+.book-view {
+  display: grid;
+  gap: 1rem;
+}
+
+.book-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.book-outline {
+  display: grid;
+  gap: 1rem;
+}
+
+.book-row {
+  display: grid;
+  grid-template-columns: minmax(8rem, 0.7fr) minmax(10rem, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--color-line);
+  border-radius: 0.9rem;
+  background: white;
+  color: inherit;
+  text-decoration: none;
+}
+
+.book-row:hover,
+.story-row__link:hover {
+  border-color: var(--color-sky-strong);
+  background: #f7fcff;
+}
+
+.book-row--cover,
+.book-row--colophon {
+  border-style: dashed;
+  background: #f8fbfd;
+}
+
+.book-row--intro {
+  border-inline-start: 0.35rem solid var(--color-yellow);
+}
+
+.book-row__title {
+  font-weight: 700;
+}
+
+.book-row__summary {
+  overflow: hidden;
+  color: var(--color-ink-soft);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row-indicators {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.3rem;
+}
+
+.row-indicator {
+  display: inline-grid;
+  min-width: 1.7rem;
+  min-height: 1.7rem;
+  place-items: center;
+  border: 1px solid var(--color-line);
+  border-radius: 50%;
+  color: var(--color-ink-soft);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.row-indicator.is-present {
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+.row-indicator--photos {
+  width: auto;
+  padding-inline: 0.35rem;
+  border-radius: 1rem;
+}
+
+.story-pairs {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.pair-group {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.9rem;
+  border: 1px solid rgb(96 133 157 / 23%);
+  border-radius: 1rem;
+  background: rgb(223 243 255 / 34%);
+}
+
+.pair-group h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--color-ink-soft);
+}
+
+.pair-group__pages {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.story-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem;
+  border: 1px solid var(--color-line);
+  border-radius: 0.8rem;
+  background: white;
+}
+
+.story-row__main {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.story-row__link {
+  display: grid;
+  min-width: 0;
+  gap: 0.2rem;
+  padding: 0.35rem;
+  border-radius: 0.4rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.story-row__actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.choice-field {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.choice-field legend {
+  margin-block-end: 0.45rem;
+  font-weight: 700;
+}
+
+.choice-field label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-inline-end: 1rem;
+}
+
+.choice-field input {
+  width: auto;
+  min-height: auto;
+}
+
+.pair-choice-list {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1rem 0;
+  padding: 0.8rem;
+  border: 1px solid var(--color-line);
+  border-radius: 0.7rem;
+}
+
+.pair-choice-list legend {
+  padding-inline: 0.3rem;
+  font-weight: 700;
+}
+
+.pair-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+}
+
+.pair-choice input {
+  width: auto;
+  min-height: auto;
+  margin-block-start: 0.25rem;
+}
+
+.pair-choice-list:disabled {
+  color: var(--color-ink-soft);
+}
+
 @media (max-width: 34rem) {
   .app-header {
     padding-inline: 1rem;
@@ -525,6 +725,38 @@ a {
 
   .api-key-control {
     flex-wrap: wrap;
+  }
+
+  .book-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .book-row__summary {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .row-indicators {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
+  .story-row {
+    align-items: flex-start;
+  }
+
+  .story-row__main {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .story-row__main .row-indicators {
+    grid-column: 2;
+    grid-row: 2;
+    justify-content: flex-start;
+  }
+
+  .story-row__actions {
+    flex-direction: column;
   }
 }
 
