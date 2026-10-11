@@ -1,6 +1,13 @@
 # Saprili
 
-Chrome extension for creating children's bedtime books.
+Chrome extension ("Your storybook scribe") that turns family photos plus short bilingual (Hebrew/English)
+text into a print-ready, hard-cover illustrated children's book and a matching colouring book.
+Each user brings their own Gemini API key.
+
+## Docs
+
+Spec, architecture and status live in [`ai_src_code_docs/`](ai_src_code_docs/README.md).
+What is still unbuilt or unverified is in [`ai_src_code_docs/TODO.md`](ai_src_code_docs/TODO.md).
 
 ## Run locally
 
