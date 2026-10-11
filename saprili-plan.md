@@ -49,7 +49,7 @@ Phases are built to run in separate chat contexts. Each phase section is self-co
 | Phase | Name | Brief phase | Status |
 |---|---|---|---|
 | P0 | Spikes: de-risk (4 independent tracks) | 0 | [ ] |
-| P1 | Scaffold, domain model, storage layer | 1 | [ ] |
+| P1 | Scaffold, domain model, storage layer | 1 | [ ] (ASYNC done; P1.8 human check pending) |
 | P2 | UI kit, My settings, Library | 1 | [ ] |
 | P3 | CSV import, Setup, Book view | 2 | [ ] |
 | P4 | Page view: spread editor, text, photos | 3 | [ ] |
@@ -438,7 +438,12 @@ _(agent fills: files, findings, deviations)_
 ### Phase 1 Definition of Done
 Generic DoD (0.5) plus the checks above.
 ### Phase 1 log
-_(agent fills)_
+- **Files:** tooling (`package.json`, `tsconfig*.json`, `vite.config.ts`, `eslint.config.mjs`, prettier), `public/manifest.json`, icons (`scripts/generate-icons.mjs`), `app.html`, `print.html`, `src/{shared,i18n,domain,storage,background,app,print}`, `scripts/{check-headers,check-manifest-permissions,pending,generate-icons}.mjs`. 36 unit tests.
+- **Architecture additions:** path alias `@/` = `src/`; ESLint layer rules (domain and storage free of React/UI, only `src/storage` may touch IndexedDB or `chrome.storage`); `StorageProvider` is a small typed port (`get`, `getAll`, `getAllByIndex`, `getAllKeysByIndex`, atomic `apply(ops)`) and repositories are factories (`createBookRepository(deps)`) so tests inject a fake clock and `fake-indexeddb`; `domain/imageRefs.ts` (`listReferencedImageIds`, `remapImageIds`) used by purge and duplicate; `background/appTab.ts` holds the testable tab logic behind `service-worker.ts`.
+- **Deviations:** `ImageRepository.putImage(record, thumb?)` takes a `ThumbPayload` (`blob`, `widthPx`, `heightPx`) instead of a bare blob, because `ThumbRecord` needs dimensions. `CURRENT_SCHEMA_VERSION` is defined in `domain/constants.ts` and re-exported from `storage/migrations` (domain cannot import storage). Colophon has no id in 5.1, so its `PageRef.id` is the constant `COLOPHON_PAGE_ID` (`'colophon'`). `toAppError(error, fallback?)` has an optional second argument. Only `react`, `react-dom`, `idb` installed; `e2e` and `package` scripts are stubs until P2 and P12. Version 0 migration fixtures describe a prototype shape (`innerMarginMm`, no `print`/`lastBackupAt`/image `meta`).
+- **Decisions assumed:** D-01 to D-06 defaults, placeholder logo.
+- **For the human:** P1.1 confirm decisions and logo; P1.8 load `dist/` unpacked, click the icon twice (one tab), check permissions, confirm DB `saprili` exists (the app page opens it).
+- **Follow-up for P3:** `data.csv` has header `Title,eng_descrip,heb_descr` (add aliases), `---------,,` separator rows and a `,,,` blank row between pairs (parser must skip them, not report them as empty rows), titles are image-like names, and the sample has 1 intro + 2 rows per pair groups.
 
 ---
 
