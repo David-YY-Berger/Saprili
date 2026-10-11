@@ -18,5 +18,5 @@ export function getPageImageIds(book: Book, pageRef: PageRef, edition: Edition):
     const id = edition === 'colouring' ? page.colouring.imageId : page.illustration.currentImageId;
     return id ? [id] : [];
   }
-  return [];
+  return book.colophon.qrImageId ? [book.colophon.qrImageId] : [];
 }

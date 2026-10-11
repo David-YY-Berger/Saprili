@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^node -e \"const f=new Intl\\.DateTimeFormat\\('en-u-ca-hebrew-nu-latn',\\{timeZone:'UTC',year:'numeric',month:'long',day:'numeric'\\}\\); for\\(const s of \\['2023-09-16','2023-10-16','2024-02-10','2024-03-11','2024-04-23','2024-10-03','2025-03-14'\\]\\) console\\.log\\(s, f\\.formatToParts\\(new Date\\(s\\+'T12:00:00Z'\\)\\)\\.map\\(p=>p\\.type\\+'='\\+p\\.value\\)\\.join\\('\\|'\\)\\)\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

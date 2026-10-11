@@ -10,6 +10,7 @@ import { getDefaultMeasurer, type TextMeasurer } from '../textFit';
 import { resolveTheme, type Edition } from '../theme';
 import { BackgroundLayer } from './BackgroundLayer';
 import { BorderLayer } from './BorderLayer';
+import { ColophonLayer } from './ColophonLayer';
 import { IntroPhotoLayer } from './IntroPhotoLayer';
 import { PageNumberLayer } from './PageNumberLayer';
 import { getPageImageIds } from './pageImages';
@@ -107,6 +108,18 @@ export function PageSheet({
             bleedMm={bleedMm}
             imageUrl={imageIds[0] ? (urls.get(imageIds[0]) ?? null) : null}
             theme={theme}
+          />
+        )}
+        {pageRef.kind === 'colophon' && (
+          <ColophonLayer
+            colophon={book.colophon}
+            bleedMm={bleedMm}
+            qrImageUrl={
+              book.colophon.qrImageId
+                ? (urls.get(book.colophon.qrImageId) ?? null)
+                : null
+            }
+            rect={geometry.contentRect}
           />
         )}
         {textLayout && (

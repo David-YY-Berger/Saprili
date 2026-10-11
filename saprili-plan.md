@@ -56,7 +56,7 @@ Tick each task checkbox as that task is completed. Tick a phase in the Status tr
 | P3 | CSV import, Setup, Book view | 2 | [x] |
 | P4 | Page view: spread editor, text, photos | 3 | [ ] |
 | P5 | Layout engine core, theme, borders | 4 | [ ] (P5.2–P5.6 and P5.7 unit tests done; P5.1, visual baselines, and P5.8 pending) |
-| P6 | Previews, Book settings, pre-flight, colophon | 4 | [ ] |
+| P6 | Previews, Book settings, pre-flight, colophon | 4 | [~] (P6.1–P6.7 implementation and tests complete; P6.8 human verification pending) |
 | P7 | Print export: page, book, colouring book | 4 | [ ] |
 | P8 | Cover editor and cover PDF | 5 | [ ] |
 | P9 | AI generation: provider, prompts, retry, history | 6 | [ ] |
@@ -620,31 +620,34 @@ Generic DoD plus: geometry numbers for the 206 by 291 page match hand calculatio
 **Needs:** P5; P0-D results. **Produces:** `features/booksettings`, `features/colophon`, `layout/preflight.ts`, `shared/hebrewDate.ts`.
 **Touches earlier files:** `features/pageview/PreviewSlot.tsx` (swap placeholder for `PagePreview`); `features/bookview/BookToolbar.tsx` (enable Book settings).
 
-- [ ] **P6.1 [ASYNC] Print-accurate preview.**
+- [x] **P6.1 [ASYNC] Print-accurate preview.**
   - Files: `features/pageview/PagePreview.tsx` (wraps `PageSheet`), `GuideOverlay.tsx` (trim, bleed, safe lines, spine side), `PreviewToggleBar.tsx` (toggles for guides), `useEdition.ts` (colour versus colouring preview toggle).
   - Rules: preview uses the **same** `PageSheet` as print, nothing separate.
-- [ ] **P6.2 [ASYNC] Hebrew date.**
+- [x] **P6.2 [ASYNC] Hebrew date.**
   - Files: `shared/hebrewDate.ts`, `shared/hebrewDate.test.ts`.
   - Names: `getHebrewDateParts(date)`, `HEBREW_MONTH_NAMES`, `formatHebrewDate(date, options)` (month spelled per the approved table such as "מרחשוון", year as numerals, day format per O-07), `isHebrewLeapYear(year)`.
   - Rules: implementation is the approved P0-D lab code; tests load `docs/hebrew-date-fixtures.json`.
-- [ ] **P6.3 [ASYNC] Colophon.**
+- [x] **P6.3 [ASYNC] Colophon.**
   - Files: `layout/render/ColophonLayer.tsx`, `features/colophon/ColophonEditorPage.tsx`, `ColophonDateField.tsx` (Gregorian date input with live Hebrew form shown; defaults to book creation date), `PlaceField.tsx` (default "Jerusalem"), `CreatedByField.tsx`, `QrImageField.tsx` (upload; stored as image kind `qr`; shown on a white square with clear space), `ColophonPreview.tsx`.
   - Rules: colophon is generated, not typed; same theme and margins as other pages; appears in the colouring book too (colouring edition: white themed page, outline border); text wording per O-05.
-- [ ] **P6.4 [ASYNC] Book settings.**
+- [x] **P6.4 [ASYNC] Book settings.**
   - Files: `features/booksettings/BookSettingsPage.tsx` with groups: `BindingSidePicker.tsx`, `ThemePicker.tsx`, `BorderStylePicker.tsx`, `MarginControls.tsx` (live clamp to the floor with an inline explanation), `FontPicker.tsx`, `TextSizeStepsControl.tsx`, `AlignmentPicker.tsx`, `HebrewEnglishSpacingControl.tsx`, `PageNumbersToggle.tsx`, `ArtStyleTextField.tsx`, `BookTitleField.tsx` (O-10), `RecomputeShapeButton.tsx` (explicit, with a clear warning that existing illustrations will no longer fit exactly), and links to the colophon editor. Page format is shown read-only with the lock explanation.
   - Rules: autosave; a **live preview** pane uses `PagePreview`; changing binding side flips margins, spreads and cover front panel (P8 reads it) and **never** touches illustrations (test it).
-- [ ] **P6.5 [ASYNC] Pre-flight.**
+- [x] **P6.5 [ASYNC] Pre-flight.**
   - Files: `layout/preflight.ts`, `print/PreflightDialog.tsx`.
   - Names: `runPreflight(book, edition, resolvedImages)` → `PreflightReport`; `PreflightIssue` has `code` (`ITEM_OUTSIDE_SAFE_AREA`, `MISSING_ILLUSTRATION`, `MISSING_COLOURING`, `OUTDATED_COLOURING`, `TEXT_OVERFLOW`, `LOW_RESOLUTION`, `PAGE_COUNT`, `MISSING_QR`), `severity` (`warning` or `info`), `pageRef`, `message`, `nextStep`; `computeEffectiveDpi(imageWidthPx, pictureWidthMm)`; threshold per O-12.
   - Rules: export is **allowed with warnings**; the dialog groups by page and lets the user jump to the page. Missing illustrations print as blank picture areas. Low resolution is a gentle notice only.
-- [ ] **P6.6 [ASYNC] Odd page-count fallback.** `appendBlankFallbackPage(model)` used only by the export model if an odd count somehow occurs; pre-flight flags `PAGE_COUNT`.
-- [ ] **P6.7 [ASYNC] Tests.** Hebrew date fixtures; pre-flight unit tests per code; end-to-end: change binding side and verify spread mirroring and that illustration ids are unchanged; margin below floor is clamped.
+- [x] **P6.6 [ASYNC] Odd page-count fallback.** `appendBlankFallbackPage(model)` used only by the export model if an odd count somehow occurs; pre-flight flags `PAGE_COUNT`.
+- [x] **P6.7 [ASYNC] Tests.** Hebrew date fixtures; pre-flight unit tests per code; end-to-end: change binding side and verify spread mirroring and that illustration ids are unchanged; margin below floor is clamped.
 - [ ] **P6.8 [SYNC] Human verification.** Confirm colophon wording (O-05), supply the QR image (O-02), check the Hebrew date against a real calendar, read pre-flight messages for tone, review Book settings ergonomics.
 
 ### Phase 6 Definition of Done
 Generic DoD plus: previews and the future print path both go through `PageSheet`; no setting can go below the safe-margin floor.
 ### Phase 6 log
-_(agent fills)_
+- Implemented PageSheet-backed previews with bleed, trim, safe-area, and spine guides plus colour/colouring toggles.
+- Added Hebrew date conversion with 15 fixtures, a generated colophon with QR upload, and autosaved Book settings with safe-margin clamping and explicit shape recomputation.
+- Added non-blocking pre-flight reports and an odd-page fallback export model. Full suite: 168 tests passed; production build, type checks, lint, and source-header check passed.
+- P6.8 remains for owner verification: approve the colophon wording, supply the real QR image, verify dates against a trusted calendar, and review pre-flight wording/settings ergonomics.
 
 ---
 

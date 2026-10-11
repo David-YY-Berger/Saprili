@@ -1,0 +1,17 @@
+[
+  { "isoDate": "2023-09-16", "day": 1, "monthKey": "tishri", "year": 5784 },
+  { "isoDate": "2023-09-25", "day": 10, "monthKey": "tishri", "year": 5784 },
+  { "isoDate": "2023-10-07", "day": 22, "monthKey": "tishri", "year": 5784 },
+  { "isoDate": "2023-10-16", "day": 1, "monthKey": "heshvan", "year": 5784 },
+  { "isoDate": "2024-02-10", "day": 1, "monthKey": "adarI", "year": 5784 },
+  { "isoDate": "2024-03-11", "day": 1, "monthKey": "adarII", "year": 5784 },
+  { "isoDate": "2024-04-22", "day": 14, "monthKey": "nisan", "year": 5784 },
+  { "isoDate": "2024-04-23", "day": 15, "monthKey": "nisan", "year": 5784 },
+  { "isoDate": "2024-06-12", "day": 6, "monthKey": "sivan", "year": 5784 },
+  { "isoDate": "2024-08-13", "day": 9, "monthKey": "av", "year": 5784 },
+  { "isoDate": "2024-09-03", "day": 30, "monthKey": "av", "year": 5784 },
+  { "isoDate": "2024-10-03", "day": 1, "monthKey": "tishri", "year": 5785 },
+  { "isoDate": "2025-03-14", "day": 14, "monthKey": "adar", "year": 5785 },
+  { "isoDate": "2025-04-12", "day": 14, "monthKey": "nisan", "year": 5785 },
+  { "isoDate": "2026-03-03", "day": 14, "monthKey": "adar", "year": 5786 }
+]

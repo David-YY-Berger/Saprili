@@ -8,11 +8,15 @@ export function BookToolbar({
   disabled,
   onAdd,
   onDelete,
+  onSettings,
+  onPreflight,
 }: {
   pairCount: number;
   disabled: boolean;
   onAdd: () => void;
   onDelete: () => void;
+  onSettings: () => void;
+  onPreflight: () => void;
 }) {
   const unavailable = (label: string, phase: number) => (
     <Tooltip content={`Available in Phase ${phase}`}>
@@ -30,24 +34,18 @@ export function BookToolbar({
       {unavailable('Print cover', 8)}
       {unavailable('Download all / backup', 11)}
       {unavailable('Generate', 9)}
+      <Button disabled={disabled} onClick={onPreflight} variant="secondary">
+        Pre-flight
+      </Button>
       <Button disabled={disabled} onClick={onAdd} variant="secondary">
         Add pages
       </Button>
       <Button disabled={disabled || pairCount <= 1} onClick={onDelete} variant="secondary">
         Delete pages
       </Button>
-      <Tooltip content="Book settings — available in Phase 6">
-        <span>
-          <Button
-            aria-label="Book settings"
-            disabled
-            title="Book settings — available in Phase 6"
-            variant="secondary"
-          >
-            <SlidersIcon /> Book settings
-          </Button>
-        </span>
-      </Tooltip>
+      <Button aria-label="Book settings" disabled={disabled} onClick={onSettings} variant="secondary">
+        <SlidersIcon /> Book settings
+      </Button>
     </div>
   );
 }

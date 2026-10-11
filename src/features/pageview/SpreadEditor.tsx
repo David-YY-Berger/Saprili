@@ -6,6 +6,8 @@ import { buildSpreads } from '@/domain/spreads';
 import { PageSlot } from './PageSlot';
 import { SpreadFrame } from './SpreadFrame';
 import { SpreadNavigator } from './SpreadNavigator';
+import { PreviewToggleBar } from './PreviewToggleBar';
+import { useEdition } from './useEdition';
 
 function containsPage(spread: { left: PageRef | null; right: PageRef | null }, id: string) {
   return spread.left?.id === id || spread.right?.id === id;
@@ -25,6 +27,8 @@ export function SpreadEditor({
   const spreads = useMemo(() => buildSpreads(book), [book]);
   const initial = Math.max(0, spreads.findIndex((spread) => containsPage(spread, pageId)));
   const [index, setIndex] = useState(initial);
+  const { edition, setEdition } = useEdition();
+  const [showGuides, setShowGuides] = useState(false);
   const spread = spreads[Math.min(index, spreads.length - 1)]!;
   useEffect(() => setIndex(initial), [initial]);
 
@@ -62,6 +66,12 @@ export function SpreadEditor({
 
   return (
     <section aria-label="Spread editor" className="spread-editor">
+      <PreviewToggleBar
+        edition={edition}
+        onEditionChange={setEdition}
+        onGuidesChange={setShowGuides}
+        showGuides={showGuides}
+      />
       <SpreadNavigator
         bindingSide={book.bindingSide}
         count={spreads.length}
@@ -74,6 +84,8 @@ export function SpreadEditor({
           onSelect={onSelectPage}
           pageRef={spread.left}
           selected={spread.left?.id === selectedPageId}
+          edition={edition}
+          showGuides={showGuides}
           side="left"
         />
         <div aria-hidden="true" className="spread-frame__gutter" />
@@ -82,6 +94,8 @@ export function SpreadEditor({
           onSelect={onSelectPage}
           pageRef={spread.right}
           selected={spread.right?.id === selectedPageId}
+          edition={edition}
+          showGuides={showGuides}
           side="right"
         />
       </SpreadFrame>

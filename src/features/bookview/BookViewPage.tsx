@@ -17,12 +17,14 @@ import { DeletePagesDialog } from './DeletePagesDialog';
 import { IntroRow } from './IntroRow';
 import { PairGroup } from './PairGroup';
 import { useStoryReorder } from './useStoryReorder';
+import { PreflightDialog } from '@/print/PreflightDialog';
 
 export function BookViewPage({ book: initialBook }: { book: Book }) {
   const [book, setBook] = useState(initialBook);
   const [pendingDelete, setPendingDelete] = useState<Set<string> | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [preflightOpen, setPreflightOpen] = useState(false);
   const [error, setError] = useState<AppError | null>(null);
   const hasPendingDelete = pendingDelete !== null;
 
@@ -96,6 +98,10 @@ export function BookViewPage({ book: initialBook }: { book: Book }) {
         disabled={hasPendingDelete}
         onAdd={() => setAddOpen(true)}
         onDelete={() => setDeleteOpen(true)}
+        onPreflight={() => setPreflightOpen(true)}
+        onSettings={() => {
+          window.location.hash = `#/book/${encodeURIComponent(book.id)}/settings`;
+        }}
         pairCount={book.storyPages.length / 2}
       />
       <div className="book-outline surface-card">
@@ -143,6 +149,12 @@ export function BookViewPage({ book: initialBook }: { book: Book }) {
         onConfirm={deletePairs}
         open={deleteOpen}
         pairs={reorder.pairs}
+      />
+      <PreflightDialog
+        book={book}
+        edition="colour"
+        onClose={() => setPreflightOpen(false)}
+        open={preflightOpen}
       />
     </section>
   );
