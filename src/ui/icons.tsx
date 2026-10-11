@@ -45,13 +45,7 @@ export function SlidersIcon({ size = 20 }: IconProps) {
 
 export function MoreIcon({ size = 20 }: IconProps) {
   return (
-    <svg
-      aria-hidden="true"
-      fill="currentColor"
-      height={size}
-      viewBox="0 0 24 24"
-      width={size}
-    >
+    <svg aria-hidden="true" fill="currentColor" height={size} viewBox="0 0 24 24" width={size}>
       <circle cx="5" cy="12" r="1.7" />
       <circle cx="12" cy="12" r="1.7" />
       <circle cx="19" cy="12" r="1.7" />

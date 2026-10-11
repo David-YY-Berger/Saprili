@@ -1,6 +1,6 @@
 // bisiyata dishmaya, leharbot ahava biyisral
 import assert from 'node:assert/strict';
-import { access, mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -8,9 +8,6 @@ import { chromium } from 'playwright';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const extensionPath = resolve(root, 'dist');
-const chromePath =
-  process.env.CHROME_PATH ?? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-await access(chromePath);
 
 const userDataDir = await mkdtemp(join(tmpdir(), 'saprili-phase2-e2e-'));
 let context;
@@ -21,12 +18,14 @@ try {
       `--load-extension=${extensionPath}`,
       '--no-first-run',
     ],
-    executablePath: chromePath,
-    headless: true,
+    ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}),
+    headless: false,
+    ignoreDefaultArgs: ['--disable-extensions'],
   });
 
   const worker =
-    context.serviceWorkers()[0] ?? (await context.waitForEvent('serviceworker', { timeout: 15000 }));
+    context.serviceWorkers()[0] ??
+    (await context.waitForEvent('serviceworker', { timeout: 15000 }));
   const extensionId = new URL(worker.url()).host;
   const page = await context.newPage();
   await page.goto(`chrome-extension://${extensionId}/app.html`);
@@ -54,7 +53,10 @@ try {
   await page.reload();
   await page.locator('#api-key').waitFor();
   assert.equal(await page.locator('#api-key').getAttribute('type'), 'password');
-  assert.equal(await page.locator('#api-key').inputValue(), testKey);
+  assert.ok(
+    (await page.locator('#api-key').inputValue()) === testKey,
+    'Settings did not persist after reload',
+  );
   console.log('Phase 2 extension E2E passed.');
 } finally {
   await context?.close();

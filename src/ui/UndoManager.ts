@@ -12,12 +12,17 @@ export interface UndoEntry {
   label: string;
   error: unknown;
   errorAction: 'undo' | 'expire' | null;
+  expiring: boolean;
 }
 
 export class UndoManager {
   private readonly entries = new Map<
     string,
-    { entry: UndoEntry; timer: ReturnType<typeof setTimeout> | null; registration: UndoRegistration }
+    {
+      entry: UndoEntry;
+      timer: ReturnType<typeof setTimeout> | null;
+      registration: UndoRegistration;
+    }
   >();
   private listeners = new Set<() => void>();
   private nextId = 0;
@@ -33,7 +38,13 @@ export class UndoManager {
   registerUndo(registration: UndoRegistration): string {
     const id = `undo-${++this.nextId}`;
     const record = {
-      entry: { id, label: registration.label, error: null, errorAction: null } as UndoEntry,
+      entry: {
+        id,
+        label: registration.label,
+        error: null,
+        errorAction: null,
+        expiring: false,
+      } as UndoEntry,
       timer: null as ReturnType<typeof setTimeout> | null,
       registration,
     };
@@ -45,7 +56,7 @@ export class UndoManager {
 
   async undo(id: string): Promise<void> {
     const record = this.entries.get(id);
-    if (!record) return;
+    if (!record || record.entry.expiring) return;
     if (record.timer !== null) clearTimeout(record.timer);
     record.timer = null;
     try {
@@ -60,7 +71,7 @@ export class UndoManager {
 
   async retry(id: string): Promise<void> {
     const record = this.entries.get(id);
-    if (!record) return;
+    if (!record || record.entry.expiring) return;
     if (record.entry.errorAction === 'undo') {
       record.entry = { ...record.entry, error: null, errorAction: null };
       this.publish();
@@ -72,13 +83,15 @@ export class UndoManager {
 
   private async expire(id: string): Promise<void> {
     const record = this.entries.get(id);
-    if (!record) return;
+    if (!record || record.entry.expiring) return;
     record.timer = null;
+    record.entry = { ...record.entry, expiring: true };
+    this.publish();
     try {
       await record.registration.onExpire();
       this.entries.delete(id);
     } catch (error) {
-      record.entry = { ...record.entry, error, errorAction: 'expire' };
+      record.entry = { ...record.entry, error, errorAction: 'expire', expiring: false };
     }
     this.publish();
   }

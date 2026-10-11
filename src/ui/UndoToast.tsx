@@ -23,12 +23,27 @@ export function UndoToast() {
               )}
             </div>
             {error ? (
-              <Button onClick={() => void undoManager.retry(entry.id)} variant="secondary">
-                Retry
-              </Button>
+              entry.errorAction === 'expire' ? (
+                <>
+                  <Button onClick={() => void undoManager.undo(entry.id)} variant="secondary">
+                    Undo instead
+                  </Button>
+                  <Button onClick={() => void undoManager.retry(entry.id)} variant="secondary">
+                    Retry deletion
+                  </Button>
+                </>
+              ) : (
+                <Button onClick={() => void undoManager.retry(entry.id)} variant="secondary">
+                  Retry undo
+                </Button>
+              )
             ) : (
-              <Button onClick={() => void undoManager.undo(entry.id)} variant="secondary">
-                Undo
+              <Button
+                disabled={entry.expiring}
+                onClick={() => void undoManager.undo(entry.id)}
+                variant="secondary"
+              >
+                {entry.expiring ? 'Finishing…' : 'Undo'}
               </Button>
             )}
           </div>

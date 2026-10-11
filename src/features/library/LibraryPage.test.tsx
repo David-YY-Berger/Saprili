@@ -34,7 +34,9 @@ describe('LibraryPage', () => {
   it('shows the friendly empty state and CSV import action', async () => {
     renderLibrary();
 
-    expect(await screen.findByRole('heading', { name: 'A little library, just for your family' })).toBeTruthy();
+    expect(
+      await screen.findByRole('heading', { name: 'A little library, just for your family' }),
+    ).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Import book1 from CSV' })).toBeTruthy();
     const results = await axe.run(document.body, { runOnly: ['button-name'] });
     expect(results.violations).toEqual([]);

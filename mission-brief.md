@@ -167,14 +167,18 @@ Icons first with tooltips; text labels on primary actions. **My settings = perso
 3. Background job test: long job, tab closed, completes.
 4. Hebrew date test: correct calendar dates and month names.
 
-**Phase 1:** extension shell, storage layer, versioned data, My settings, library.
-**Phase 2:** CSV import, setup, book view with pairs, reordering, add/delete in pairs.
-**Phase 3:** page view (spread), text, photos, overlay, autosave.
-**Phase 4:** layout engine, theme and borders, previews with guides, pre-flight, colophon, print page/book/colouring book.
-**Phase 5:** cover editor and cover PDF.
-**Phase 6:** AI illustration, cover illustration, colouring, retry, history.
-**Phase 7:** background job queue, generate dialog, backup/restore.
-**Phase 8:** test with a non-technical relative, polish, Web Store listing.
+**Phase 1:** scaffold, domain model, and storage layer.
+**Phase 2:** UI kit, My settings, and Library.
+**Phase 3:** CSV import, setup, and book view with pairs, reordering, and add/delete in pairs.
+**Phase 4:** page view (spread), text, photos, overlay, and autosave.
+**Phase 5:** layout engine core, theme, and borders.
+**Phase 6:** previews with guides, book settings, pre-flight, and colophon.
+**Phase 7:** print export (page, book, and colouring book).
+**Phase 8:** cover editor and cover PDF.
+**Phase 9:** AI generation, cover illustration, colouring, retry, and history.
+**Phase 10:** background job queue and Generate dialog.
+**Phase 11:** backup, restore, and per-page download.
+**Phase 12:** hardening, user test, and Web Store release.
 
 ---
 

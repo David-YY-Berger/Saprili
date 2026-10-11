@@ -53,7 +53,11 @@ export function MySettingsPage() {
         <Banner type="error" title={error.userMessage}>
           {error.nextStep}
         </Banner>
-        <button className="button button--secondary" onClick={() => void loadSettings()} type="button">
+        <button
+          className="button button--secondary"
+          onClick={() => void loadSettings()}
+          type="button"
+        >
           Try again
         </button>
       </section>
@@ -87,10 +91,7 @@ export function MySettingsPage() {
           <SaveErrorBanner error={autosave.error} onRetry={() => void autosave.flush()} />
         )}
         <form className="settings-form" onSubmit={(event) => event.preventDefault()}>
-          <ModelDropdown
-            onChange={(modelId) => update({ modelId })}
-            value={settings.modelId}
-          />
+          <ModelDropdown onChange={(modelId) => update({ modelId })} value={settings.modelId} />
           <ApiKeyField
             onChange={(apiKey) => update({ apiKey: apiKey || null })}
             value={settings.apiKey ?? ''}

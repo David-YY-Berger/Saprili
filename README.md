@@ -10,3 +10,9 @@ Chrome extension for creating children's bedtime books.
 4. After changes rebuild, click **Reload** on the Saprili card.
 
 For a one-time production build, run `npm run build`.
+
+## Checks
+
+- `npm test` runs unit and component tests.
+- `npm run typecheck` and `npm run lint` check types and source rules.
+- For the extension end-to-end test, run `npx playwright install chromium` once, then `npm run e2e`. It opens a temporary headed browser profile.

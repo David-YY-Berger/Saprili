@@ -454,28 +454,32 @@ Generic DoD (0.5) plus the checks above.
 **Goal:** the app shell, shared UI parts, autosave pattern, My settings, and an empty-state Library.
 **Needs:** P1. **Produces:** `ui/*`, `app/*`, `features/settings`, `features/library`.
 
-- [ ] **P2.1 [ASYNC] Design tokens and UI kit.**
+- [x] **P2.1 [ASYNC] Design tokens and UI kit.**
   - Files: `ui/tokens.css` (CSS variables for the playful palette from brief 5.3: sky-blue base, sunny yellow, coral, mint, lilac), `ui/IconButton.tsx` (props: `icon`, `label` **required** (accessible name and tooltip), `onClick`, `disabled`, `disabledReason`), `ui/Button.tsx`, `ui/Tooltip.tsx`, `ui/Modal.tsx` (focus trap, Escape closes), `ui/ConfirmDialog.tsx`, `ui/Banner.tsx` (types `info`, `warning`, `error`), `ui/SavedIndicator.tsx` (states `idle`, `saving`, `saved`, `failed`), `ui/ToastHost.tsx`, `ui/EmptyState.tsx`, `ui/Spinner.tsx`, `ui/UndoManager.ts` (`registerUndo({label, undo, onExpire})`, uses `UNDO_WINDOW_MS`) with `ui/UndoToast.tsx`.
   - Icons: person icon (My settings), sliders icon (Book settings). **No gear icon anywhere.**
   - Rules: logical CSS properties only; no hard-coded left/right.
-- [ ] **P2.2 [ASYNC] Autosave pattern.**
+- [x] **P2.2 [ASYNC] Autosave pattern.**
   - Files: `shared/useAutosave.ts`: `useAutosave(value, saveFn, options)` returns `{ status, lastSavedAt, error, flush }` with debounce `AUTOSAVE_DEBOUNCE_MS`; `ui/SaveErrorBanner.tsx` (loud banner with retry); `app/useBeforeUnloadGuard.ts` (warns only while a save is pending or failed).
-- [ ] **P2.3 [ASYNC] App shell.**
+- [x] **P2.3 [ASYNC] App shell.**
   - Files: `app/main.tsx`, `app/AppRoot.tsx`, `app/routes.tsx` (table in 3.4; unbuilt pages render `ComingSoonPage`), `app/AppHeader.tsx` ("Saprili" and "Your storybook scribe"; person icon to `#/settings`), `app/NotFoundPage.tsx`, `app/ErrorBoundary.tsx` (plain-language fallback with a way back to the Library).
-- [ ] **P2.4 [ASYNC] My settings.**
+- [x] **P2.4 [ASYNC] My settings.**
   - Files: `features/settings/MySettingsPage.tsx`, `ModelDropdown.tsx` (lists image-capable models only from `ai/modelCatalog.ts`), `ApiKeyField.tsx` (masked with show/hide toggle), `PrivacyNotice.tsx`; `ai/modelCatalog.ts` with `ImageModelEntry` (`id`, `provider`, `label`, `supportsEdit`, `imageCapable`) and a **placeholder** list (real list in P9).
   - Rules: autosave with the "Saved" indicator; key stored only via `SettingsRepository`; never logged or put in URLs; notice says photos and English text go to the chosen provider.
-- [ ] **P2.5 [ASYNC] Library.**
+- [x] **P2.5 [ASYNC] Library.**
   - Files: `features/library/LibraryPage.tsx`, `BookCard.tsx`, `BookThumbnail.tsx` (cover illustration thumb, else first intro photo thumb, else placeholder), `useBookSummaries.ts` (sorted by `modifiedAt` descending), `EmptyLibraryState.tsx` (friendly), `ImportCsvButton.tsx` (labelled "Import book1 from CSV", **shown only while no book exists**, navigates to `#/import`).
   - Rules: card shows title, page count (interior pages incl. intro and colophon), last modified date, thumbnail; thumbnails only, never full images.
   - Per O-08 (assumed yes): `BookCardMenu` with **Duplicate book** (`duplicateBook`) and **Delete book** (confirm dialog, then undo window via `UndoManager`; physical delete after expiry).
-- [ ] **P2.6 [ASYNC] Tests.** Component tests for `IconButton` (name required), autosave states, Library empty and filled; an axe check that every icon button has an accessible name; end-to-end: open extension tab, see empty state, change My settings, reload, values persisted.
+- [x] **P2.6 [ASYNC] Tests.** Component tests for `IconButton` (name required), autosave states, Library empty and filled; an axe check that every icon button has an accessible name; end-to-end: open extension tab, see empty state, change My settings, reload, values persisted.
 - [ ] **P2.7 [SYNC] Human verification.** Click through Library and My settings; judge the look of the palette and header; confirm the key is masked and persists. Answer O-08.
 
 ### Phase 2 Definition of Done
 Generic DoD plus: no gear icon; every icon has an accessible name; key not visible in any log.
 ### Phase 2 log
-_(agent fills)_
+- **Files:** `src/ui` (design tokens, shared controls, dialogs, notifications and undo), `src/shared/useAutosave.ts`, `src/app` (header, hash routes, error boundary and unload guard), `src/ai/modelCatalog.ts`, `src/features/settings`, `src/features/library`, and `scripts/e2e-phase2.mjs`.
+- **Behavior:** My settings autosaves through `SettingsRepository`; the key is masked by default and is never logged or placed in a URL. Library cards use only thumbnails, sort by modification time, and support duplicate plus delayed delete with an undo window. Import is offered only when there are no books. Import and later book routes show a coming-soon page.
+- **Architecture addition:** `AUTOSAVE_DEBOUNCE_MS` lives in `shared/timing.ts` and is re-exported from `domain/constants.ts`, so the shared hook can use it without reversing the domain/shared dependency rule.
+- **Tests:** 115 unit/component tests pass, including axe button-name checks and modal focus behavior. `npm run e2e` builds the extension and verifies the empty state and settings persistence after reload in Playwright Chromium.
+- **Not yet verified by a person:** P2.7 palette/header review and O-08 confirmation remain open.
 
 ---
 

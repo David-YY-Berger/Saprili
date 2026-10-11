@@ -26,7 +26,10 @@ describe('UndoManager', () => {
   it('runs expiry and keeps failures available for retry', async () => {
     vi.useFakeTimers();
     const manager = new UndoManager();
-    const onExpire = vi.fn().mockRejectedValueOnce(new Error('Storage unavailable')).mockResolvedValueOnce(undefined);
+    const onExpire = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('Storage unavailable'))
+      .mockResolvedValueOnce(undefined);
     const id = manager.registerUndo({ label: 'Delete book', undo: vi.fn(), onExpire });
 
     await vi.advanceTimersByTimeAsync(UNDO_WINDOW_MS);

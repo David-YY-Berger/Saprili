@@ -19,7 +19,10 @@ export function AppRoutes() {
   const route = useHashRoute();
   if (route === '#/' || route === '#') return <LibraryPage />;
   if (route === '#/settings') return <MySettingsPage />;
-  if (route === '#/import' || /^#\/book\/[^/]+(?:\/(?:setup|settings|cover|colophon|page\/[^/]+))?$/.test(route)) {
+  if (
+    route === '#/import' ||
+    /^#\/book\/[^/]+(?:\/(?:setup|settings|cover|colophon|page\/[^/]+))?$/.test(route)
+  ) {
     return <ComingSoonPage />;
   }
   return <NotFoundPage />;

@@ -22,17 +22,20 @@ export function LibraryPage() {
     try {
       const copy = await bookRepository.duplicateBook(book.id);
       setBooks((current) =>
-        [...current, {
-          id: copy.id,
-          title: copy.title,
-          pageCount: book.pageCount,
-          modifiedAt: copy.modifiedAt,
-          thumbImageId:
-            copy.cover.illustration.currentImageId ??
-            copy.cover.ownImageId ??
-            copy.intro.photos[0]?.originalImageId ??
-            null,
-        }].sort((a, b) => b.modifiedAt.localeCompare(a.modifiedAt)),
+        [
+          ...current,
+          {
+            id: copy.id,
+            title: copy.title,
+            pageCount: book.pageCount,
+            modifiedAt: copy.modifiedAt,
+            thumbImageId:
+              copy.cover.illustration.currentImageId ??
+              copy.cover.ownImageId ??
+              copy.intro.photos[0]?.originalImageId ??
+              null,
+          },
+        ].sort((a, b) => b.modifiedAt.localeCompare(a.modifiedAt)),
       );
       showToast(`Created “${copy.title}”.`);
     } catch (duplicateError) {
@@ -104,7 +107,9 @@ export function LibraryPage() {
       ) : (
         <>
           <div className="library-toolbar">
-            <p>{visibleBooks.length} {visibleBooks.length === 1 ? 'book' : 'books'}</p>
+            <p>
+              {visibleBooks.length} {visibleBooks.length === 1 ? 'book' : 'books'}
+            </p>
           </div>
           <div className="book-grid">
             {visibleBooks.map((book) => (

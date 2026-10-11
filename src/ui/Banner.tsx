@@ -13,7 +13,10 @@ export function Banner({
   title?: string;
 }) {
   return (
-    <div className={`banner${type === 'info' ? '' : ` banner--${type}`}`} role={type === 'error' ? 'alert' : 'status'}>
+    <div
+      className={`banner${type === 'info' ? '' : ` banner--${type}`}`}
+      role={type === 'error' ? 'alert' : 'status'}
+    >
       {title && <strong>{title} </strong>}
       {children}
     </div>

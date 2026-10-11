@@ -25,7 +25,11 @@ export function BookCard({
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   return (
     <article className="book-card">
-      <a aria-label={`Open ${book.title}`} className="book-card__cover-link" href={`#/book/${encodeURIComponent(book.id)}`}>
+      <a
+        aria-label={`Open ${book.title}`}
+        className="book-card__cover-link"
+        href={`#/book/${encodeURIComponent(book.id)}`}
+      >
         <BookThumbnail imageId={book.thumbImageId} title={book.title} />
       </a>
       <div className="book-card__body">

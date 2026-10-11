@@ -19,7 +19,8 @@ export function Modal({
 
   useEffect(() => {
     if (!open) return;
-    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousFocus =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const dialog = dialogRef.current;
     const focusable = () =>
       dialog?.querySelectorAll<HTMLElement>(
@@ -37,10 +38,20 @@ export function Modal({
       if (items.length === 0) {
         event.preventDefault();
         dialog?.focus();
-      } else if (event.shiftKey && document.activeElement === items[0]) {
+      } else if (
+        event.shiftKey &&
+        (document.activeElement === items[0] ||
+          document.activeElement === dialog ||
+          !dialog?.contains(document.activeElement))
+      ) {
         event.preventDefault();
         items[items.length - 1]?.focus();
-      } else if (!event.shiftKey && document.activeElement === items[items.length - 1]) {
+      } else if (
+        !event.shiftKey &&
+        (document.activeElement === items[items.length - 1] ||
+          document.activeElement === dialog ||
+          !dialog?.contains(document.activeElement))
+      ) {
         event.preventDefault();
         items[0]?.focus();
       }
