@@ -341,7 +341,7 @@ export function PageViewPage({ book: initialBook, pageId }: { book: Book; pageId
           <SpreadEditor
             book={book}
             onSelectPage={setSelectedPageRef}
-            pageId={initialPageRef.id}
+            pageId={activePage.id}
             selectedPageId={activePage.id}
           />
           <PageEditorPanel

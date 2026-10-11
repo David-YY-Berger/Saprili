@@ -52,7 +52,7 @@ export class GeminiImageProvider implements ImageProvider {
   constructor(
     private readonly modelId: string,
     private readonly apiKey: string,
-    private readonly fetcher: typeof fetch = fetch,
+    private readonly fetcher: typeof fetch = (input, init) => fetch(input, init),
     private readonly imageDimensions: (image: Blob) => Promise<ImageDimensions> = measureImage,
   ) {}
 
