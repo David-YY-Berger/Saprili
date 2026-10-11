@@ -116,6 +116,45 @@ describe('AI prompt payload composition', () => {
     expect(request.omittedPhotoCount).toBe(1);
   });
 
+  it('uses character pictures and descriptions in order instead of intro photos', async () => {
+    const { book, imageRepository } = fixture();
+    const records = new Map<string, ImageRecord>();
+    for (const id of ['char-ai-1', 'char-ai-2', 'story-ai-1']) records.set(id, imageRecord(id));
+    book.intro.characters = [
+      {
+        id: 'c1',
+        name: 'Miriam עברית',
+        description: 'Five years old, curly hair',
+        photo: { originalImageId: 'char-o-1', aiCopyImageId: 'char-ai-1' },
+      },
+      { id: 'c2', name: 'Dad', description: 'Tall, glasses', photo: null },
+      {
+        id: 'c3',
+        name: 'Shira',
+        description: 'Baby',
+        photo: { originalImageId: 'char-o-2', aiCopyImageId: 'char-ai-2' },
+      },
+    ];
+    book.storyPages[0]!.photos = [{ originalImageId: 'story-o-1', aiCopyImageId: 'story-ai-1' }];
+    const request = await buildIllustrationRequest(
+      book,
+      'story-1',
+      {},
+      { getImage: async (id: string) => records.get(id) ?? null },
+    );
+    expect(request.instructions).toContain('- Miriam (reference picture 1): Five years old, curly hair');
+    expect(request.instructions).toContain('- Dad (no picture): Tall, glasses');
+    expect(request.instructions).toContain('- Shira (reference picture 2): Baby');
+    expect(request.instructions).not.toMatch(/[\u0590-\u05ff]/);
+    expect(await Promise.all(request.referenceImages.map((b) => b.text()))).toEqual([
+      'char-ai-1',
+      'char-ai-2',
+      'story-ai-1',
+    ]);
+    expect(request.omittedPhotoCount).toBe(0);
+    expect(imageRepository).toBeDefined();
+  });
+
   it('fails rather than silently generating colouring art without an illustration', async () => {
     const { book, imageRepository } = fixture();
     book.storyPages[0]!.illustration.currentImageId = null;

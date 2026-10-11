@@ -755,6 +755,44 @@ a {
   list-style: none;
 }
 
+.character-list {
+  display: grid;
+  gap: 0.8rem;
+  margin: 0 0 0.8rem;
+  padding: 0;
+  list-style: none;
+}
+
+.character-card {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.character-card__picture {
+  display: grid;
+  width: 8rem;
+  flex: none;
+  gap: 0.35rem;
+}
+
+.character-card__picture img,
+.character-card__placeholder {
+  display: grid;
+  width: 8rem;
+  height: 8rem;
+  place-items: center;
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgb(0 0 0 / 6%);
+}
+
+.character-card__fields {
+  display: grid;
+  flex: 1;
+  gap: 0.5rem;
+}
+
 .photo-tile {
   display: grid;
   width: 9rem;

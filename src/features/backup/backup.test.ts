@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { unzipSync } from 'fflate';
 import { createEmptyBook, createStoryPage } from '@/domain/factories';
 import type { Book } from '@/domain/book';
+import { CURRENT_SCHEMA_VERSION } from '@/domain/constants';
 import type { ImageRecord } from '@/domain/image';
 import { bookRepository, imageRepository, setStorageForTests } from '@/storage/repositories';
 import { createTestStorage } from '@/storage/testing';
@@ -171,7 +172,7 @@ describe('book backup and restore', () => {
 
     const result = await restoreBookBackup(await asFile(oldBackup));
     expect(result.status).toBe('restored');
-    expect((await bookRepository.getBook(book.id))?.schemaVersion).toBe(2);
+    expect((await bookRepository.getBook(book.id))?.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
   });
 
   it('leaves the existing book and images intact when the atomic commit fails', async () => {

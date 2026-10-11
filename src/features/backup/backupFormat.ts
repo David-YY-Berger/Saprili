@@ -63,6 +63,12 @@ function pageImagePaths(book: Book): Map<string, string> {
   };
 
   addPhotos(book.intro.photos, 'pages/00-intro');
+  book.intro.characters.forEach((character, index) => {
+    if (!character.photo) return;
+    const base = `pages/00-intro/character-${index + 1}`;
+    paths.set(character.photo.originalImageId, `${base}-original`);
+    paths.set(character.photo.aiCopyImageId, `${base}-ai-copy`);
+  });
   book.storyPages.forEach((page, index) => {
     const folder = `pages/${String(index + 1).padStart(2, '0')}-story`;
     addPhotos(page.photos, folder);
@@ -103,6 +109,13 @@ export function buildBackupFilePlan(
   const files: BackupFile[] = [
     { path: 'pages/00-intro/text-en.txt', blob: new Blob([book.intro.textEn], { type: 'text/plain' }) },
     { path: 'pages/00-intro/text-he.txt', blob: new Blob([book.intro.textHe], { type: 'text/plain' }) },
+    {
+      path: 'pages/00-intro/characters.txt',
+      blob: new Blob(
+        [book.intro.characters.map((c) => `${c.name}: ${c.description}`).join('\n')],
+        { type: 'text/plain' },
+      ),
+    },
   ];
   book.storyPages.forEach((page, index) => {
     const folder = `pages/${String(index + 1).padStart(2, '0')}-story`;

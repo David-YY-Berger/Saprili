@@ -9,7 +9,7 @@ import {
   ILLUSTRATION_INSTRUCTIONS,
 } from './promptTemplates';
 import { getPictureZoneSpec, getCoverPictureZoneSpec } from '@/layout/shape';
-import { MAX_AI_PHOTOS_INTRO, MAX_AI_PHOTOS_PAGE } from '@/domain/constants';
+import { MAX_AI_CHARACTERS, MAX_AI_PHOTOS_INTRO, MAX_AI_PHOTOS_PAGE } from '@/domain/constants';
 import { AppError } from '@/shared/errors';
 
 export interface AiPhotoSelection {
@@ -44,6 +44,44 @@ export async function getAiPhotoSelection(
   };
 }
 
+export interface CharacterReference {
+  images: Blob[];
+  text: string;
+  omittedCount: number;
+}
+
+/** Character pictures go first, in order; the text numbers each picture so name/description match it. */
+export async function getCharacterReference(
+  book: Book,
+  imageRepository: Pick<ImageRepository, 'getImage'>,
+): Promise<CharacterReference> {
+  const characters = book.intro.characters.filter(
+    (c) => c.photo !== null || c.name.trim() !== '' || c.description.trim() !== '',
+  );
+  const sent = characters.slice(0, MAX_AI_CHARACTERS);
+  const images: Blob[] = [];
+  const lines: string[] = [];
+  for (const [index, character] of sent.entries()) {
+    let pictureNote = 'no picture';
+    if (character.photo) {
+      const record = await imageRepository.getImage(character.photo.aiCopyImageId);
+      if (!record) {
+        throw new AppError('STORAGE_FAILED', { detail: 'A character picture is missing from storage' });
+      }
+      images.push(record.blob);
+      pictureNote = `reference picture ${images.length}`;
+    }
+    const name = stripHebrew(character.name).trim() || `Character ${index + 1}`;
+    const description = stripHebrew(character.description).trim();
+    lines.push(`- ${name} (${pictureNote})${description ? `: ${description}` : ''}`);
+  }
+  return {
+    images,
+    text: lines.length > 0 ? `Main characters:\n${lines.join('\n')}` : '',
+    omittedCount: Math.max(0, characters.length - sent.length),
+  };
+}
+
 function textPart(label: string, value: string): string {
   return `${label}: ${stripHebrew(value).trim()}`;
 }
@@ -62,6 +100,17 @@ function makeRequest(
   };
 }
 
+/** Character profiles are the reference; intro photos are used only when no characters are defined. */
+async function getIntroReference(
+  book: Book,
+  imageRepository: Pick<ImageRepository, 'getImage'>,
+): Promise<CharacterReference> {
+  const characters = await getCharacterReference(book, imageRepository);
+  if (characters.text) return characters;
+  const photos = await getAiPhotoSelection(book.intro.photos, imageRepository, MAX_AI_PHOTOS_INTRO);
+  return { images: photos.images, text: '', omittedCount: photos.omittedCount };
+}
+
 export async function buildIllustrationRequest(
   book: Book,
   pageId: string,
@@ -70,12 +119,13 @@ export async function buildIllustrationRequest(
 ): Promise<ImageGenRequest & { omittedPhotoCount: number }> {
   const page = book.storyPages.find((candidate) => candidate.id === pageId);
   if (!page) throw new AppError('STORAGE_FAILED', { detail: `Story page ${pageId} was not found` });
-  const [introPhotos, pagePhotos] = await Promise.all([
-    getAiPhotoSelection(book.intro.photos, imageRepository, MAX_AI_PHOTOS_INTRO),
+  const [introReference, pagePhotos] = await Promise.all([
+    getIntroReference(book, imageRepository),
     getAiPhotoSelection(page.photos, imageRepository, MAX_AI_PHOTOS_PAGE),
   ]);
   const instructions = [
     ILLUSTRATION_INSTRUCTIONS,
+    introReference.text,
     textPart('Introduction (character reference)', book.intro.textEn),
     textPart('This page’s story', page.textEn),
     textPart('Art style', options.artStyleText ?? book.artStyleText),
@@ -87,10 +137,10 @@ export async function buildIllustrationRequest(
     .join('\n\n');
   const request = makeRequest(
     instructions,
-    [...introPhotos.images, ...pagePhotos.images],
+    [...introReference.images, ...pagePhotos.images],
     getPictureZoneSpec(book).aspect,
   );
-  return { ...request, omittedPhotoCount: introPhotos.omittedCount + pagePhotos.omittedCount };
+  return { ...request, omittedPhotoCount: introReference.omittedCount + pagePhotos.omittedCount };
 }
 
 export async function buildColouringRequest(
@@ -110,23 +160,22 @@ export async function buildCoverIllustrationRequest(
   book: Book,
   imageRepository: Pick<ImageRepository, 'getImage'>,
 ): Promise<ImageGenRequest & { omittedPhotoCount: number }> {
-  const introPhotos = await getAiPhotoSelection(
-    book.intro.photos,
-    imageRepository,
-    MAX_AI_PHOTOS_INTRO,
-  );
+  const introReference = await getIntroReference(book, imageRepository);
   const instructions = [
     COVER_INSTRUCTIONS,
+    introReference.text,
     textPart('Introduction (character reference)', book.intro.textEn),
     textPart('Art style', book.artStyleText),
-  ].join('\n\n');
+  ]
+    .filter(Boolean)
+    .join('\n\n');
   return {
     ...makeRequest(
       instructions,
-      introPhotos.images,
+      introReference.images,
       getCoverPictureZoneSpec(book).aspect,
     ),
-    omittedPhotoCount: introPhotos.omittedCount,
+    omittedPhotoCount: introReference.omittedCount,
   };
 }
 

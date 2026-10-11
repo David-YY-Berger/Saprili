@@ -1,6 +1,7 @@
 // bisiyata dishmaya, leharbot ahava biyisral
 import type { Book } from '@/domain/book';
-import type { IllustrationState, IntroPhotoLayout, PageRef, PhotoRef } from '@/domain/page';
+import type { Character, IllustrationState, IntroPhotoLayout, PageRef, PhotoRef } from '@/domain/page';
+import { CharactersSection } from './CharactersSection';
 import { ColouringSection } from './ColouringSection';
 import { EnglishTextField } from './EnglishTextField';
 import { HebrewTextField } from './HebrewTextField';
@@ -17,6 +18,9 @@ export function PageEditorPanel({
   onUpdate,
   onPhotosChange,
   onPhotoRemove,
+  onCharactersChange,
+  onCharacterPhoto,
+  onCharacterRemove,
   onImportPhotos,
   onIllustrationChange,
   beforeGeneration,
@@ -33,6 +37,9 @@ export function PageEditorPanel({
   }) => void;
   onPhotosChange: (photos: PhotoRef[]) => void;
   onPhotoRemove: (photo: PhotoRef, index: number) => void;
+  onCharactersChange: (characters: Character[]) => void;
+  onCharacterPhoto: (characterId: string, file: File) => void;
+  onCharacterRemove: (character: Character, index: number) => void;
   onImportPhotos: (files: File[]) => void;
   onIllustrationChange: (pageId: string, patch: Partial<IllustrationState>) => void;
   beforeGeneration: () => Promise<unknown>;
@@ -87,6 +94,15 @@ export function PageEditorPanel({
         photoLayout={pageRef.kind === 'intro' ? book.intro.photoLayout : undefined}
         photos={page.photos}
       />
+      {pageRef.kind === 'intro' && (
+        <CharactersSection
+          characters={book.intro.characters}
+          disabled={importDisabled}
+          onChange={onCharactersChange}
+          onPhotoFile={onCharacterPhoto}
+          onRemove={onCharacterRemove}
+        />
+      )}
       {storyPage && (
         <>
           <IllustrationSection

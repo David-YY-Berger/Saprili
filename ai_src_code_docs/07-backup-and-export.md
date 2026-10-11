@@ -8,7 +8,7 @@ Code: `src/features/backup/*`. ZIP via `fflate`; images are fetched and added on
 One ZIP restores the book and is also human-readable:
 - `manifest.json`: `formatVersion` (`BACKUP_FORMAT_VERSION`), `appVersion`, `schemaVersion`, `createdAt`, `bookId`, file list with sizes.
 - `book.json`: full `Book` record (source of truth). `images.json`: maps every `ImageRecord` id to its zip path, `kind`, `meta`.
-- Readable files: `pages/00-intro/photo-1.jpg`, `pages/03/photo-1.jpg`, `pages/03/illustration.png`, `pages/03/colouring.png`, `pages/03/text-en.txt`, `pages/03/text-he.txt`, `cover/…`, `colophon/qr.png`; includes original and AI photos, current and historical illustrations, colouring pages, cover art.
+- Readable files: `pages/00-intro/photo-1.jpg`, `pages/03/photo-1.jpg`, `pages/03/illustration.png`, `pages/03/colouring.png`, `pages/03/text-en.txt`, `pages/03/text-he.txt`, `pages/00-intro/characters.txt` and `pages/00-intro/character-N-original/ai-copy.*` (main characters), `cover/…`, `colophon/qr.png`; includes original and AI photos, current and historical illustrations, colouring pages, cover art.
 - Export sets `lastBackupAt` with `save(book, 'system')` (does not change `modifiedAt`). Backups are local, unencrypted downloads. UI: progress + cancel, "Last backed up N days ago" badge (nudge colour after 14 days).
 
 ## Restore

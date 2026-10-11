@@ -37,6 +37,7 @@ export function createIntroPage(init: Partial<Omit<IntroPage, 'photos'>> = {}): 
     textHe: '',
     photos: [],
     photoLayout: 'firstLarge',
+    characters: [],
     ...init,
   };
 }

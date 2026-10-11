@@ -40,7 +40,7 @@ Source of truth for remaining work. Tick items here (not in other docs). Tags: *
 - [ ] **[CODE] Optional:** cover/colophon PDF sheet sizes and `centredA4` mode have only been validated by automated checks, not by a printer.
 
 ## 4. Backlog (not in v1; do not build)
-Cast-list paragraph on the intro to reduce character drift · back-cover design · Hebrew interface · duplicate a book into a new page format (`duplicateBookWithNewFormat`) · other languages, landscape, other print shops · in-app image editing · accounts and sync · mobile.
+Cast-list paragraph on the intro to reduce character drift (superseded by intro main characters; verify against real Gemini) · back-cover design · Hebrew interface · duplicate a book into a new page format (`duplicateBookWithNewFormat`) · other languages, landscape, other print shops · in-app image editing · accounts and sync · mobile.
 
 ## 5. Dropped from the old plan
 The Phase 0 "spike" labs (`spikes/ai-lab`, `print-lab`, `bg-lab`, `hebdate-lab`) and `docs/spike-findings.md` were never built; the app itself was built directly. Their intent lives on in section 1 (real AI run, real PDF, real background run, Hebrew date check). Do not build the spikes unless a real-world check surprises you.

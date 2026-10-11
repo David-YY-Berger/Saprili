@@ -13,7 +13,7 @@
 - **IndexedDB** DB `saprili`, stores `books`, `images`, `thumbs`, `jobs`, `batches`, `meta`. One record per book (text, order, settings), one per image, thumbnails separate, full images loaded on demand.
 - **`chrome.storage.local`** holds only `userSettings` (key `userSettings`).
 - `StorageProvider` is a small typed port (`get`, `getAll`, `getAllByIndex`, `getAllKeysByIndex`, atomic `apply(ops)`); repositories are factories so tests inject a fake clock and `fake-indexeddb`.
-- Records carry `schemaVersion` (current **2**). Reads always pass through `migrateBookRecord` / `migrateImageRecord` / `migrateSettings`.
+- Records carry `schemaVersion` (current **3**; v3 adds `intro.characters`). Reads always pass through `migrateBookRecord` / `migrateImageRecord` / `migrateSettings`.
 - Storage failures throw `AppError` `STORAGE_FAILED` or `STORAGE_QUOTA`.
 - `MetaRepository` is a generic key/value used for `printJob:<id>`, `jobHostMode`, and flags.
 - `chrome.storage.session` holds a flag used to tell a worker idle-restart from a browser restart (`storage/sessionFlag.ts`).
@@ -35,7 +35,8 @@
 - **PageFormat**: `trimWidthMm` 206, `trimHeightMm` 291, `orientation` portrait, `textPosition` below, `presetId` `shop-206x291`, `lockedAt` (ISO or null until Setup confirms).
 - **BookShape** (computed once): `textZoneHeightMm`, `pictureAspect` (w/h), `computedAt`.
 - **PageRef** `{kind: intro|story|colophon, id}`; the colophon id is the constant `COLOPHON_PAGE_ID = 'colophon'`. **PhotoRef** `{originalImageId, aiCopyImageId}`.
-- **IntroPage**: `id`, `privateTitle`, `textEn`, `textHe`, `photos`, `photoLayout` (`firstLarge` | `collage` up to 4).
+- **IntroPage**: `id`, `privateTitle`, `textEn`, `textHe`, `photos`, `photoLayout` (`firstLarge` | `collage` up to 4), `characters[]`.
+- **Character** `{id, name, description, photo: PhotoRef | null}`: a main character; the profile picture (stored like any photo: original + AI copy + thumb) and the English description are what the AI prompt uses. Characters are not printed.
 - **StoryPage**: `id`, `privateTitle`, `textEn`, `textHe`, `photos`, `illustration`, `colouring`.
 - **IllustrationState** (also `Cover.illustration`): `currentImageId`, `history` (≤3 `{imageId, replacedAt}`), `customPrompt`, `useEditMode`. **ColouringState**: `imageId`, `sourceIllustrationImageId`, `outdated`.
 - **Cover**: `titleHe`, `subtitleHe`, `spineTextHe`, `illustration`, `ownImageId`, `back {note}`, `colouringMarkerText`.
@@ -59,6 +60,7 @@ Shop-dependent values are listed in `PLACEHOLDER_KEYS` (do not remove until conf
 | `SPINE_WIDTH_TABLE` | one row `{40 pages, 8 mm}` | yes (S6) |
 | `COVER_SAFE_INSET_MM` | 10 | yes |
 | `MAX_AI_PHOTOS_INTRO` / `_PAGE` | 3 / 3 | |
+| `MAX_AI_CHARACTERS` | 6 (characters sent to AI; extras flagged) | |
 | `ORIGINAL_LONG_EDGE_PX`, `AI_COPY_LONG_EDGE_PX`, `THUMB_LONG_EDGE_PX` | 2000, 1024, 256 | |
 | `ILLUSTRATION_HISTORY_MAX`, `MAX_AI_CROP_PERCENT` | 3, 3 | |
 | `JOB_CONCURRENCY`, `UNDO_WINDOW_MS`, `AUTOSAVE_DEBOUNCE_MS` | 2, 8000, 500 | |

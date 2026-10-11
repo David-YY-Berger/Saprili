@@ -19,6 +19,7 @@ export function listReferencedImageIds(book: Book): Set<string> {
   };
 
   addPhotos(book.intro.photos);
+  addPhotos(book.intro.characters.flatMap((c) => (c.photo ? [c.photo] : [])));
   for (const page of book.storyPages) {
     addPhotos(page.photos);
     addIllustration(page.illustration);
@@ -48,7 +49,14 @@ export function remapImageIds(book: Book, mapping: ReadonlyMap<string, string>):
 
   return {
     ...book,
-    intro: { ...book.intro, photos: mapPhotos(book.intro.photos) },
+    intro: {
+      ...book.intro,
+      photos: mapPhotos(book.intro.photos),
+      characters: book.intro.characters.map((c) => ({
+        ...c,
+        photo: c.photo ? mapPhotos([c.photo])[0]! : null,
+      })),
+    },
     storyPages: book.storyPages.map((page) => ({
       ...page,
       photos: mapPhotos(page.photos),

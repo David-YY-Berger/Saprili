@@ -16,11 +16,19 @@ export const bookMigrations: MigrationRegistry = {
     };
   },
   1: (record) => ({ ...record }),
+  // Version 3 adds intro.characters.
+  2: (record) => ({
+    ...record,
+    intro: isRecord(record.intro)
+      ? { ...record.intro, characters: record.intro.characters ?? [] }
+      : record.intro,
+  }),
 };
 
 export const imageMigrations: MigrationRegistry = {
   0: (record) => ({ ...record, meta: record.meta ?? { source: 'uploaded' } }),
   1: (record) => ({ ...record }),
+  2: (record) => ({ ...record }),
 };
 
 export const settingsMigrations: MigrationRegistry = {
@@ -36,4 +44,5 @@ export const settingsMigrations: MigrationRegistry = {
     colouringModelId: record.colouringModelId ?? 'gemini-3.1-flash-lite-image',
     apiKey: record.apiKey ?? null,
   }),
+  2: (record) => ({ ...record }),
 };

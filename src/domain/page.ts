@@ -32,6 +32,14 @@ export interface ColouringState {
   outdated: boolean;
 }
 
+/** A main character: the profile picture and description are what the AI is given. */
+export interface Character {
+  id: string;
+  name: string;
+  description: string;
+  photo: PhotoRef | null;
+}
+
 export interface IntroPage {
   id: string;
   privateTitle: string;
@@ -39,6 +47,7 @@ export interface IntroPage {
   textHe: string;
   photos: PhotoRef[];
   photoLayout: IntroPhotoLayout;
+  characters: Character[];
 }
 
 export interface StoryPage {

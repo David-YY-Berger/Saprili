@@ -7,7 +7,7 @@ export { AUTOSAVE_DEBOUNCE_MS };
 export const HEADER_COMMENT_TEXT = 'bisiyata dishmaya, leharbot ahava biyisral';
 
 /** Current data version of stored books, images and settings. */
-export const CURRENT_SCHEMA_VERSION = 2;
+export const CURRENT_SCHEMA_VERSION = 3;
 
 export interface TrimPreset {
   id: TrimPresetId;
@@ -44,6 +44,7 @@ export const SPINE_WIDTH_TABLE: readonly SpineWidthRow[] = [{ pages: 40, spineMm
 
 export const MAX_AI_PHOTOS_INTRO = 3;
 export const MAX_AI_PHOTOS_PAGE = 3;
+export const MAX_AI_CHARACTERS = 6;
 export const ORIGINAL_LONG_EDGE_PX = 2000;
 export const AI_COPY_LONG_EDGE_PX = 1024;
 export const THUMB_LONG_EDGE_PX = 256;

@@ -2,7 +2,7 @@
 import type { Book } from '@/domain/book';
 import type { IllustrationState } from '@/domain/page';
 import { getImageModel } from '@/ai/modelCatalog';
-import { MAX_AI_PHOTOS_INTRO, MAX_AI_PHOTOS_PAGE } from '@/domain/constants';
+import { MAX_AI_CHARACTERS, MAX_AI_PHOTOS_INTRO, MAX_AI_PHOTOS_PAGE } from '@/domain/constants';
 import { GenerateButton } from './GenerateButton';
 import { GeneratedImage } from './GeneratedImage';
 import { RetryPanel } from './RetryPanel';
@@ -35,7 +35,9 @@ export function IllustrationSection({
 }) {
   const model = getImageModel(modelId);
   const extraPhotos =
-    Math.max(0, book.intro.photos.length - MAX_AI_PHOTOS_INTRO) +
+    (book.intro.characters.length > 0
+      ? Math.max(0, book.intro.characters.length - MAX_AI_CHARACTERS)
+      : Math.max(0, book.intro.photos.length - MAX_AI_PHOTOS_INTRO)) +
     Math.max(
       0,
       (book.storyPages.find((page) => page.id === pageId)?.photos.length ?? 0) -

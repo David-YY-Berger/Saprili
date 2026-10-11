@@ -13,12 +13,13 @@ Code: `src/ai/*` (provider, prompts, post-processing, generation service), `src/
 
 ## Requests (each call stands alone)
 Built in `ai/prompts.ts` from instruction constants in `ai/promptTemplates.ts` (easy to tune).
-- **Illustration:** intro English text + intro AI-copy photos + page English text + page AI-copy photos + art-style text. Never sent: Hebrew, other pages, any illustration. Instructions: learn characters from the intro; use page text/photos to decide who appears and what happens; match photo people to text; cute simple cartoon in the art style; reuse real objects/places; **no written text in the picture**; fixed picture shape; calm space at the edges. Custom prompt is **appended to instructions, never to page text**.
+- **Main characters (`getCharacterReference`):** up to 6 intro characters (`MAX_AI_CHARACTERS`) are sent as reference pictures, **first and in order**, with a text list `- Name (reference picture N): description` (or `(no picture)`), so each description is tied to its picture. Characters with neither picture, name nor description are skipped; extras beyond 6 are flagged "Not sent to AI". **When the intro has characters, intro photos are not sent**; with none, the old behaviour (up to 3 intro photos) applies. Intro English text is still sent.
+- **Illustration:** character reference (above) + intro English text + page English text + page AI-copy photos + art-style text. Never sent: Hebrew, other pages, any illustration. Instructions: learn characters from the list/pictures (or intro photos); use page text/photos to decide who appears and what happens; keep each character consistent with their picture and description; cute simple cartoon in the art style; reuse real objects/places; **no written text in the picture**; fixed picture shape; calm space at the edges. Custom prompt is **appended to instructions, never to page text**.
 - **Colouring:** only that page's illustration; pure black-and-white line art for a 4-year-old, thick outlines, big shapes, no shading/grey/text, same shape. Disabled without an illustration (no call is made).
-- **Cover illustration:** intro English text + intro photos + art-style text; one cute cartoon family portrait at the cover picture shape, no text.
+- **Cover illustration:** same character reference (else intro photos) + intro English text + art-style text; one cute cartoon family portrait at the cover picture shape, no text.
 - **Edit mode:** supplied current illustration + custom instruction (when the model supports edit).
 - Mandatory payload tests assert: no Hebrew characters in any request, no other pages' content, no illustration in an illustration request, only that page's illustration in a colouring request. `describeRequestForDebug` omits keys and image bytes.
-- Known risk: characters may drift between pages (cast-list paragraph on the intro is a backlog fix).
+- Known risk: characters may drift between pages (mitigated by the main characters list; not yet tested against the real API).
 
 ## Post-processing (`ai/postprocess.ts`, worker-safe)
 - Gemini may not return the exact picture shape: **centre-crop the smallest excess edge**; pre-flight `AI_ASPECT_CROP` warns when >3% of an edge was removed (owner-approved).
