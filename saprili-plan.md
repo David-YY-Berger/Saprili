@@ -55,7 +55,7 @@ Tick each task checkbox as that task is completed. Tick a phase in the Status tr
 | P2 | UI kit, My settings, Library | 1 | [ ] |
 | P3 | CSV import, Setup, Book view | 2 | [ ] |
 | P4 | Page view: spread editor, text, photos | 3 | [ ] |
-| P5 | Layout engine core, theme, borders | 4 | [ ] (ASYNC done; P5.1 and P5.8 human checks pending) |
+| P5 | Layout engine core, theme, borders | 4 | [ ] (P5.2–P5.6 and P5.7 unit tests done; P5.1, visual baselines, and P5.8 pending) |
 | P6 | Previews, Book settings, pre-flight, colophon | 4 | [ ] |
 | P7 | Print export: page, book, colouring book | 4 | [ ] |
 | P8 | Cover editor and cover PDF | 5 | [ ] |
@@ -584,9 +584,9 @@ _(agent fills)_
 - [x] **P5.6 [ASYNC] Fonts packaging.**
   - Files: `public/fonts/*.woff2`, `layout/fonts.css` (`@font-face` for the chosen families), `layout/fontRegistry.ts` (`FONT_REGISTRY`, `getFontFamilyCss(fontId)`, `ensureFontsLoaded`), `docs/font-licenses.md`.
   - Rules: files packaged inside the extension; no remote font loading; nikud verified in a test page.
-- [ ] **P5.7 [ASYNC] Tests.** (unit tests done; Playwright visual baselines deferred, see Phase 5 log)
-  - Unit: `computePageGeometry` for left and right pages with both binding sides (spine-side margin correct, safe floor respected); `clampLayoutSettings`; picture scaling keeps aspect; text-zone maximum from sample texts with `FakeTextMeasurer`; step choice; overflow flag.
-  - Visual: Playwright screenshots of `PageSheet` for intro, story, long-text story, colouring edition (stored as baselines).
+- [ ] **P5.7 [ASYNC] Tests.** (partially complete; see Phase 5 log)
+  - [x] Unit tests: `computePageGeometry` for left and right pages with both binding sides (spine-side margin correct, safe floor respected); `clampLayoutSettings`; picture scaling keeps aspect; text-zone maximum from sample texts with `FakeTextMeasurer`; step choice; overflow flag. Also covered shape locking/recompute, themes, all border styles, both render editions, intro photo layouts, and page rendering.
+  - [ ] Visual: Playwright screenshots of `PageSheet` for intro, story, long-text story, colouring edition, stored as baselines. Playwright is not installed yet; browser inspection of the dev page is recorded in the Phase 5 log but does not replace checked-in baselines.
 - [ ] **P5.8 [SYNC] Human verification.** Review rendered sample pages (screenshots or a dev route `#/dev/layout`): colours, border styles, text sizes for a small child, nikud correctness, panel on/off, minimum font size (O-11).
 
 ### Phase 5 Definition of Done
@@ -598,7 +598,7 @@ Generic DoD plus: geometry numbers for the 206 by 291 page match hand calculatio
 - **Deviations / additions:** `computePictureRect` lives in `geometry.ts` (avoids an import cycle) and is re-exported from `shape.ts`. `TextFitResult` also has `fontSizePt`. Border generators are one `buildBorderShapes(style, rect, theme)` returning shape data (paths and circles) instead of four path functions. `PageSheet` takes optional `images` (the print `ResolvedImages` map) and `measurer`. Intro and story page numbers: only story pages show a number (position in the printed interior, intro = 1). Photos and illustrations use `object-fit: contain` (never cropped). Font ids stay `hebrew-default` and `english-default` so books made in P1 keep working. The colophon renders background and border only; its content is P6.
 - **Not done:**
   - `features/setup/formatLockHook.ts` does not exist yet (P2 to P4 are not built), so `ensureBookShape` is not wired into `onFormatLocked`. P3 must call `await createBookMeasurer(book)` then `ensureBookShape(book, measurer)` when the format is locked.
-  - Playwright visual baselines (P5.7): Playwright is not installed yet (e2e arrives later). Rendering is covered by server-render tests, and the dev page was checked in a browser (scalloped, dotted, stars, clouds, colouring edition, nikud text, long page).
+  - Playwright visual baselines (P5.7): Playwright is not installed yet (e2e arrives later). Rendering is covered by server-render tests; the dev page was visually inspected in a browser for intro/story, long text, Hebrew nikud, all four borders, colour/colouring editions, and text panel on/off. No screenshot baselines were committed.
 - **Decisions assumed:** D-FONT = Noto Sans Hebrew + Nunito; palette: sky `#DCEFFB`, mint `#DDF6EA`, peach `#FFE8D9`, lavender `#ECE4FA` with sunny/coral/mint/lilac/sky accents; text panel off by default.
 - **For the human:** P5.1 confirm fonts, palette and panel default. P5.8 run `npx vite build --mode development`, load `dist/`, open `app.html#/dev/layout` (switch edition, theme, border, panel, binding, min font; check nikud and text sizes for a small child, and O-11).
 
