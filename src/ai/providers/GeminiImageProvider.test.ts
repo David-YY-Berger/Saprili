@@ -28,10 +28,15 @@ describe('GeminiImageProvider', () => {
         { status: 200 },
       ),
     );
-    const provider = new GeminiImageProvider('gemini-3-pro-image', 'private-key', fetcher, async () => ({
-      widthPx: 700,
-      heightPx: 1000,
-    }));
+    const provider = new GeminiImageProvider(
+      'gemini-3-pro-image',
+      'private-key',
+      fetcher,
+      async () => ({
+        widthPx: 700,
+        heightPx: 1000,
+      }),
+    );
     const result = await provider.generateImage(request);
     const [url, init] = fetcher.mock.calls[0]!;
     expect(url).toBe(
@@ -47,20 +52,70 @@ describe('GeminiImageProvider', () => {
     expect(JSON.parse(init!.body as string).generationConfig.imageConfig.imageSize).toBe('1K');
   });
 
+  it('starts each retry with only that request’s prompt and reference images', async () => {
+    const generatedImage = btoa('generated-image');
+    const fetcher = vi.fn<typeof fetch>().mockImplementation(
+      async () =>
+        new Response(
+          JSON.stringify({
+            candidates: [
+              {
+                content: {
+                  parts: [{ inlineData: { mimeType: 'image/png', data: generatedImage } }],
+                },
+              },
+            ],
+          }),
+          { status: 200 },
+        ),
+    );
+    const provider = new GeminiImageProvider(
+      'gemini-3-pro-image',
+      'private-key',
+      fetcher,
+      async () => ({ widthPx: 700, heightPx: 1000 }),
+    );
+    const retryRequest = {
+      ...request,
+      instructions: 'Retry with a brighter background.',
+      referenceImages: [new Blob(['retry reference'], { type: 'image/png' })],
+    };
+
+    await provider.generateImage(request);
+    await provider.generateImage(retryRequest);
+
+    const firstPayload = JSON.parse(fetcher.mock.calls[0]![1]?.body as string);
+    const retryPayload = JSON.parse(fetcher.mock.calls[1]![1]?.body as string);
+    expect(firstPayload.contents).toHaveLength(1);
+    expect(firstPayload.contents[0].parts[0].text).toBe(request.instructions);
+    expect(retryPayload.contents).toHaveLength(1);
+    expect(retryPayload.contents[0].parts).toEqual([
+      { text: retryRequest.instructions },
+      {
+        inlineData: {
+          mimeType: 'image/png',
+          data: btoa('retry reference'),
+        },
+      },
+    ]);
+    expect(JSON.stringify(retryPayload)).not.toContain(request.instructions);
+    expect(JSON.stringify(retryPayload)).not.toContain(generatedImage);
+  });
+
   it('maps authentication and refusal errors to explained app errors', async () => {
     const auth = new GeminiImageProvider(
       'gemini-3-pro-image',
       'secret',
-      async () => new Response(JSON.stringify({ error: { status: 'UNAUTHENTICATED' } }), { status: 401 }),
+      async () =>
+        new Response(JSON.stringify({ error: { status: 'UNAUTHENTICATED' } }), { status: 401 }),
     );
     const refusal = new GeminiImageProvider(
       'gemini-3-pro-image',
       'secret',
       async () =>
-        new Response(
-          JSON.stringify({ error: { message: 'Request blocked by safety policy' } }),
-          { status: 400 },
-        ),
+        new Response(JSON.stringify({ error: { message: 'Request blocked by safety policy' } }), {
+          status: 400,
+        }),
     );
     await expect(auth.generateImage(request)).rejects.toMatchObject({ code: 'AI_AUTH' });
     await expect(refusal.generateImage(request)).rejects.toMatchObject({ code: 'AI_REFUSED' });

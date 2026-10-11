@@ -21,9 +21,7 @@ import { usePasteImages } from './usePasteImages';
 function getPageRef(book: Book, pageId: string): PageRef | null {
   if (pageId === book.intro.id) return { kind: 'intro', id: book.intro.id };
   if (pageId === COLOPHON_PAGE_ID) return { kind: 'colophon', id: COLOPHON_PAGE_ID };
-  return book.storyPages.some((page) => page.id === pageId)
-    ? { kind: 'story', id: pageId }
-    : null;
+  return book.storyPages.some((page) => page.id === pageId) ? { kind: 'story', id: pageId } : null;
 }
 
 function updatePhotos(book: Book, pageRef: PageRef, photos: PhotoRef[]): Book {
@@ -55,11 +53,7 @@ export function PageViewPage({ book: initialBook, pageId }: { book: Book; pageId
   const book = loadedBook?.id === initialBook.id ? loadedBook : initialBook;
   const [loadError, setLoadError] = useState<unknown>(null);
   const [storeReady, setStoreReady] = useState(false);
-  const autosave = useBookAutosave(
-    book,
-    commit,
-    storeReady && loadedBook?.id === initialBook.id,
-  );
+  const autosave = useBookAutosave(book, commit, storeReady && loadedBook?.id === initialBook.id);
   useBeforeUnloadGuard(autosave.status);
   const initialPageRef = getPageRef(book, pageId);
   const [selectedPageRef, setSelectedPageRef] = useState<PageRef | null>(initialPageRef);
@@ -68,10 +62,7 @@ export function PageViewPage({ book: initialBook, pageId }: { book: Book; pageId
   const importingRef = useRef(false);
   const canEditPhotos = storeReady && selectedPageRef?.kind !== 'colophon';
   const beforeGeneration = useCallback(() => commit('userEdit'), [commit]);
-  const afterGeneration = useCallback(
-    () => loadBook(initialBook.id),
-    [initialBook.id, loadBook],
-  );
+  const afterGeneration = useCallback(() => loadBook(initialBook.id), [initialBook.id, loadBook]);
 
   useEffect(() => {
     let active = true;
@@ -117,7 +108,8 @@ export function PageViewPage({ book: initialBook, pageId }: { book: Book; pageId
               current,
               target,
               readPhotos(current, target).filter(
-                (photo) => !imported.some((added) => added.originalImageId === photo.originalImageId),
+                (photo) =>
+                  !imported.some((added) => added.originalImageId === photo.originalImageId),
               ),
             ),
           );
@@ -172,7 +164,10 @@ export function PageViewPage({ book: initialBook, pageId }: { book: Book; pageId
     if (selectedPageRef) updateBook((current) => updatePhotos(current, selectedPageRef, photos));
   };
 
-  const updateIllustration = (targetPageId: string, patch: Partial<Book['storyPages'][number]['illustration']>) => {
+  const updateIllustration = (
+    targetPageId: string,
+    patch: Partial<Book['storyPages'][number]['illustration']>,
+  ) => {
     updateBook((current) => ({
       ...current,
       storyPages: current.storyPages.map((page) =>
@@ -181,6 +176,35 @@ export function PageViewPage({ book: initialBook, pageId }: { book: Book; pageId
           : page,
       ),
     }));
+  };
+
+  const deleteIllustration = async (targetPageId: string) => {
+    updateBook((current) => ({
+      ...current,
+      storyPages: current.storyPages.map((page) =>
+        page.id === targetPageId
+          ? {
+              ...page,
+              illustration: {
+                ...page.illustration,
+                currentImageId: null,
+                history: [],
+              },
+              colouring: {
+                ...page.colouring,
+                sourceIllustrationImageId: null,
+                outdated: page.colouring.imageId !== null,
+              },
+            }
+          : page,
+      ),
+    }));
+    try {
+      const saved = await commit('userEdit');
+      await imageRepository.purgeOrphanImages(saved);
+    } catch (error) {
+      setImmediateError(error);
+    }
   };
 
   const handleCharactersChange = (characters: Character[]) => {
@@ -323,10 +347,7 @@ export function PageViewPage({ book: initialBook, pageId }: { book: Book; pageId
           Back to book
         </a>
       </header>
-      <SaveStatusBar
-        lastSavedAt={autosave.lastSavedAt}
-        status={autosave.status}
-      />
+      <SaveStatusBar lastSavedAt={autosave.lastSavedAt} status={autosave.status} />
       {autosave.status === 'failed' && (
         <SaveErrorBanner error={autosave.error} onRetry={() => void autosave.flush()} />
       )}
@@ -335,7 +356,11 @@ export function PageViewPage({ book: initialBook, pageId }: { book: Book; pageId
           {immediateAppError.nextStep}
         </Banner>
       )}
-      {importing && <p aria-live="polite" role="status">Preparing pictures…</p>}
+      {importing && (
+        <p aria-live="polite" role="status">
+          Preparing pictures…
+        </p>
+      )}
       {selectedPageRef && (
         <>
           <SpreadEditor
@@ -349,6 +374,7 @@ export function PageViewPage({ book: initialBook, pageId }: { book: Book; pageId
             importDisabled={importing}
             onImportPhotos={(files) => void importPhotos(files)}
             onIllustrationChange={updateIllustration}
+            onDeleteIllustration={deleteIllustration}
             onPhotoRemove={handlePhotoRemove}
             onPhotosChange={handlePhotosChange}
             onCharactersChange={handleCharactersChange}

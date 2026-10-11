@@ -6,7 +6,7 @@
 - **Interior order is fixed:** Cover (outside the page sequence) → Intro (alone) → story pairs → Colophon (alone). Intro + even story pages + colophon is always even (a blank last page is a fallback only; see [04](./04-layout-and-print.md)).
 - Data supports many books from day one ("book1" is the first). Minimum one story pair.
 - **Intro:** private title, English text, Hebrew text, original photos, **main characters** (name, profile picture, short description; added in the intro editor); no illustration/colouring page. Prints the original photos (first large, or collage ≤4, also in colouring edition) with the free text below; characters are not printed. Its main characters (else its English text + photos) are the AI's character reference.
-- **Story page:** private title (never printed), one English and one Hebrew text (paragraphs allowed, no rich formatting), original photos, illustration, colouring page, remembered custom prompt, ≤3 older illustration versions, image metadata.
+- **Story page:** private title (never printed), one English and one Hebrew text (paragraphs allowed, no rich formatting), original photos, illustration, colouring page, remembered custom prompt, ≤3 older illustration versions, image metadata. The page editor can permanently delete an illustration and its version history; dropping files into the illustration area is disabled.
 - **Colophon:** generated, not typed (see [04](./04-layout-and-print.md)). **Cover:** see [04](./04-layout-and-print.md).
 
 ## Binding and direction

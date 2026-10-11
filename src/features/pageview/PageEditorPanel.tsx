@@ -1,6 +1,12 @@
 // bisiyata dishmaya, leharbot ahava biyisral
 import type { Book } from '@/domain/book';
-import type { Character, IllustrationState, IntroPhotoLayout, PageRef, PhotoRef } from '@/domain/page';
+import type {
+  Character,
+  IllustrationState,
+  IntroPhotoLayout,
+  PageRef,
+  PhotoRef,
+} from '@/domain/page';
 import { CharactersSection } from './CharactersSection';
 import { ColouringSection } from './ColouringSection';
 import { EnglishTextField } from './EnglishTextField';
@@ -23,6 +29,7 @@ export function PageEditorPanel({
   onCharacterRemove,
   onImportPhotos,
   onIllustrationChange,
+  onDeleteIllustration,
   beforeGeneration,
   onGenerationComplete,
   importDisabled,
@@ -42,6 +49,7 @@ export function PageEditorPanel({
   onCharacterRemove: (character: Character, index: number) => void;
   onImportPhotos: (files: File[]) => void;
   onIllustrationChange: (pageId: string, patch: Partial<IllustrationState>) => void;
+  onDeleteIllustration: (pageId: string) => Promise<void>;
   beforeGeneration: () => Promise<unknown>;
   onGenerationComplete: (book: Book) => Promise<unknown> | unknown;
   importDisabled: boolean;
@@ -114,9 +122,8 @@ export function PageEditorPanel({
             onCustomPromptChange={(customPrompt) =>
               onIllustrationChange(storyPage.id, { customPrompt })
             }
-            onEditModeChange={(useEditMode) =>
-              onIllustrationChange(storyPage.id, { useEditMode })
-            }
+            onEditModeChange={(useEditMode) => onIllustrationChange(storyPage.id, { useEditMode })}
+            onDelete={() => void onDeleteIllustration(storyPage.id)}
             onGenerate={() =>
               void generation.run('illustration', storyPage.id, {
                 customPrompt: storyPage.illustration.customPrompt,

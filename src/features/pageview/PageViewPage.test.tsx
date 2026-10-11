@@ -11,6 +11,22 @@ import { AppRoutes } from '@/app/routes';
 const originalCreateObjectURL = URL.createObjectURL;
 const originalRevokeObjectURL = URL.revokeObjectURL;
 
+function illustrationRecord(bookId: string, id: string, kind: 'illustration' | 'colouring') {
+  const blob = new Blob(['image'], { type: 'image/png' });
+  return {
+    id,
+    bookId,
+    kind,
+    blob,
+    mime: blob.type,
+    widthPx: 64,
+    heightPx: 64,
+    byteSize: blob.size,
+    createdAt: '2026-10-01T00:00:00.000Z',
+    meta: { source: 'uploaded' as const },
+  };
+}
+
 beforeEach(async () => {
   setStorageForTests(createTestStorage());
   Object.defineProperty(URL, 'createObjectURL', {
@@ -99,12 +115,10 @@ describe('Phase 4 page editor', () => {
         <AppRoutes />
       </ToastHost>,
     );
-    expect((await screen.findByLabelText('English text') as HTMLTextAreaElement).value).toBe(
+    expect(((await screen.findByLabelText('English text')) as HTMLTextAreaElement).value).toBe(
       'A paragraph\\nwith a second line.',
     );
-    expect((screen.getByLabelText('Hebrew text') as HTMLTextAreaElement).value).toBe(
-      'שלום\\nעולם',
-    );
+    expect((screen.getByLabelText('Hebrew text') as HTMLTextAreaElement).value).toBe('שלום\\nעולם');
   });
 
   it('opens full-size pictures, closes with Escape, and restores focus', async () => {
@@ -139,5 +153,73 @@ describe('Phase 4 page editor', () => {
     await waitFor(async () => {
       expect((await bookRepository.getBook('phase4-book'))?.storyPages[0]?.photos).toHaveLength(1);
     });
+  });
+
+  it('permanently deletes an illustration and its history while preserving its colouring page', async () => {
+    const book = await bookRepository.getBook('phase4-book');
+    const page = book!.storyPages[0]!;
+    const currentImageId = 'phase4-illustration-current';
+    const historyImageId = 'phase4-illustration-history';
+    const colouringImageId = 'phase4-colouring';
+    page.illustration.currentImageId = currentImageId;
+    page.illustration.history = [{ imageId: historyImageId, replacedAt: book!.createdAt }];
+    page.colouring = {
+      imageId: colouringImageId,
+      sourceIllustrationImageId: currentImageId,
+      outdated: false,
+    };
+    await bookRepository.save(book!, 'userEdit');
+    await Promise.all([
+      imageRepository.putImage(illustrationRecord(book!.id, currentImageId, 'illustration')),
+      imageRepository.putImage(illustrationRecord(book!.id, historyImageId, 'illustration')),
+      imageRepository.putImage(illustrationRecord(book!.id, colouringImageId, 'colouring')),
+    ]);
+    window.location.hash = `#/book/phase4-book/page/${encodeURIComponent(page.id)}`;
+    render(
+      <ToastHost>
+        <AppRoutes />
+      </ToastHost>,
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Delete illustration' }));
+
+    await waitFor(async () => {
+      const saved = await bookRepository.getBook('phase4-book');
+      expect(saved?.storyPages[0]?.illustration.currentImageId).toBeNull();
+      expect(saved?.storyPages[0]?.illustration.history).toEqual([]);
+      expect(saved?.storyPages[0]?.colouring).toEqual({
+        imageId: colouringImageId,
+        sourceIllustrationImageId: null,
+        outdated: true,
+      });
+      expect(await imageRepository.listImageIdsForBook('phase4-book')).toEqual([colouringImageId]);
+    });
+  });
+
+  it('does not accept images dropped into the illustration area', async () => {
+    const book = await bookRepository.getBook('phase4-book');
+    const page = book!.storyPages[0]!;
+    const currentImageId = 'phase4-illustration-current';
+    page.illustration.currentImageId = currentImageId;
+    await bookRepository.save(book!, 'userEdit');
+    await imageRepository.putImage(illustrationRecord(book!.id, currentImageId, 'illustration'));
+    window.location.hash = `#/book/phase4-book/page/${encodeURIComponent(page.id)}`;
+    render(
+      <ToastHost>
+        <AppRoutes />
+      </ToastHost>,
+    );
+
+    const section = await screen.findByRole('region', { name: 'Illustration' });
+    const dataTransfer = {
+      files: [new File(['dropped'], 'dropped.png', { type: 'image/png' })],
+    };
+    fireEvent.dragOver(section, { dataTransfer });
+    fireEvent.drop(section, { dataTransfer });
+
+    expect(
+      (await bookRepository.getBook('phase4-book'))?.storyPages[0]?.illustration.currentImageId,
+    ).toBe(currentImageId);
+    expect(await imageRepository.listImageIdsForBook('phase4-book')).toEqual([currentImageId]);
   });
 });

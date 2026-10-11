@@ -7,6 +7,7 @@ import { GenerateButton } from './GenerateButton';
 import { GeneratedImage } from './GeneratedImage';
 import { RetryPanel } from './RetryPanel';
 import { VersionHistoryStrip } from './VersionHistoryStrip';
+import { Button } from '@/ui/Button';
 
 export function IllustrationSection({
   book,
@@ -17,6 +18,7 @@ export function IllustrationSection({
   disabled,
   onGenerate,
   onRestore,
+  onDelete,
   onUpload,
   onCustomPromptChange,
   onEditModeChange,
@@ -29,6 +31,7 @@ export function IllustrationSection({
   disabled: boolean;
   onGenerate: () => void;
   onRestore: (imageId: string) => void;
+  onDelete: () => void;
   onUpload: (file: File) => void;
   onCustomPromptChange: (value: string) => void;
   onEditModeChange: (value: boolean) => void;
@@ -40,14 +43,26 @@ export function IllustrationSection({
       : Math.max(0, book.intro.photos.length - MAX_AI_PHOTOS_INTRO)) +
     Math.max(
       0,
-      (book.storyPages.find((page) => page.id === pageId)?.photos.length ?? 0) -
-        MAX_AI_PHOTOS_PAGE,
+      (book.storyPages.find((page) => page.id === pageId)?.photos.length ?? 0) - MAX_AI_PHOTOS_PAGE,
     );
   return (
-    <section aria-labelledby="illustration-heading" className="page-editor__section">
+    <section
+      aria-labelledby="illustration-heading"
+      className="page-editor__section"
+      onDragOver={(event) => event.preventDefault()}
+      onDrop={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+      }}
+    >
       <h3 id="illustration-heading">Illustration</h3>
       {illustration.currentImageId ? (
-        <GeneratedImage alt="Current story illustration" imageId={illustration.currentImageId} />
+        <>
+          <GeneratedImage alt="Current story illustration" imageId={illustration.currentImageId} />
+          <Button disabled={busy} onClick={onDelete} type="button" variant="danger">
+            Delete illustration
+          </Button>
+        </>
       ) : (
         <p>No illustration yet.</p>
       )}
