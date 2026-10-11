@@ -18,6 +18,7 @@ import { IntroRow } from './IntroRow';
 import { PairGroup } from './PairGroup';
 import { useStoryReorder } from './useStoryReorder';
 import { PreflightDialog } from '@/print/PreflightDialog';
+import { startPrint, type PrintOutput } from '@/print/printJob';
 
 export function BookViewPage({ book: initialBook }: { book: Book }) {
   const [book, setBook] = useState(initialBook);
@@ -25,6 +26,7 @@ export function BookViewPage({ book: initialBook }: { book: Book }) {
   const [addOpen, setAddOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [preflightOpen, setPreflightOpen] = useState(false);
+  const [printOutput, setPrintOutput] = useState<PrintOutput | undefined>();
   const [error, setError] = useState<AppError | null>(null);
   const hasPendingDelete = pendingDelete !== null;
 
@@ -98,7 +100,18 @@ export function BookViewPage({ book: initialBook }: { book: Book }) {
         disabled={hasPendingDelete}
         onAdd={() => setAddOpen(true)}
         onDelete={() => setDeleteOpen(true)}
-        onPreflight={() => setPreflightOpen(true)}
+        onPreflight={() => {
+          setPrintOutput(undefined);
+          setPreflightOpen(true);
+        }}
+        onPrintBook={() => {
+          setPrintOutput('book');
+          setPreflightOpen(true);
+        }}
+        onPrintColouring={() => {
+          setPrintOutput('colouring');
+          setPreflightOpen(true);
+        }}
         onSettings={() => {
           window.location.hash = `#/book/${encodeURIComponent(book.id)}/settings`;
         }}
@@ -153,7 +166,12 @@ export function BookViewPage({ book: initialBook }: { book: Book }) {
       <PreflightDialog
         book={book}
         edition="colour"
-        onClose={() => setPreflightOpen(false)}
+        onConfirm={printOutput ? () => startPrint(book.id, printOutput) : undefined}
+        onClose={() => {
+          setPreflightOpen(false);
+          setPrintOutput(undefined);
+        }}
+        output={printOutput}
         open={preflightOpen}
       />
     </section>

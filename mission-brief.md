@@ -87,7 +87,9 @@ Hard cover. Interior 20.6 × 29.1 cm, double-sided, 4-colour CMYK, 170 g matte c
 
 Every export page = trim + bleed + space for **crop marks** (drawn by the layout engine outside the bleed; no marks or colour bars inside the bleed band). Sheet size is a setting: exact size, or centred on A4. The shop's "can send it as A4" remark is ambiguous (see Section 11).
 
-**PDF method:** browser print-to-PDF from a print-styled page, because Hebrew right-to-left, mixed Hebrew/English, and nikud render correctly. Verify in testing: custom page size, bleed, crop marks, forced background colours/graphics (browsers may drop them), embedded fonts, no added margins. **Colour risk:** browser output is RGB while the shop prints CMYK; the shop must confirm RGB is accepted, otherwise add an external CMYK/PDF/X conversion step.
+**PDF method:** browser print-to-PDF from a print-styled page, because Hebrew right-to-left, mixed Hebrew/English, and nikud render correctly. Verify in testing: custom page size, bleed, crop marks, forced background colours/graphics (browsers may drop them), embedded fonts, no added margins. **Colour risk:** browser output is RGB while the shop may require CMYK/PDF/X. The owner does not expect shop specifications to become available; keep the export in RGB, warn on every export that compatibility is unverified, and do not describe the file as shop-approved. If CMYK/PDF/X is required, use a trusted prepress conversion workflow; do not silently convert without an agreed profile.
+
+For the interior's **centred A4** sheet mode, A4 is a minimum canvas size, not a clipping boundary. If the trim, bleed, and crop-mark zone need more room, the output sheet expands symmetrically rather than clipping any bleed or marks. This is a safety behavior; the resulting sheet size is not shop-approved.
 
 **Pre-flight check before export:** items outside the safe area, missing illustrations (print blank picture area), overflowing text, low-resolution images, page-count issues. Export is allowed with warnings. A preview toggle shows trim, bleed, and safe lines.
 
@@ -186,7 +188,7 @@ Icons first with tooltips; text labels on primary actions. **My settings = perso
 
 **Inputs still to supply:** the CSV; the QR image.
 
-**Questions for the print shop:**
+**Questions for the print shop (unanswered; owner does not expect answers):**
 1. Interior bleed amount (assumed 3 mm).
 2. Extra spine-side margin beyond 1 cm.
 3. What "you can send it as A4" means: interior pages on A4 sheets, or something about the cover (the flat cover, 43.6 × 29.7 cm, can't be A4)?

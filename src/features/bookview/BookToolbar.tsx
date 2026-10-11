@@ -10,6 +10,8 @@ export function BookToolbar({
   onDelete,
   onSettings,
   onPreflight,
+  onPrintBook,
+  onPrintColouring,
 }: {
   pairCount: number;
   disabled: boolean;
@@ -17,6 +19,8 @@ export function BookToolbar({
   onDelete: () => void;
   onSettings: () => void;
   onPreflight: () => void;
+  onPrintBook: () => void;
+  onPrintColouring: () => void;
 }) {
   const unavailable = (label: string, phase: number) => (
     <Tooltip content={`Available in Phase ${phase}`}>
@@ -29,8 +33,12 @@ export function BookToolbar({
   );
   return (
     <div aria-label="Book actions" className="book-toolbar">
-      {unavailable('Print book', 7)}
-      {unavailable('Print colouring book', 7)}
+      <Button disabled={disabled} onClick={onPrintBook} variant="secondary">
+        Print book
+      </Button>
+      <Button disabled={disabled} onClick={onPrintColouring} variant="secondary">
+        Print colouring book
+      </Button>
       {unavailable('Print cover', 8)}
       {unavailable('Download all / backup', 11)}
       {unavailable('Generate', 9)}
@@ -43,7 +51,12 @@ export function BookToolbar({
       <Button disabled={disabled || pairCount <= 1} onClick={onDelete} variant="secondary">
         Delete pages
       </Button>
-      <Button aria-label="Book settings" disabled={disabled} onClick={onSettings} variant="secondary">
+      <Button
+        aria-label="Book settings"
+        disabled={disabled}
+        onClick={onSettings}
+        variant="secondary"
+      >
         <SlidersIcon /> Book settings
       </Button>
     </div>

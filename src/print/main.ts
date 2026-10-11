@@ -1,5 +1,11 @@
 // bisiyata dishmaya, leharbot ahava biyisral
-import { t } from '@/i18n';
+import { StrictMode, createElement } from 'react';
+import { createRoot } from 'react-dom/client';
+import { PrintApp } from './PrintApp';
+import '@/layout/fonts.css';
+import '@/ui/tokens.css';
+import './print.css';
 
-// Placeholder; the print page arrives in Phase 7.
-document.getElementById('root')!.textContent = t('print.placeholder');
+createRoot(document.getElementById('root')!).render(
+  createElement(StrictMode, null, createElement(PrintApp)),
+);

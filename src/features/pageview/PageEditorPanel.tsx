@@ -42,13 +42,15 @@ export function PageEditorPanel({
         >
           Open colophon editor
         </a>
+        <PageActionsBar book={book} pageRef={pageRef} />
       </section>
     );
   }
 
-  const page = pageRef.kind === 'intro'
-    ? book.intro
-    : book.storyPages.find((candidate) => candidate.id === pageRef.id);
+  const page =
+    pageRef.kind === 'intro'
+      ? book.intro
+      : book.storyPages.find((candidate) => candidate.id === pageRef.id);
   if (!page) return null;
 
   return (
@@ -66,9 +68,7 @@ export function PageEditorPanel({
         onChange={onPhotosChange}
         onFiles={onImportPhotos}
         onLayoutChange={
-          pageRef.kind === 'intro'
-            ? (photoLayout) => onUpdate({ photoLayout })
-            : undefined
+          pageRef.kind === 'intro' ? (photoLayout) => onUpdate({ photoLayout }) : undefined
         }
         onRemove={onPhotoRemove}
         photoLayout={pageRef.kind === 'intro' ? book.intro.photoLayout : undefined}
@@ -80,7 +80,7 @@ export function PageEditorPanel({
           <ColouringSection />
         </>
       )}
-      <PageActionsBar />
+      <PageActionsBar book={book} pageRef={pageRef} />
     </section>
   );
 }
