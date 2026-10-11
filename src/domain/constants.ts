@@ -1,5 +1,8 @@
 // bisiyata dishmaya, leharbot ahava biyisral
+import { AUTOSAVE_DEBOUNCE_MS } from '@/shared/timing';
 import type { TrimPresetId } from './book';
+
+export { AUTOSAVE_DEBOUNCE_MS };
 
 export const HEADER_COMMENT_TEXT = 'bisiyata dishmaya, leharbot ahava biyisral';
 
@@ -47,8 +50,6 @@ export const THUMB_LONG_EDGE_PX = 256;
 export const ILLUSTRATION_HISTORY_MAX = 3;
 export const JOB_CONCURRENCY = 2;
 export const UNDO_WINDOW_MS = 8000;
-export const AUTOSAVE_DEBOUNCE_MS = 500;
-
 /** The colophon has no id of its own; its PageRef always uses this one. */
 export const COLOPHON_PAGE_ID = 'colophon';
 

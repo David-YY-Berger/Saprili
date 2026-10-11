@@ -3,6 +3,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { getDirection, getLocale } from '@/i18n';
 import { AppRoot } from './AppRoot';
+import '@/ui/tokens.css';
 
 document.documentElement.lang = getLocale();
 document.documentElement.dir = getDirection();
