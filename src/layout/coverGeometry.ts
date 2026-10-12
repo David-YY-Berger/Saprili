@@ -22,6 +22,7 @@ import {
 
 export const COVER_TITLE_HEIGHT_MM = 38;
 export const COVER_SUBTITLE_HEIGHT_MM = 16;
+export const COVER_MULTILINE_SUBTITLE_HEIGHT_MM = 22;
 export const COVER_TEXT_GAP_MM = 4;
 export const COVER_PICTURE_GAP_MM = 6;
 /** Always reserved at the bottom of the front, so the colouring marker never moves the picture. */
@@ -104,7 +105,9 @@ export function computeCoverGeometry(
   const subtitleRect: Rect = {
     ...content,
     y: titleRect.y + titleRect.height + COVER_TEXT_GAP_MM,
-    height: COVER_SUBTITLE_HEIGHT_MM,
+    height: book.cover.subtitleHe.includes('\n')
+      ? COVER_MULTILINE_SUBTITLE_HEIGHT_MM
+      : COVER_SUBTITLE_HEIGHT_MM,
   };
   const pictureTop = subtitleRect.y + subtitleRect.height + COVER_PICTURE_GAP_MM;
   const markerBandTop = content.y + content.height - COVER_MARKER_BAND_MM;

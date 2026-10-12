@@ -13,7 +13,7 @@
 - **IndexedDB** DB `saprili`, stores `books`, `images`, `thumbs`, `jobs`, `batches`, `meta`. One record per book (text, order, settings), one per image, thumbnails separate, full images loaded on demand.
 - **`chrome.storage.local`** holds only `userSettings` (key `userSettings`).
 - `StorageProvider` is a small typed port (`get`, `getAll`, `getAllByIndex`, `getAllKeysByIndex`, atomic `apply(ops)`); repositories are factories so tests inject a fake clock and `fake-indexeddb`.
-- Records carry `schemaVersion` (current **4**; v3 adds `intro.characters`, v4 adds cover artwork modes and per-character portraits). Reads always pass through `migrateBookRecord` / `migrateImageRecord` / `migrateSettings`.
+- Records carry `schemaVersion` (current **5**; v3 adds `intro.characters`, v4 adds cover artwork modes and per-character portraits, v5 adds back-cover artwork fields). Reads always pass through `migrateBookRecord` / `migrateImageRecord` / `migrateSettings`.
 - Storage failures throw `AppError` `STORAGE_FAILED` or `STORAGE_QUOTA`.
 - `MetaRepository` is a generic key/value used for `printJob:<id>`, `jobHostMode`, and flags.
 - `chrome.storage.session` holds a flag used to tell a worker idle-restart from a browser restart (`storage/sessionFlag.ts`).
@@ -39,7 +39,7 @@
 - **Character** `{id, name, description, photo: PhotoRef | null}`: a main character; the profile picture (stored like any photo: original + AI copy + thumb) and the English description are what the AI prompt uses. Characters are not printed.
 - **StoryPage**: `id`, `privateTitle`, `textEn`, `textHe`, `photos`, `illustration`, `colouring`.
 - **IllustrationState** (also `Cover.illustration`): `currentImageId`, `history` (≤3 `{imageId, replacedAt}`), `customPrompt`, `useEditMode`. **ColouringState**: `imageId`, `sourceIllustrationImageId`, `outdated`.
-- **Cover**: `titleHe`, `subtitleHe`, `spineTextHe`, `illustration`, `artworkMode` (`single` | `introCollage` | `characterPortraits`), `characterPortraits[]` (`characterId`, `imageId`), `ownImageId`, `back {note}`, `colouringMarkerText`. Own image takes display precedence. Intro-collage mode references the original intro photos and follows its selected photo layout.
+- **Cover**: `titleHe`, `subtitleHe`, `spineTextHe`, `illustration`, `artworkMode` (`single` | `introCollage` | `characterPortraits`), `characterPortraits[]` (`characterId`, `imageId`), `ownImageId`, `back {note, artworkMode, referenceImageId, generatedImageId, ownImageId}`, `colouringMarkerText`. Front own image takes display precedence. Intro-collage mode references the original intro photos and follows its selected photo layout. Back artwork is either AI-generated from its separately uploaded original reference photo (reference is not printed) or a separately uploaded picture used directly.
 - **Colophon**: `dateIso` (defaults to creation date), `place` (default "Jerusalem"), `createdByTextHe`, `qrImageId`.
 - **ImageRecord**: `id`, `bookId`, `kind` (`original|aiCopy|illustration|colouring|coverIllustration|coverUserImage|qr`), `blob`, `mime`, `widthPx`, `heightPx`, `byteSize`, `createdAt`, `meta {source: uploaded|generated, modelId?, generatedAt?}`. **ThumbRecord**: `imageId`, `bookId`, `blob`, `widthPx`, `heightPx`.
 - **Spread**: `index`, `kind` (`intro|pair|colophon`), `left`, `right`; built only by `buildSpreads(book)`.

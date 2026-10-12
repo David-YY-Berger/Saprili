@@ -6,6 +6,7 @@ import {
   COVER_CHARACTER_INSTRUCTIONS,
   COLOURING_INSTRUCTIONS,
   COVER_INSTRUCTIONS,
+  BACK_COVER_INSTRUCTIONS,
   EDIT_INSTRUCTIONS,
   ILLUSTRATION_INSTRUCTIONS,
 } from './promptTemplates';
@@ -14,6 +15,8 @@ import { MAX_AI_CHARACTERS, MAX_AI_PHOTOS_INTRO, MAX_AI_PHOTOS_PAGE } from '@/do
 import { AppError } from '@/shared/errors';
 import { computeCharacterPortraitLayout } from '@/layout/render/introPhotos';
 import { computeCoverGeometry } from '@/layout/coverGeometry';
+import { insetRect } from '@/layout/geometry';
+import { CONTENT_INSET_MM } from '@/layout/specs';
 
 export interface AiPhotoSelection {
   images: Blob[];
@@ -181,6 +184,26 @@ export async function buildCoverIllustrationRequest(
     ...makeRequest(instructions, introReference.images, getCoverPictureZoneSpec(book).aspect),
     omittedPhotoCount: introReference.omittedCount,
   };
+}
+
+export async function buildBackCoverIllustrationRequest(
+  book: Book,
+  referenceImageId: string,
+  imageRepository: Pick<ImageRepository, 'getImage'>,
+): Promise<ImageGenRequest> {
+  const reference = await imageRepository.getImage(referenceImageId);
+  if (!reference) {
+    throw new AppError('STORAGE_FAILED', {
+      detail: 'The back-cover reference photo is missing from storage',
+    });
+  }
+  const { safeRects } = computeCoverGeometry(book);
+  const pictureRect = insetRect(safeRects.back, CONTENT_INSET_MM);
+  const instructions = [
+    BACK_COVER_INSTRUCTIONS,
+    textPart('Art style', book.artStyleText),
+  ].join('\n\n');
+  return makeRequest(instructions, [reference.blob], pictureRect.width / pictureRect.height);
 }
 
 export async function buildCoverCharacterRequests(

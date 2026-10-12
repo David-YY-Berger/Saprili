@@ -8,7 +8,7 @@
 
 **Users:** the owner plus friends and family on desktop Chromium. Each user brings their own paid-tier Gemini API key.
 
-**Non-goals (v1):** accounts, cloud sync, collaboration, mobile, in-app image editing, other languages, landscape books, other print shops' formats, back-cover design, Hebrew UI.
+**Non-goals (v1):** accounts, cloud sync, collaboration, mobile, in-app image editing, other languages, landscape books, other print shops' formats, advanced back-cover design, Hebrew UI.
 
 ## Vocabulary
 - **Cover**: flat printed cover (front, spine, back). **Intro page**: first interior page, alone; introduces characters; prints the original photos. **Story page**, **pair/spread**, **Colophon page** (last interior page, alone).

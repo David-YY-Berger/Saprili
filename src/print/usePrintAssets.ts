@@ -1,7 +1,7 @@
 // bisiyata dishmaya, leharbot ahava biyisral
 import { useEffect, useState } from 'react';
 import type { Book } from '@/domain/book';
-import { getCoverImageIds, getPageImageIds } from '@/layout/render/pageImages';
+import { getBackCoverImageId, getCoverImageIds, getPageImageIds } from '@/layout/render/pageImages';
 import type { ResolvedImages } from '@/layout/render/useBlobUrl';
 import { AppError } from '@/shared/errors';
 import { imageRepository } from '@/storage/repositories';
@@ -36,7 +36,9 @@ export function usePrintAssets(
       ...new Set(
         model.sheets.flatMap((sheet) =>
           sheet.isCover
-            ? getCoverImageIds(book)
+            ? [...getCoverImageIds(book), getBackCoverImageId(book)].filter(
+                (id): id is string => id !== null,
+              )
             : sheet.pageRef
               ? getPageImageIds(book, sheet.pageRef, sheet.edition)
               : [],

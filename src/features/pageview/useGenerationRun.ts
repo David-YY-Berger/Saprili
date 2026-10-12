@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Book } from '@/domain/book';
 import type { UserSettings } from '@/domain/settings';
-import type { GenerationOptions } from '@/ai/generationService';
+import type { GenerationOptions, GenerationResult } from '@/ai/generationService';
 import { createGenerationService } from '@/ai/generationService';
 import { requestGeminiPermission } from '@/ai/geminiPermission';
 import { createProvider } from '@/ai/providers';
@@ -10,7 +10,12 @@ import { systemClock } from '@/shared/clock';
 import { AppError, toAppError } from '@/shared/errors';
 import { bookRepository, getSettingsRepository, imageRepository } from '@/storage/repositories';
 
-export type GenerationAction = 'illustration' | 'colouring' | 'cover' | 'coverCharacters';
+export type GenerationAction =
+  | 'illustration'
+  | 'colouring'
+  | 'cover'
+  | 'coverCharacters'
+  | 'backCover';
 
 export function useGenerationRun(
   bookId: string,
@@ -79,14 +84,32 @@ export function useGenerationRun(
           settingsRepository: getSettingsRepository(),
           clock: systemClock,
         });
-        const result =
-          action === 'cover'
-            ? await service.generateCoverIllustration(bookId, options)
-            : action === 'coverCharacters'
-              ? await service.generateCoverCharacterPortraits(bookId, options)
-              : action === 'illustration'
-                ? await service.generateIllustrationForPage(bookId, pageId!, options)
-                : await service.generateColouringForPage(bookId, pageId!);
+        let result: GenerationResult;
+        switch (action) {
+          case 'cover':
+            result = await service.generateCoverIllustration(bookId, options);
+            break;
+          case 'coverCharacters':
+            result = await service.generateCoverCharacterPortraits(bookId, options);
+            break;
+          case 'backCover':
+            if (!options.referenceImageId) {
+              throw new AppError('AI_BAD_RESPONSE', {
+                userMessage: 'Upload an original photo before generating back-cover artwork.',
+                nextStep: 'Choose a reference photo, then try again.',
+              });
+            }
+            result = await service.generateBackCoverIllustration(bookId, options.referenceImageId);
+            break;
+          case 'illustration':
+            if (!pageId) throw new AppError('STORAGE_FAILED', { detail: 'Missing story page id' });
+            result = await service.generateIllustrationForPage(bookId, pageId, options);
+            break;
+          case 'colouring':
+            if (!pageId) throw new AppError('STORAGE_FAILED', { detail: 'Missing story page id' });
+            result = await service.generateColouringForPage(bookId, pageId);
+            break;
+        }
         setOmittedPhotoCount(result.omittedPhotoCount);
         await onComplete(result.book);
       } catch (runError) {

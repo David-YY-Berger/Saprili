@@ -11,9 +11,13 @@ import { Banner } from '@/ui/Banner';
 export function CoverImageUpload({
   bookId,
   onUploaded,
+  label = 'Use own image',
+  hint = 'The image is shown whole, inside the cover frame; it is never cropped.',
 }: {
   bookId: string;
   onUploaded: (imageId: string) => void;
+  label?: string;
+  hint?: string;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
@@ -53,7 +57,7 @@ export function CoverImageUpload({
 
   return (
     <label className="field">
-      <span>Use own image</span>
+      <span>{label}</span>
       <input
         accept="image/*"
         disabled={busy}
@@ -66,7 +70,7 @@ export function CoverImageUpload({
         type="file"
       />
       <span className="field__hint">
-        The image is shown whole, inside the cover frame; it is never cropped.
+        {hint}
       </span>
       {busy && <span role="status">Adding cover image…</span>}
       {error !== null && (

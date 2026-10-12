@@ -77,7 +77,13 @@ export function createDefaultCover(): Cover {
     artworkMode: 'single',
     characterPortraits: [],
     ownImageId: null,
-    back: { note: '' },
+    back: {
+      note: '',
+      artworkMode: 'generate',
+      referenceImageId: null,
+      generatedImageId: null,
+      ownImageId: null,
+    },
     colouringMarkerText: 'ספר צביעה', // placeholder wording (O-06)
   };
 }

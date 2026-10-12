@@ -80,6 +80,11 @@ function pageImagePaths(book: Book): Map<string, string> {
     paths.set(portrait.imageId, `cover/character-${index + 1}`);
   });
   if (book.cover.ownImageId) paths.set(book.cover.ownImageId, 'cover/own-image');
+  if (book.cover.back.referenceImageId)
+    paths.set(book.cover.back.referenceImageId, 'cover/back-reference');
+  if (book.cover.back.generatedImageId)
+    paths.set(book.cover.back.generatedImageId, 'cover/back-illustration');
+  if (book.cover.back.ownImageId) paths.set(book.cover.back.ownImageId, 'cover/back-own-image');
   if (book.colophon.qrImageId) paths.set(book.colophon.qrImageId, 'colophon/qr');
   return paths;
 }

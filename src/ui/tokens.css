@@ -333,6 +333,10 @@ a {
   line-height: 1.5;
 }
 
+.field textarea.field__textarea--compact {
+  min-height: 4.5rem;
+}
+
 .field__hint {
   margin: 0;
   color: var(--color-ink-soft);

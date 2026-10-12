@@ -25,6 +25,13 @@ export function getCoverImageIds(book: Book): string[] {
   return book.cover.illustration.currentImageId ? [book.cover.illustration.currentImageId] : [];
 }
 
+/** The selected back-cover artwork; the source photo is never printed directly in generate mode. */
+export function getBackCoverImageId(book: Book): string | null {
+  return book.cover.back.artworkMode === 'upload'
+    ? book.cover.back.ownImageId
+    : book.cover.back.generatedImageId;
+}
+
 /** Image ids the page needs for the given edition. Intro always prints the original photos. */
 export function getPageImageIds(book: Book, pageRef: PageRef, edition: Edition): string[] {
   if (pageRef.kind === 'intro') {

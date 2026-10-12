@@ -11,11 +11,12 @@ import { buildSpreads } from '@/domain/spreads';
 import type { PageRef } from '@/domain/page';
 import { computePageGeometry, type Rect } from './geometry';
 import { computeCoverGeometry, computeCoverTextFits, fitSpineText } from './coverGeometry';
-import { getCoverImageIds } from './render/pageImages';
+import { getBackCoverImageId, getCoverImageIds } from './render/pageImages';
 import { computePageTextLayout } from './pageText';
 import { getDefaultMeasurer } from './textFit';
 import type { Edition } from './theme';
 import { computeCharacterPortraitLayout, computeIntroPhotoLayout } from './render/introPhotos';
+import { CONTENT_INSET_MM } from './specs';
 
 export type PreflightIssueCode =
   | 'ITEM_OUTSIDE_SAFE_AREA'
@@ -340,6 +341,35 @@ function runCoverPreflight(
           pageRef: COVER_REF,
           message: `The cover picture may look soft at print size (${Math.round(dpi)} effective DPI).`,
           nextStep: 'You can continue, or replace it with a higher-resolution image.',
+        });
+      }
+    }
+  }
+  const backCoverImageId = getBackCoverImageId(book);
+  if (backCoverImageId) {
+    const image = resolvedImages.get(backCoverImageId);
+    if (image) {
+      if (
+        image.meta.croppedEdgePercent !== undefined &&
+        image.meta.croppedEdgePercent > MAX_AI_CROP_PERCENT
+      ) {
+        issues.push({
+          code: 'AI_ASPECT_CROP',
+          severity: 'warning',
+          pageRef: COVER_REF,
+          message: `${image.meta.croppedEdgePercent.toFixed(1)}% of a back-cover image edge was cropped to fit the picture shape.`,
+          nextStep: 'Review the artwork edges. If important content is missing, try another photo or regenerate.',
+        });
+      }
+      const pictureWidthMm = geometry.safeRects.back.width - 2 * CONTENT_INSET_MM;
+      const dpi = computeEffectiveDpi(image.widthPx, pictureWidthMm);
+      if (dpi < LOW_RESOLUTION_DPI) {
+        issues.push({
+          code: 'LOW_RESOLUTION',
+          severity: 'info',
+          pageRef: COVER_REF,
+          message: `The back-cover picture may look soft at print size (${Math.round(dpi)} effective DPI).`,
+          nextStep: 'You can continue, or replace it with a higher-resolution picture.',
         });
       }
     }

@@ -33,6 +33,22 @@ export const bookMigrations: MigrationRegistry = {
         }
       : record.cover,
   }),
+  4: (record) => ({
+    ...record,
+    cover: isRecord(record.cover)
+      ? {
+          ...record.cover,
+          back: {
+            note: '',
+            artworkMode: 'generate',
+            referenceImageId: null,
+            generatedImageId: null,
+            ownImageId: null,
+            ...(isRecord(record.cover.back) ? record.cover.back : {}),
+          },
+        }
+      : record.cover,
+  }),
 };
 
 export const imageMigrations: MigrationRegistry = {
@@ -40,6 +56,7 @@ export const imageMigrations: MigrationRegistry = {
   1: (record) => ({ ...record }),
   2: (record) => ({ ...record }),
   3: (record) => ({ ...record }),
+  4: (record) => ({ ...record }),
 };
 
 export const settingsMigrations: MigrationRegistry = {
@@ -57,4 +74,5 @@ export const settingsMigrations: MigrationRegistry = {
   }),
   2: (record) => ({ ...record }),
   3: (record) => ({ ...record }),
+  4: (record) => ({ ...record }),
 };

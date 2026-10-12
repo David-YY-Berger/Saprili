@@ -134,11 +134,26 @@ describe('imageRefs', () => {
     };
     book.storyPages[0]!.colouring.imageId = 'col1';
     book.cover.ownImageId = 'cov';
+    book.cover.back.referenceImageId = 'back-ref';
+    book.cover.back.generatedImageId = 'back-generated';
+    book.cover.back.ownImageId = 'back-own';
     book.cover.characterPortraits = [{ characterId: 'c1', imageId: 'cover-char' }];
     book.colophon.qrImageId = 'qr';
 
     expect([...listReferencedImageIds(book)].sort()).toEqual(
-      ['a1', 'col1', 'cov', 'cover-char', 'ill1', 'ill2', 'o1', 'qr'].sort(),
+      [
+        'a1',
+        'back-generated',
+        'back-own',
+        'back-ref',
+        'col1',
+        'cov',
+        'cover-char',
+        'ill1',
+        'ill2',
+        'o1',
+        'qr',
+      ].sort(),
     );
 
     const copy = remapImageIds(
@@ -147,6 +162,9 @@ describe('imageRefs', () => {
         ['o1', 'X'],
         ['ill2', 'Y'],
         ['cover-char', 'portrait-copy'],
+        ['back-ref', 'back-ref-copy'],
+        ['back-generated', 'back-generated-copy'],
+        ['back-own', 'back-own-copy'],
         ['qr', 'Z'],
       ]),
     );
@@ -155,6 +173,9 @@ describe('imageRefs', () => {
     expect(copy.colophon.qrImageId).toBe('Z');
     expect(copy.cover.ownImageId).toBe('cov');
     expect(copy.cover.characterPortraits[0]!.imageId).toBe('portrait-copy');
+    expect(copy.cover.back.referenceImageId).toBe('back-ref-copy');
+    expect(copy.cover.back.generatedImageId).toBe('back-generated-copy');
+    expect(copy.cover.back.ownImageId).toBe('back-own-copy');
     expect(book.intro.photos[0]!.originalImageId).toBe('o1');
   });
 });

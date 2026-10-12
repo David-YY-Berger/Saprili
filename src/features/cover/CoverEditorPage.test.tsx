@@ -25,6 +25,9 @@ describe('CoverEditorPage', () => {
     expect(screen.getByRole('button', { name: 'Generate cover illustration' })).toBeTruthy();
 
     fireEvent.change(screen.getByLabelText('Title (Hebrew)'), { target: { value: 'כותרת חדשה' } });
+    fireEvent.change(screen.getByLabelText('Subtitle (Hebrew)'), {
+      target: { value: 'שורה ראשונה\nשורה שנייה' },
+    });
     fireEvent.change(screen.getByLabelText(/^Spine text \(Hebrew\)/), {
       target: { value: 'שדרה' },
     });
@@ -32,6 +35,7 @@ describe('CoverEditorPage', () => {
     await waitFor(async () => {
       const saved = await bookRepository.getBook(book.id);
       expect(saved?.cover.titleHe).toBe('כותרת חדשה');
+      expect(saved?.cover.subtitleHe).toBe('שורה ראשונה\nשורה שנייה');
       expect(saved?.cover.spineTextHe).toBe('שדרה');
     });
   });

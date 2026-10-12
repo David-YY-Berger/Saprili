@@ -40,6 +40,13 @@ describe('migrations', () => {
     expect(migrated.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
     expect(migrated.cover.artworkMode).toBe('single');
     expect(migrated.cover.characterPortraits).toEqual([]);
+    expect(migrated.cover.back).toEqual({
+      note: '',
+      artworkMode: 'generate',
+      referenceImageId: null,
+      generatedImageId: null,
+      ownImageId: null,
+    });
   });
 
   it('upgrades image and settings records', () => {

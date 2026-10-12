@@ -87,6 +87,17 @@ describe('cover geometry', () => {
     expect(g.frontPictureRect.height).toBe(181);
   });
 
+  it('reserves room for a manually split two-line subtitle without overflow', () => {
+    const book = makeBook();
+    book.cover.subtitleHe = 'שורה ראשונה\nשורה שנייה';
+    const geometry = computeCoverGeometry(book, 40);
+    const fits = computeCoverTextFits(book, geometry, measurer);
+
+    expect(geometry.subtitleRect.height).toBe(22);
+    expect(geometry.frontPictureRect.height).toBe(175);
+    expect(fits.subtitle.overflow).toBe(false);
+  });
+
   it('keeps spine text inside the spine, clear of the hinges and the safe inset', () => {
     const g = computeCoverGeometry(makeBook(), 40);
     expect(g.spineTextRect.x).toBeGreaterThanOrEqual(g.spineRect.x);

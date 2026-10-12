@@ -13,6 +13,7 @@ import type { SaveReason } from '@/storage/bookRepository';
 import type { ProviderFactory } from './ImageProvider';
 import {
   buildColouringRequest,
+  buildBackCoverIllustrationRequest,
   buildCoverCharacterRequests,
   buildCoverIllustrationRequest,
   buildEditRequest,
@@ -42,6 +43,7 @@ export interface GenerationOptions extends PromptOptions {
   useEditMode?: boolean;
   apiKey?: string;
   modelId?: string;
+  referenceImageId?: string;
 }
 
 export interface GenerationResult {
@@ -379,6 +381,50 @@ export function createGenerationService(deps: GenerationServiceDeps) {
     return { book: saved, imageId: record.id, omittedPhotoCount: request.omittedPhotoCount };
   }
 
+  async function generateBackCoverIllustration(
+    bookId: string,
+    referenceImageId: string,
+  ): Promise<GenerationResult> {
+    const { book, apiKey, illustrationModelId } = await getBookAndSettings(bookId);
+    const request = await buildBackCoverIllustrationRequest(
+      book,
+      referenceImageId,
+      deps.imageRepository,
+    );
+    const result = await deps.providerFactory(illustrationModelId, apiKey).generateImage(request);
+    const sourceSize = await postprocess.measureImage(result.image);
+    const image = await postprocess.fitToShape(result.image, request.targetAspect);
+    const fittedSize = await postprocess.measureImage(image);
+    const croppedEdgePercent = Math.max(
+      ((sourceSize.widthPx - fittedSize.widthPx) / sourceSize.widthPx) * 100,
+      ((sourceSize.heightPx - fittedSize.heightPx) / sourceSize.heightPx) * 100,
+      0,
+    );
+    const record = await saveGeneratedImage(
+      book,
+      'coverIllustration',
+      { ...result, image },
+      croppedEdgePercent,
+    );
+    const saved = await applyToLatestBook(bookId, record.id, (latest) => ({
+      book: {
+        ...latest,
+        cover: {
+          ...latest.cover,
+          back: {
+            ...latest.cover.back,
+            artworkMode: 'generate',
+            generatedImageId: record.id,
+          },
+        },
+      },
+      expired: latest.cover.back.generatedImageId
+        ? [latest.cover.back.generatedImageId]
+        : [],
+    }));
+    return { book: saved, imageId: record.id, omittedPhotoCount: 0 };
+  }
+
   async function generateCoverCharacterPortraits(
     bookId: string,
     options: GenerationOptions = {},
@@ -565,6 +611,7 @@ export function createGenerationService(deps: GenerationServiceDeps) {
     generateIllustrationForPage,
     generateColouringForPage,
     generateCoverIllustration,
+    generateBackCoverIllustration,
     generateCoverCharacterPortraits,
     restoreIllustrationVersion,
     restoreCoverIllustrationVersion,

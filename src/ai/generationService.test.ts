@@ -133,6 +133,36 @@ describe('generation service', () => {
     );
   });
 
+  it('generates back-cover art from only its uploaded reference and saves it separately', async () => {
+    const reference = new Blob(['original family photo'], { type: 'image/jpeg' });
+    await images.putImage({
+      id: 'back-reference',
+      bookId: 'book',
+      kind: 'coverUserImage',
+      blob: reference,
+      mime: reference.type,
+      widthPx: 1200,
+      heightPx: 1600,
+      byteSize: reference.size,
+      createdAt: T0,
+      meta: { source: 'uploaded' },
+    });
+    const book = await books.getBook('book');
+    book!.cover.back.referenceImageId = 'back-reference';
+    await books.save(book!, 'userEdit');
+
+    const result = await service.generateBackCoverIllustration('book', 'back-reference');
+    expect(calls).toHaveLength(1);
+    expect(calls[0]!.referenceImages).toEqual([reference]);
+    expect(calls[0]!.instructions).toContain('back cover');
+    expect(result.book.cover.back).toMatchObject({
+      artworkMode: 'generate',
+      referenceImageId: 'back-reference',
+      generatedImageId: result.imageId,
+    });
+    expect((await images.getImage(result.imageId))?.meta.source).toBe('generated');
+  });
+
   it('gates colouring without an illustration and makes no provider call', async () => {
     await expect(service.generateColouringForPage('book', 'page-1')).rejects.toMatchObject({
       code: 'AI_BAD_RESPONSE',

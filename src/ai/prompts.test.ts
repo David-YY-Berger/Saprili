@@ -4,6 +4,7 @@ import { createEmptyBook, createStoryPage } from '@/domain/factories';
 import type { ImageRecord } from '@/domain/image';
 import {
   buildColouringRequest,
+  buildBackCoverIllustrationRequest,
   buildCoverCharacterRequests,
   buildCoverIllustrationRequest,
   buildIllustrationRequest,
@@ -115,6 +116,22 @@ describe('AI prompt payload composition', () => {
     expect(request.instructions).not.toContain('OTHER PAGE SECRET');
     expect(request.referenceImages).toHaveLength(3);
     expect(request.omittedPhotoCount).toBe(1);
+  });
+
+  it('uses only the selected original photo for back-cover generation', async () => {
+    const { book } = fixture();
+    const reference = imageRecord('back-reference');
+    const request = await buildBackCoverIllustrationRequest(book, reference.id, {
+      getImage: async (id: string) => (id === reference.id ? reference : null),
+    });
+    expect(request.referenceImages).toEqual([reference.blob]);
+    expect(request.targetAspect).toBeGreaterThan(0);
+    expect(request.instructions).toContain('back cover');
+    expect(request.instructions).not.toMatch(/[\u0590-\u05ff]/);
+    expect(request.instructions).not.toContain('The family lives near the sea.');
+    await expect(
+      buildBackCoverIllustrationRequest(book, 'missing', { getImage: async () => null }),
+    ).rejects.toMatchObject({ code: 'STORAGE_FAILED' });
   });
 
   it('uses character pictures and descriptions in order instead of intro photos', async () => {

@@ -2,7 +2,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { createEmptyBook } from '@/domain/factories';
-import { getCoverImageIds } from './pageImages';
+import { getBackCoverImageId, getCoverImageIds } from './pageImages';
 import { CoverSheet } from './CoverSheet';
 import { FakeTextMeasurer } from '../textFit';
 
@@ -40,9 +40,9 @@ describe('CoverSheet', () => {
     expect(html).toContain('ספר צביעה');
   });
 
-  it('never prints the back-cover reminder; it is editor only', () => {
+  it('does not show a back-cover reminder in the preview or print', () => {
     expect(render()).not.toContain('TODO');
-    expect(render({ showTodoNote: true })).toContain('data-editor-only="true"');
+    expect(render()).not.toContain('data-editor-only="true"');
   });
 
   it('keeps the same cover colours in both editions', () => {
@@ -121,5 +121,25 @@ describe('getCoverImageIds', () => {
     expect(html).toContain('src="blob:first"');
     expect(html).toContain('src="blob:second"');
     expect((html.match(/data-layer="picture"/g) ?? []).length).toBe(2);
+  });
+
+  it('renders selected back-cover artwork and never the AI reference photo', () => {
+    const book = createEmptyBook({ nowIso: '2026-01-01T00:00:00.000Z' });
+    book.cover.back.referenceImageId = 'reference';
+    book.cover.back.generatedImageId = 'generated-back';
+    const ids = [getBackCoverImageId(book)!];
+    const html = render({ book, images: new Map([['generated-back', 'blob:generated']]) });
+    expect(ids).toEqual(['generated-back']);
+    expect(html).toContain('src="blob:generated"');
+
+    book.cover.back.artworkMode = 'upload';
+    book.cover.back.ownImageId = 'uploaded-back';
+    expect(getBackCoverImageId(book)).toBe('uploaded-back');
+    expect(getBackCoverImageId(book)).not.toBe('reference');
+    const directUploadHtml = render({
+      book,
+      images: new Map([['uploaded-back', 'blob:uploaded-back']]),
+    });
+    expect(directUploadHtml).toContain('src="blob:uploaded-back"');
   });
 });

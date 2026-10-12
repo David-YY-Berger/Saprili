@@ -47,6 +47,16 @@ export function CoverEditorPage({ initialBook }: { initialBook: Book }) {
     purgeAfterSaveRef.current = autosave.lastSavedAt ?? '';
     updateCover({ ownImageId: imageId });
   };
+  const updateBackCover = (patch: Partial<Book['cover']['back']>) => {
+    purgeAfterSaveRef.current = autosave.lastSavedAt ?? '';
+    setBook((current) => ({
+      ...current,
+      cover: {
+        ...current.cover,
+        back: { ...current.cover.back, ...patch },
+      },
+    }));
+  };
 
   return (
     <section aria-labelledby="cover-heading" className="cover-editor-page">
@@ -95,7 +105,12 @@ export function CoverEditorPage({ initialBook }: { initialBook: Book }) {
           onBookChange={setBook}
           onOwnImage={setOwnImage}
         />
-        <BackCoverNote />
+        <BackCoverNote
+          beforeGeneration={() => autosave.flush()}
+          book={book}
+          onBookChange={setBook}
+          onUploadedImage={updateBackCover}
+        />
         <div className="modal__actions">
           <Button
             onClick={() => {

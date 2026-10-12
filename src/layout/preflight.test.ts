@@ -114,6 +114,21 @@ describe('preflight', () => {
       expect(notice?.pageRef.kind).toBe('cover');
     });
 
+    it('checks the selected back-cover picture resolution', () => {
+      const book = makeBook();
+      book.cover.back.artworkMode = 'upload';
+      book.cover.back.ownImageId = 'back';
+      const report = runPreflight(
+        book,
+        'colour',
+        new Map([['back', image('back', 300)]]),
+        'cover',
+      );
+      expect(
+        report.issues.find((issue) => issue.code === 'LOW_RESOLUTION')?.message,
+      ).toContain('back-cover');
+    });
+
     it('warns about a cover illustration cropped beyond the threshold', () => {
       const book = makeBook();
       book.cover.illustration.currentImageId = 'cover';

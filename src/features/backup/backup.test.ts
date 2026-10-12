@@ -49,6 +49,9 @@ async function createFixture() {
   const second = createStoryPage({ id: 'story-2' });
   book.storyPages = [first, second];
   book.cover.ownImageId = 'cover-own';
+  book.cover.back.referenceImageId = 'cover-back-reference';
+  book.cover.back.generatedImageId = 'cover-back-generated';
+  book.cover.back.ownImageId = 'cover-back-own';
   book.cover.characterPortraits = [{ characterId: 'miriam', imageId: 'cover-character' }];
   book.colophon.qrImageId = 'qr';
   await bookRepository.createBook(book);
@@ -61,6 +64,9 @@ async function createFixture() {
     image('old-illustration', book.id, 'illustration', 'older art'),
     image('colouring', book.id, 'colouring', 'line art'),
     image('cover-own', book.id, 'coverUserImage', 'cover photo'),
+    image('cover-back-reference', book.id, 'coverUserImage', 'back reference photo'),
+    image('cover-back-generated', book.id, 'coverIllustration', 'back generated art'),
+    image('cover-back-own', book.id, 'coverUserImage', 'back uploaded art'),
     image('cover-character', book.id, 'coverIllustration', 'AI character portrait'),
     image('qr', book.id, 'qr', 'qr data'),
   ];
@@ -87,6 +93,9 @@ describe('book backup and restore', () => {
     expect(Object.keys(archive)).toContain('pages/00-intro/text-he.txt');
     expect(Object.keys(archive)).toContain('pages/01-story/illustration-history-1.png');
     expect(Object.keys(archive)).toContain('cover/character-1.png');
+    expect(Object.keys(archive)).toContain('cover/back-reference.png');
+    expect(Object.keys(archive)).toContain('cover/back-illustration.png');
+    expect(Object.keys(archive)).toContain('cover/back-own-image.png');
 
     await bookRepository.deleteBook(book.id);
     const result = await restoreBookBackup(await asFile(backup));

@@ -2,13 +2,14 @@
 import type { Book } from '@/domain/book';
 import type { CoverGeometry } from '../coverGeometry';
 import type { Rect } from '../geometry';
+import { insetRect } from '../geometry';
+import { CONTENT_INSET_MM } from '../specs';
 import type { ResolvedTheme } from '../theme';
 import { BorderLayer } from './BorderLayer';
-import { rectStyle } from './layerStyle';
+import { PictureLayer } from './PictureLayer';
 
 /**
- * Themed background and border only (v1). The note is a reminder for the editor
- * and is never rendered when `showTodoNote` is false, which is always the case in print.
+ * The back-cover artwork is framed inside the themed border and safe area.
  */
 export function CoverBack({
   book,
@@ -16,14 +17,14 @@ export function CoverBack({
   bleedMm,
   theme,
   canvasRect,
-  showTodoNote,
+  imageUrl,
 }: {
   book: Book;
   geometry: CoverGeometry;
   bleedMm: number;
   theme: ResolvedTheme;
   canvasRect: Rect;
-  showTodoNote: boolean;
+  imageUrl: string | null;
 }) {
   return (
     <div data-panel="back" style={{ position: 'absolute', inset: 0 }}>
@@ -33,23 +34,13 @@ export function CoverBack({
         style={book.theme.borderStyle}
         theme={theme}
       />
-      {showTodoNote && (
-        <div
-          data-editor-only="true"
-          style={{
-            ...rectStyle(geometry.safeRects.back, bleedMm),
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: theme.textColor,
-            fontFamily: 'sans-serif',
-            fontSize: '14pt',
-            opacity: 0.6,
-            textAlign: 'center',
-          }}
-        >
-          TODO: back cover design
-        </div>
+      {imageUrl && (
+        <PictureLayer
+          bleedMm={bleedMm}
+          imageUrl={imageUrl}
+          rect={insetRect(geometry.safeRects.back, CONTENT_INSET_MM)}
+          theme={theme}
+        />
       )}
     </div>
   );

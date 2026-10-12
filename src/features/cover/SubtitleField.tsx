@@ -7,14 +7,18 @@ export function SubtitleField({
   onChange: (value: string) => void;
 }) {
   return (
-    <label className="field">
-      <span>Subtitle (Hebrew)</span>
-      <input
+    <div className="field">
+      <label htmlFor="cover-subtitle">Subtitle (Hebrew)</label>
+      <textarea
+        className="field__textarea--compact"
         dir="rtl"
+        id="cover-subtitle"
         lang="he"
         onChange={(event) => onChange(event.currentTarget.value)}
+        rows={2}
         value={value}
       />
-    </label>
+      <span className="field__hint">Press Enter to split the subtitle across two lines.</span>
+    </div>
   );
 }

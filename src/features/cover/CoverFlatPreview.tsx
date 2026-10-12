@@ -59,7 +59,7 @@ export function CoverFlatPreview({
             height: mmToCss(p.heightMm),
           }}
         >
-          <CoverSheet book={book} edition={edition} showTodoNote />
+          <CoverSheet book={book} edition={edition} />
         </div>
         {showGuides && <CoverGuides book={book} layout={layout} />}
       </div>

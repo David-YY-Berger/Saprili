@@ -10,7 +10,7 @@ import { BackgroundLayer } from './BackgroundLayer';
 import { CoverBack } from './CoverBack';
 import { CoverFront } from './CoverFront';
 import { CoverSpine } from './CoverSpine';
-import { getCoverImageIds } from './pageImages';
+import { getBackCoverImageId, getCoverImageIds } from './pageImages';
 import { useBlobUrls, type ResolvedImages } from './useBlobUrl';
 import { useFontsReady } from './useFontsReady';
 
@@ -21,8 +21,6 @@ export interface CoverSheetProps {
   /** Pre-resolved image URLs (print). Without it, images are loaded from storage. */
   images?: ResolvedImages;
   measurer?: TextMeasurer;
-  /** Editor only: a reminder on the back panel. Never set for print. */
-  showTodoNote?: boolean;
 }
 
 /** The flat cover including its bleed band; the single renderer behind the editor and print. */
@@ -31,7 +29,6 @@ export function CoverSheet({
   edition,
   images,
   measurer,
-  showTodoNote = false,
 }: CoverSheetProps) {
   const fontId = book.typography.hebrewFontId;
   const geometry = useMemo(() => computeCoverGeometry(book), [book]);
@@ -52,7 +49,12 @@ export function CoverSheet({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [book.cover.spineTextHe, geometry.spineWidthMm, fontId, measurer, fontsReady],
   );
-  const imageIds = useMemo(() => getCoverImageIds(book), [book]);
+  const frontImageIds = useMemo(() => getCoverImageIds(book), [book]);
+  const backImageId = useMemo(() => getBackCoverImageId(book), [book]);
+  const imageIds = useMemo(
+    () => [...frontImageIds, ...(backImageId ? [backImageId] : [])],
+    [backImageId, frontImageIds],
+  );
   const urls = useBlobUrls(imageIds, images);
   const canvas = geometry.bleedRect;
 
@@ -76,7 +78,7 @@ export function CoverSheet({
           book={book}
           canvasRect={canvas}
           geometry={geometry}
-          showTodoNote={showTodoNote}
+          imageUrl={backImageId ? (urls.get(backImageId) ?? null) : null}
           theme={theme}
         />
         <CoverFront
@@ -85,7 +87,7 @@ export function CoverSheet({
           canvasRect={canvas}
           fits={fits}
           geometry={geometry}
-          imageUrls={imageIds.map((id) => urls.get(id) ?? null)}
+          imageUrls={frontImageIds.map((id) => urls.get(id) ?? null)}
           showMarker={edition === 'colouring'}
           theme={theme}
         />
