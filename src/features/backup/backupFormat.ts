@@ -76,6 +76,9 @@ function pageImagePaths(book: Book): Map<string, string> {
     if (page.colouring.imageId) paths.set(page.colouring.imageId, `${folder}/colouring`);
   });
   addIllustration(book.cover.illustration, 'cover', 'illustration');
+  book.cover.characterPortraits.forEach((portrait, index) => {
+    paths.set(portrait.imageId, `cover/character-${index + 1}`);
+  });
   if (book.cover.ownImageId) paths.set(book.cover.ownImageId, 'cover/own-image');
   if (book.colophon.qrImageId) paths.set(book.colophon.qrImageId, 'colophon/qr');
   return paths;

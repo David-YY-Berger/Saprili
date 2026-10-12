@@ -74,6 +74,8 @@ export function createDefaultCover(): Cover {
     subtitleHe: 'צילום מצב מהחיים שלנו',
     spineTextHe: 'משפחת ברגר 5787',
     illustration: createEmptyIllustrationState(),
+    artworkMode: 'single',
+    characterPortraits: [],
     ownImageId: null,
     back: { note: '' },
     colouringMarkerText: 'ספר צביעה', // placeholder wording (O-06)

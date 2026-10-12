@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { createEmptyBook, createStoryPage } from '@/domain/factories';
 import { buildPrintDocument, computeSheetLayout } from './printJob';
-import { computeCropMarkSegments } from './CropMarks';
+
 
 const shop = {
   trim: { widthMm: 206, heightMm: 291 },
@@ -87,17 +87,16 @@ describe('print job layout', () => {
     expect(sheet.pageRef).toBeNull();
     expect(sheet.edition).toBe('colouring');
     expect(sheet.bleedMm).toBe(15);
-    // 436 x 297 cut + 2 x (15 bleed + 3 offset + 5 mark length)
-    expect(sheet.sheetSizeMm).toEqual({ widthMm: 482, heightMm: 343 });
-    expect(sheet.placementMm).toEqual({ leftMm: 8, topMm: 8, widthMm: 466, heightMm: 327 });
-    expect(sheet.trimRect).toEqual({ x: 23, y: 23, width: 436, height: 297 });
-    const marks = computeCropMarkSegments(sheet.trimRect, sheet.bleedMm, 3, 5);
-    expect(marks).toHaveLength(8);
-    const bleedLeft = sheet.trimRect.x - sheet.bleedMm;
-    const bleedRight = sheet.trimRect.x + sheet.trimRect.width + sheet.bleedMm;
-    for (const mark of marks.filter((m) => m.y1 === m.y2)) {
-      for (const x of [mark.x1, mark.x2]) expect(x <= bleedLeft || x >= bleedRight).toBe(true);
-    }
+    // 436 x 297 cut + 2 x 15 bleed = 466 x 327, no marks (BOOK-BIND template)
+    expect(sheet.sheetSizeMm).toEqual({ widthMm: 466, heightMm: 327 });
+    expect(sheet.placementMm).toEqual({ leftMm: 0, topMm: 0, widthMm: 466, heightMm: 327 });
+    expect(sheet.trimRect).toEqual({ x: 15, y: 15, width: 436, height: 297 });
+  });
+
+  it('prints the cover at exact size even in centredA4 mode', () => {
+    const book = createEmptyBook({ id: 'cover3', nowIso: '2026-01-01T00:00:00.000Z' });
+    const doc = buildPrintDocument(book, { bookId: book.id, output: 'cover', sheetMode: 'centredA4' });
+    expect(doc.sheets[0]?.sheetSizeMm).toEqual({ widthMm: 466, heightMm: 327 });
   });
 
   it('defaults the cover to the colour edition', () => {

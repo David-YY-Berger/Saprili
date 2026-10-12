@@ -15,7 +15,7 @@ import { getCoverImageIds } from './render/pageImages';
 import { computePageTextLayout } from './pageText';
 import { getDefaultMeasurer } from './textFit';
 import type { Edition } from './theme';
-import { computeIntroPhotoLayout } from './render/introPhotos';
+import { computeCharacterPortraitLayout, computeIntroPhotoLayout } from './render/introPhotos';
 
 export type PreflightIssueCode =
   | 'ITEM_OUTSIDE_SAFE_AREA'
@@ -293,18 +293,33 @@ function runCoverPreflight(
       nextStep: 'Shorten the spine text in the Cover editor.',
     });
   }
-  const [coverImageId] = getCoverImageIds(book);
-  if (!coverImageId) {
+  const coverImageIds = getCoverImageIds(book);
+  if (coverImageIds.length === 0) {
     issues.push({
       code: 'MISSING_COVER_ILLUSTRATION',
       severity: 'warning',
       pageRef: COVER_REF,
-      message: 'The cover has no illustration; it will print with a blank picture area.',
-      nextStep: 'Use your own image in the Cover editor, or generate an illustration later.',
+      message: 'The cover has no artwork; it will print with a blank picture area.',
+      nextStep:
+        'Use an intro collage, add character portraits, or choose an image in the Cover editor.',
     });
   } else {
-    const image = resolvedImages.get(coverImageId);
-    if (image) {
+    let coverCells: Rect[];
+    if (book.cover.ownImageId || book.cover.artworkMode === 'single') {
+      coverCells = [geometry.frontPictureRect];
+    } else if (book.cover.artworkMode === 'introCollage') {
+      coverCells = computeIntroPhotoLayout(
+        coverImageIds.length,
+        book.intro.photoLayout,
+        geometry.frontPictureRect,
+      );
+    } else {
+      coverCells = computeCharacterPortraitLayout(coverImageIds.length, geometry.frontPictureRect);
+    }
+    for (const [index, coverImageId] of coverImageIds.entries()) {
+      const image = resolvedImages.get(coverImageId);
+      if (!image) continue;
+      const pictureWidthMm = coverCells[index]?.width ?? geometry.frontPictureRect.width;
       if (
         image.meta.croppedEdgePercent !== undefined &&
         image.meta.croppedEdgePercent > MAX_AI_CROP_PERCENT
@@ -317,7 +332,7 @@ function runCoverPreflight(
           nextStep: 'Review the artwork edges. If important content is missing, try a different model or regenerate.',
         });
       }
-      const dpi = computeEffectiveDpi(image.widthPx, geometry.frontPictureRect.width);
+      const dpi = computeEffectiveDpi(image.widthPx, pictureWidthMm);
       if (dpi < LOW_RESOLUTION_DPI) {
         issues.push({
           code: 'LOW_RESOLUTION',

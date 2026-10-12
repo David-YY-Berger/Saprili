@@ -4,6 +4,7 @@ import { createEmptyBook, createStoryPage } from '@/domain/factories';
 import type { ImageRecord } from '@/domain/image';
 import {
   buildColouringRequest,
+  buildCoverCharacterRequests,
   buildCoverIllustrationRequest,
   buildIllustrationRequest,
 } from './prompts';
@@ -153,6 +154,41 @@ describe('AI prompt payload composition', () => {
     ]);
     expect(request.omittedPhotoCount).toBe(0);
     expect(imageRepository).toBeDefined();
+  });
+
+  it('creates one English-only AI request per intro character', async () => {
+    const { book } = fixture();
+    const records = new Map<string, ImageRecord>();
+    records.set('character-ai', imageRecord('character-ai'));
+    book.intro.characters = [
+      {
+        id: 'child',
+        name: 'Miriam עברית',
+        description: 'Curly hair',
+        photo: { originalImageId: 'character-original', aiCopyImageId: 'character-ai' },
+      },
+      { id: 'parent', name: 'Dad', description: 'Glasses', photo: null },
+      { id: 'baby', name: 'Shira', description: 'Baby', photo: null },
+    ];
+    const result = await buildCoverCharacterRequests(book, {
+      getImage: async (id: string) => records.get(id) ?? null,
+    });
+    expect(result.omittedCount).toBe(0);
+    expect(result.requests.map(({ characterId }) => characterId)).toEqual([
+      'child',
+      'parent',
+      'baby',
+    ]);
+    expect(result.requests.map(({ request }) => request.referenceImages.length)).toEqual([1, 0, 0]);
+    expect(result.requests[0]!.request.instructions).toContain('Character: Miriam');
+    expect(result.requests[0]!.request.instructions).toContain('Curly hair');
+    expect(result.requests[1]!.request.instructions).toContain('Character: Dad');
+    expect(
+      result.requests.every(({ request }) => !/[\u0590-\u05ff]/.test(request.instructions)),
+    ).toBe(true);
+    expect(result.requests[0]!.request.targetAspect).not.toBe(
+      result.requests[1]!.request.targetAspect,
+    );
   });
 
   it('fails rather than silently generating colouring art without an illustration', async () => {

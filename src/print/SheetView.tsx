@@ -127,15 +127,17 @@ export function SheetView({
           )}
         </div>
       )}
-      <CropMarks
-        bleedMm={bleed}
-        lengthMm={spec.cropMark.lengthMm}
-        offsetMm={spec.cropMark.offsetMm}
-        sheetSizeMm={sheet.sheetSizeMm}
-        strokeMm={spec.cropMark.strokeMm}
-        trimRect={sheet.trimRect}
-      />
-      {showGuides && (
+      {!sheet.isCover && (
+        <CropMarks
+          bleedMm={bleed}
+          lengthMm={spec.cropMark.lengthMm}
+          offsetMm={spec.cropMark.offsetMm}
+          sheetSizeMm={sheet.sheetSizeMm}
+          strokeMm={spec.cropMark.strokeMm}
+          trimRect={sheet.trimRect}
+        />
+      )}
+      {showGuides && !sheet.isCover && (
         <svg
           aria-label="Crop mark and sheet bounds guides"
           className="print-screen-guides print-screen-guides--outer"

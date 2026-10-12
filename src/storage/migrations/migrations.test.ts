@@ -31,6 +31,17 @@ describe('migrations', () => {
     expect(migrateBookRecord(book)).toEqual(book);
   });
 
+  it('adds default cover artwork fields when upgrading version 3 books', () => {
+    const book = createEmptyBook({ id: 'old-cover', nowIso: '2026-01-01T00:00:00.000Z' });
+    book.schemaVersion = 3;
+    delete (book.cover as Partial<typeof book.cover>).artworkMode;
+    delete (book.cover as Partial<typeof book.cover>).characterPortraits;
+    const migrated = migrateBookRecord(book);
+    expect(migrated.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+    expect(migrated.cover.artworkMode).toBe('single');
+    expect(migrated.cover.characterPortraits).toEqual([]);
+  });
+
   it('upgrades image and settings records', () => {
     const image = migrateImageRecord({ id: 'x', blob: new Blob(['a']) });
     expect(image.meta).toEqual({ source: 'uploaded' });

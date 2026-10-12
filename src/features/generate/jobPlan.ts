@@ -2,6 +2,8 @@
 import type { Book } from '@/domain/book';
 import type { JobPlan, PlannedJob, SkippedJob } from '@/domain/job';
 import type { StoryPage } from '@/domain/page';
+import { MAX_AI_CHARACTERS } from '@/domain/constants';
+import { getCoverImageIds } from '@/layout/render/pageImages';
 
 export interface GenerateSelection {
   cover: boolean;
@@ -55,7 +57,7 @@ export function selectAll(book: Book): GenerateSelection {
 
 export function selectMissingIllustration(book: Book): GenerateSelection {
   return {
-    cover: book.cover.illustration.currentImageId === null,
+    cover: book.cover.artworkMode !== 'introCollage' && getCoverImageIds(book).length === 0,
     pageIds: new Set(
       book.storyPages
         .filter((page) => page.illustration.currentImageId === null)
@@ -91,8 +93,20 @@ export function buildJobPlan(
 
   // The cover row only ever has an illustration job.
   if (selection.cover && switches.illustrations.enabled) {
-    const exists = book.cover.illustration.currentImageId !== null;
-    if (exists && !switches.illustrations.overwrite) {
+    const exists = getCoverImageIds(book).length > 0;
+    if (book.cover.ownImageId) {
+      skipped.push({
+        kind: 'coverIllustration',
+        target: { kind: 'cover' },
+        reason: 'Using your own cover image',
+      });
+    } else if (book.cover.artworkMode === 'introCollage') {
+      skipped.push({
+        kind: 'coverIllustration',
+        target: { kind: 'cover' },
+        reason: 'Using the intro photo collage',
+      });
+    } else if (exists && !switches.illustrations.overwrite) {
       skipped.push({
         kind: 'coverIllustration',
         target: { kind: 'cover' },
@@ -149,10 +163,27 @@ export function buildJobPlan(
   }
 
   const colourings = jobs.filter((job) => job.kind === 'colouring').length;
+  const portraitCalls = jobs.some(
+    (job) => job.kind === 'coverIllustration' && book.cover.artworkMode === 'characterPortraits',
+  )
+    ? Math.min(
+        book.intro.characters.filter(
+          (character) =>
+            character.photo !== null ||
+            character.name.trim() !== '' ||
+            character.description.trim() !== '',
+        ).length,
+        MAX_AI_CHARACTERS,
+      ) - 1
+    : 0;
   return {
     bookId: book.id,
     jobs,
-    summary: { illustrations: jobs.length - colourings, colourings, totalCalls: jobs.length },
+    summary: {
+      illustrations: jobs.length - colourings,
+      colourings,
+      totalCalls: jobs.length + Math.max(0, portraitCalls),
+    },
     skipped,
   };
 }

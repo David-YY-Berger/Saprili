@@ -13,6 +13,7 @@ import type { SaveReason } from '@/storage/bookRepository';
 import type { ProviderFactory } from './ImageProvider';
 import {
   buildColouringRequest,
+  buildCoverCharacterRequests,
   buildCoverIllustrationRequest,
   buildEditRequest,
   buildIllustrationRequest,
@@ -184,6 +185,41 @@ export function createGenerationService(deps: GenerationServiceDeps) {
     return saved;
   }
 
+  async function storeBookAndCleanupMany(
+    book: Book,
+    newImageIds: readonly string[],
+    expiredImageIds: readonly string[],
+  ): Promise<Book> {
+    let saved: Book;
+    try {
+      saved = await deps.bookRepository.save(book, 'generation');
+    } catch (error) {
+      await deleteImages(newImageIds);
+      throw error;
+    }
+    await deleteImages(expiredImageIds);
+    return saved;
+  }
+
+  async function deleteImages(imageIds: readonly string[]): Promise<void> {
+    let firstError: unknown;
+    let failedCount = 0;
+    for (const imageId of imageIds) {
+      try {
+        await deps.imageRepository.deleteImage(imageId);
+      } catch (error) {
+        firstError ??= error;
+        failedCount += 1;
+      }
+    }
+    if (failedCount > 0) {
+      throw new AppError('STORAGE_FAILED', {
+        cause: firstError,
+        detail: `Could not remove ${failedCount} replaced or incomplete cover image(s)`,
+      });
+    }
+  }
+
   /** Applies a generated image to the latest saved book; removes the image if that fails. */
   async function applyToLatestBook(
     bookId: string,
@@ -343,6 +379,91 @@ export function createGenerationService(deps: GenerationServiceDeps) {
     return { book: saved, imageId: record.id, omittedPhotoCount: request.omittedPhotoCount };
   }
 
+  async function generateCoverCharacterPortraits(
+    bookId: string,
+    options: GenerationOptions = {},
+  ): Promise<GenerationResult> {
+    const { book, apiKey, illustrationModelId } = await getBookAndSettings(bookId);
+    if (book.cover.ownImageId) {
+      throw new AppError('AI_BAD_RESPONSE', {
+        userMessage: 'Remove the cover image before generating character portraits.',
+        nextStep: 'Remove the own image or keep using it as the cover artwork.',
+      });
+    }
+    const modelId = options.modelId ?? illustrationModelId;
+    const provider = deps.providerFactory(modelId, options.apiKey ?? apiKey);
+    const { requests, omittedCount } = await buildCoverCharacterRequests(
+      book,
+      deps.imageRepository,
+      options,
+    );
+    const records: ImageRecord[] = [];
+    try {
+      for (const { request } of requests) {
+        const result = await provider.generateImage(request);
+        const sourceSize = await postprocess.measureImage(result.image);
+        const image = await postprocess.fitToShape(result.image, request.targetAspect);
+        const fittedSize = await postprocess.measureImage(image);
+        const croppedEdgePercent = Math.max(
+          ((sourceSize.widthPx - fittedSize.widthPx) / sourceSize.widthPx) * 100,
+          ((sourceSize.heightPx - fittedSize.heightPx) / sourceSize.heightPx) * 100,
+          0,
+        );
+        records.push(
+          await saveGeneratedImage(
+            book,
+            'coverIllustration',
+            { ...result, image },
+            croppedEdgePercent,
+          ),
+        );
+      }
+    } catch (error) {
+      await deleteImages(records.map(({ id }) => id));
+      throw error;
+    }
+    const portraits = requests.map(({ characterId }, index) => ({
+      characterId,
+      imageId: records[index]!.id,
+    }));
+    const saved = await withBookLock(bookId, async () => {
+      const latest = await getBook(bookId);
+      const currentCharacterIds = new Set(latest.intro.characters.map((character) => character.id));
+      const currentPortraits = portraits.filter(({ characterId }) =>
+        currentCharacterIds.has(characterId),
+      );
+      if (currentPortraits.length === 0) {
+        await deleteImages(records.map(({ id }) => id));
+        throw new AppError('STORAGE_FAILED', {
+          detail: 'The intro characters changed before cover portraits could be saved',
+        });
+      }
+      const currentImageIds = new Set(currentPortraits.map(({ imageId }) => imageId));
+      const unusedImageIds = records
+        .map(({ id }) => id)
+        .filter((imageId) => !currentImageIds.has(imageId));
+      await deleteImages(unusedImageIds);
+      const expired = latest.cover.characterPortraits.map(({ imageId }) => imageId);
+      return storeBookAndCleanupMany(
+        {
+          ...latest,
+          cover: {
+            ...latest.cover,
+            artworkMode: 'characterPortraits',
+            characterPortraits: currentPortraits,
+          },
+        },
+        [...currentImageIds],
+        expired,
+      );
+    });
+    return {
+      book: saved,
+      imageId: saved.cover.characterPortraits[0]!.imageId,
+      omittedPhotoCount: omittedCount,
+    };
+  }
+
   async function restoreIllustrationVersion(
     bookId: string,
     pageId: string,
@@ -444,6 +565,7 @@ export function createGenerationService(deps: GenerationServiceDeps) {
     generateIllustrationForPage,
     generateColouringForPage,
     generateCoverIllustration,
+    generateCoverCharacterPortraits,
     restoreIllustrationVersion,
     restoreCoverIllustrationVersion,
     uploadOwnIllustration,

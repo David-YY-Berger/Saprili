@@ -111,6 +111,28 @@ describe('generation service', () => {
     );
   });
 
+  it('generates and stores a separate cover portrait for each intro character', async () => {
+    const book = await books.getBook('book');
+    expect(book).not.toBeNull();
+    book!.intro.characters = [
+      { id: 'child', name: 'Miriam', description: 'Curly hair', photo: null },
+      { id: 'parent', name: 'Dad', description: 'Glasses', photo: null },
+    ];
+    await books.save(book!, 'userEdit');
+
+    const result = await service.generateCoverCharacterPortraits('book');
+    expect(calls).toHaveLength(2);
+    expect(result.book.cover.artworkMode).toBe('characterPortraits');
+    expect(result.book.cover.characterPortraits.map((portrait) => portrait.characterId)).toEqual([
+      'child',
+      'parent',
+    ]);
+    expect(result.book.cover.characterPortraits.every((portrait) => portrait.imageId)).toBe(true);
+    expect((await images.getImage(result.book.cover.characterPortraits[0]!.imageId))?.kind).toBe(
+      'coverIllustration',
+    );
+  });
+
   it('gates colouring without an illustration and makes no provider call', async () => {
     await expect(service.generateColouringForPage('book', 'page-1')).rejects.toMatchObject({
       code: 'AI_BAD_RESPONSE',

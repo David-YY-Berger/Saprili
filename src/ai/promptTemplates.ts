@@ -8,5 +8,8 @@ export const COLOURING_INSTRUCTIONS =
 export const COVER_INSTRUCTIONS =
   'Use the main characters list and their reference pictures (or the introduction photos when no characters are listed) to learn the family’s appearance. Create one warm, cute children’s-book cartoon family portrait in the requested art style. Match the people to the pictures and descriptions and reuse recognizable objects or places. Do not include written text, letters, numbers, captions, or logos. Compose for the requested cover picture shape, leaving calm space around the edges.';
 
+export const COVER_CHARACTER_INSTRUCTIONS =
+  'Create a warm, cute children’s-book cartoon portrait of only the described person. Match their appearance to the supplied reference picture, if present. Do not include any other people, written text, letters, numbers, captions, or logos. Compose the portrait for the requested picture shape, leaving calm space around the edges.';
+
 export const EDIT_INSTRUCTIONS =
   'Edit the supplied current illustration according to the additional instruction. Preserve the recognizable characters, children’s-book cartoon style, and requested picture shape. Do not add written text, letters, numbers, captions, or logos.';

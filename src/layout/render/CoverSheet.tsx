@@ -85,7 +85,7 @@ export function CoverSheet({
           canvasRect={canvas}
           fits={fits}
           geometry={geometry}
-          imageUrl={imageIds[0] ? (urls.get(imageIds[0]) ?? null) : null}
+          imageUrls={imageIds.map((id) => urls.get(id) ?? null)}
           showMarker={edition === 'colouring'}
           theme={theme}
         />

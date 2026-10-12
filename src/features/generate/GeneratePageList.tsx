@@ -1,6 +1,7 @@
 // bisiyata dishmaya, leharbot ahava biyisral
 import type { Book } from '@/domain/book';
 import type { Job, JobPlan } from '@/domain/job';
+import { getCoverImageIds } from '@/layout/render/pageImages';
 import { StatusPill } from './StatusPill';
 import type { GenerateSelection, JobSwitches } from './jobPlan';
 
@@ -43,6 +44,7 @@ export function GeneratePageList({
     );
   // A page cannot be picked when colouring is the only job and it has no illustration to colour.
   const colouringOnly = switches.colouring.enabled && !switches.illustrations.enabled;
+  const coverHasArtwork = getCoverImageIds(book).length > 0;
   const pill = (job: Job | undefined, prefix: string) =>
     job ? <StatusPill prefix={prefix} status={job.status} /> : null;
 
@@ -59,7 +61,7 @@ export function GeneratePageList({
           Cover
         </label>
         <span className="generate-list__status">
-          {book.cover.illustration.currentImageId ? 'Has illustration' : 'No illustration'}{' '}
+          {coverHasArtwork ? 'Has cover artwork' : 'No cover artwork'}{' '}
           {pill(findJob(jobs, 'coverIllustration', null), 'Illustration')}
         </span>
       </li>

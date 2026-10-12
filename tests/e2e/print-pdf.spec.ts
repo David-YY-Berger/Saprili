@@ -107,8 +107,8 @@ test('prints an exact-size, multi-page interior PDF', async () => {
     });
     const coverResult = await inspectPdf(Buffer.from(coverPdf.data, 'base64'), {
       pageCount: 1,
-      widthMm: 482,
-      heightMm: 343,
+      widthMm: 466,
+      heightMm: 327,
       // Chrome rounds PDF page sizes to whole points (up to 0.18 mm).
       toleranceMm: 0.2,
     });

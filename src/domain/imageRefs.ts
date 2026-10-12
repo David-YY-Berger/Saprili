@@ -27,6 +27,7 @@ export function listReferencedImageIds(book: Book): Set<string> {
     add(page.colouring.sourceIllustrationImageId);
   }
   addIllustration(book.cover.illustration);
+  book.cover.characterPortraits.forEach((portrait) => add(portrait.imageId));
   add(book.cover.ownImageId);
   add(book.colophon.qrImageId);
   return ids;
@@ -70,6 +71,10 @@ export function remapImageIds(book: Book, mapping: ReadonlyMap<string, string>):
     cover: {
       ...book.cover,
       illustration: mapIllustration(book.cover.illustration),
+      characterPortraits: book.cover.characterPortraits.map((portrait) => ({
+        ...portrait,
+        imageId: map(portrait.imageId),
+      })),
       ownImageId: mapNullable(book.cover.ownImageId),
     },
     colophon: { ...book.colophon, qrImageId: mapNullable(book.colophon.qrImageId) },

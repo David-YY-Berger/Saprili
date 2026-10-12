@@ -73,4 +73,53 @@ describe('getCoverImageIds', () => {
     book.cover.ownImageId = 'own';
     expect(getCoverImageIds(book)).toEqual(['own']);
   });
+
+  it('uses the exact selected intro collage photos and portrait ids in character order', () => {
+    const book = createEmptyBook({ nowIso: '2026-01-01T00:00:00.000Z' });
+    book.intro.photoLayout = 'collage';
+    book.intro.photos = [
+      { originalImageId: 'original-1', aiCopyImageId: 'ai-1' },
+      { originalImageId: 'original-2', aiCopyImageId: 'ai-2' },
+      { originalImageId: 'original-3', aiCopyImageId: 'ai-3' },
+      { originalImageId: 'original-4', aiCopyImageId: 'ai-4' },
+      { originalImageId: 'ignored-original', aiCopyImageId: 'ignored-ai' },
+    ];
+    book.cover.artworkMode = 'introCollage';
+    expect(getCoverImageIds(book)).toEqual([
+      'original-1',
+      'original-2',
+      'original-3',
+      'original-4',
+    ]);
+    book.intro.characters = [
+      { id: 'first', name: 'First', description: '', photo: null },
+      { id: 'second', name: 'Second', description: '', photo: null },
+    ];
+    book.cover.artworkMode = 'characterPortraits';
+    book.cover.characterPortraits = [
+      { characterId: 'second', imageId: 'portrait-2' },
+      { characterId: 'first', imageId: 'portrait-1' },
+    ];
+    expect(getCoverImageIds(book)).toEqual(['portrait-1', 'portrait-2']);
+  });
+
+  it('renders the cover collage with its source images in the cover picture area', () => {
+    const book = createEmptyBook({ nowIso: '2026-01-01T00:00:00.000Z' });
+    book.cover.artworkMode = 'introCollage';
+    book.intro.photoLayout = 'collage';
+    book.intro.photos = [
+      { originalImageId: 'original-1', aiCopyImageId: 'ai-1' },
+      { originalImageId: 'original-2', aiCopyImageId: 'ai-2' },
+    ];
+    const html = render({
+      book,
+      images: new Map([
+        ['original-1', 'blob:first'],
+        ['original-2', 'blob:second'],
+      ]),
+    });
+    expect(html).toContain('src="blob:first"');
+    expect(html).toContain('src="blob:second"');
+    expect((html.match(/data-layer="picture"/g) ?? []).length).toBe(2);
+  });
 });

@@ -100,6 +100,24 @@ describe('buildJobPlan', () => {
     expect(plan.jobs.filter((job) => job.target.kind === 'cover')).toHaveLength(1);
   });
 
+  it('counts one cover AI call per character and skips the photo-collage cover', () => {
+    const book = sampleBook();
+    book.cover.artworkMode = 'characterPortraits';
+    book.intro.characters = [
+      { id: 'c1', name: 'Miriam', description: '', photo: null },
+      { id: 'c2', name: 'Dad', description: '', photo: null },
+    ];
+    const portraitPlan = buildJobPlan(book, { cover: true, pageIds: new Set() }, both());
+    expect(portraitPlan.summary).toEqual({ illustrations: 1, colourings: 0, totalCalls: 2 });
+
+    book.cover.artworkMode = 'introCollage';
+    book.intro.photos = [{ originalImageId: 'photo-1', aiCopyImageId: 'ai-1' }];
+    expect(selectMissingIllustration(book).cover).toBe(false);
+    const collagePlan = buildJobPlan(book, { cover: true, pageIds: new Set() }, both());
+    expect(collagePlan.jobs).toHaveLength(0);
+    expect(collagePlan.skipped[0]?.reason).toBe('Using the intro photo collage');
+  });
+
   it('runs illustration then colouring for each page and links them', () => {
     const book = sampleBook();
     const plan = buildJobPlan(book, { cover: false, pageIds: new Set(['p3']) }, both());

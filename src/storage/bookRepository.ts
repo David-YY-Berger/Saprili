@@ -22,16 +22,19 @@ export interface BookRepository {
 }
 
 export function summarizeBook(book: Book): BookSummary {
+  const coverThumbId =
+    book.cover.ownImageId ??
+    (book.cover.artworkMode === 'characterPortraits'
+      ? book.cover.characterPortraits[0]?.imageId
+      : book.cover.artworkMode === 'introCollage'
+        ? book.intro.photos[0]?.originalImageId
+        : book.cover.illustration.currentImageId);
   return {
     id: book.id,
     title: book.title,
     pageCount: getInteriorPageCount(book),
     modifiedAt: book.modifiedAt,
-    thumbImageId:
-      book.cover.illustration.currentImageId ??
-      book.cover.ownImageId ??
-      book.intro.photos[0]?.originalImageId ??
-      null,
+    thumbImageId: coverThumbId ?? book.intro.photos[0]?.originalImageId ?? null,
   };
 }
 

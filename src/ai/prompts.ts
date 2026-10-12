@@ -3,6 +3,7 @@ import type { Book } from '@/domain/book';
 import type { ImageRepository } from '@/storage/imageRepository';
 import type { ImageGenRequest } from './ImageProvider';
 import {
+  COVER_CHARACTER_INSTRUCTIONS,
   COLOURING_INSTRUCTIONS,
   COVER_INSTRUCTIONS,
   EDIT_INSTRUCTIONS,
@@ -11,6 +12,8 @@ import {
 import { getPictureZoneSpec, getCoverPictureZoneSpec } from '@/layout/shape';
 import { MAX_AI_CHARACTERS, MAX_AI_PHOTOS_INTRO, MAX_AI_PHOTOS_PAGE } from '@/domain/constants';
 import { AppError } from '@/shared/errors';
+import { computeCharacterPortraitLayout } from '@/layout/render/introPhotos';
+import { computeCoverGeometry } from '@/layout/coverGeometry';
 
 export interface AiPhotoSelection {
   images: Blob[];
@@ -34,7 +37,9 @@ export async function getAiPhotoSelection(
   maxPhotos: number,
 ): Promise<AiPhotoSelection> {
   const selected = photoRefs.slice(0, maxPhotos);
-  const records = await Promise.all(selected.map(({ aiCopyImageId }) => imageRepository.getImage(aiCopyImageId)));
+  const records = await Promise.all(
+    selected.map(({ aiCopyImageId }) => imageRepository.getImage(aiCopyImageId)),
+  );
   if (records.some((record) => !record)) {
     throw new AppError('STORAGE_FAILED', { detail: 'An AI-copy photo is missing from storage' });
   }
@@ -66,7 +71,9 @@ export async function getCharacterReference(
     if (character.photo) {
       const record = await imageRepository.getImage(character.photo.aiCopyImageId);
       if (!record) {
-        throw new AppError('STORAGE_FAILED', { detail: 'A character picture is missing from storage' });
+        throw new AppError('STORAGE_FAILED', {
+          detail: 'A character picture is missing from storage',
+        });
       }
       images.push(record.blob);
       pictureNote = `reference picture ${images.length}`;
@@ -152,7 +159,8 @@ export async function buildColouringRequest(
   if (!page) throw new AppError('STORAGE_FAILED', { detail: `Story page ${pageId} was not found` });
   if (!page.illustration.currentImageId) throw new AppError('AI_BAD_RESPONSE');
   const illustration = await imageRepository.getImage(page.illustration.currentImageId);
-  if (!illustration) throw new AppError('STORAGE_FAILED', { detail: 'The illustration is missing' });
+  if (!illustration)
+    throw new AppError('STORAGE_FAILED', { detail: 'The illustration is missing' });
   return makeRequest(COLOURING_INSTRUCTIONS, [illustration.blob], getPictureZoneSpec(book).aspect);
 }
 
@@ -170,13 +178,71 @@ export async function buildCoverIllustrationRequest(
     .filter(Boolean)
     .join('\n\n');
   return {
-    ...makeRequest(
-      instructions,
-      introReference.images,
-      getCoverPictureZoneSpec(book).aspect,
-    ),
+    ...makeRequest(instructions, introReference.images, getCoverPictureZoneSpec(book).aspect),
     omittedPhotoCount: introReference.omittedCount,
   };
+}
+
+export async function buildCoverCharacterRequests(
+  book: Book,
+  imageRepository: Pick<ImageRepository, 'getImage'>,
+  options: PromptOptions = {},
+): Promise<{
+  requests: { characterId: string; request: ImageGenRequest }[];
+  omittedCount: number;
+}> {
+  const characters = book.intro.characters.filter(
+    (character) =>
+      character.photo !== null ||
+      character.name.trim() !== '' ||
+      character.description.trim() !== '',
+  );
+  const selected = characters.slice(0, MAX_AI_CHARACTERS);
+  if (selected.length === 0) {
+    throw new AppError('AI_BAD_RESPONSE', {
+      userMessage: 'Add at least one main character before generating cover portraits.',
+      nextStep: 'Add a character on the intro page, then try again.',
+    });
+  }
+  const geometry = computeCoverGeometry(book);
+  const cells = computeCharacterPortraitLayout(selected.length, geometry.frontPictureRect);
+  const requests = await Promise.all(
+    selected.map(async (character, index) => {
+      const referenceImages: Blob[] = [];
+      if (character.photo) {
+        const record = await imageRepository.getImage(character.photo.aiCopyImageId);
+        if (!record) {
+          throw new AppError('STORAGE_FAILED', {
+            detail: 'A character picture is missing from storage',
+          });
+        }
+        referenceImages.push(record.blob);
+      }
+      const name =
+        stripHebrew(character.name).trim() ||
+        `Character ${book.intro.characters.indexOf(character) + 1}`;
+      const description = stripHebrew(character.description).trim();
+      const instructions = [
+        COVER_CHARACTER_INSTRUCTIONS,
+        `Character: ${name}${description ? `\nDescription: ${description}` : ''}`,
+        textPart('Art style', options.artStyleText ?? book.artStyleText),
+        options.customPrompt?.trim()
+          ? `Additional cover instruction: ${stripHebrew(options.customPrompt.trim())}`
+          : '',
+      ]
+        .filter(Boolean)
+        .join('\n\n');
+      return {
+        characterId: character.id,
+        request: makeRequest(
+          instructions,
+          referenceImages,
+          cells[index]!.width / cells[index]!.height,
+        ),
+      };
+    }),
+  );
+  return { requests, omittedCount: Math.max(0, characters.length - selected.length) };
 }
 
 export async function buildEditRequest(
@@ -188,7 +254,8 @@ export async function buildEditRequest(
   const page = book.storyPages.find((candidate) => candidate.id === pageId);
   if (!page?.illustration.currentImageId) throw new AppError('AI_BAD_RESPONSE');
   const illustration = await imageRepository.getImage(page.illustration.currentImageId);
-  if (!illustration) throw new AppError('STORAGE_FAILED', { detail: 'The illustration is missing' });
+  if (!illustration)
+    throw new AppError('STORAGE_FAILED', { detail: 'The illustration is missing' });
   return makeRequest(
     [
       EDIT_INSTRUCTIONS,

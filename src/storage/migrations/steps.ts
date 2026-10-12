@@ -23,12 +23,23 @@ export const bookMigrations: MigrationRegistry = {
       ? { ...record.intro, characters: record.intro.characters ?? [] }
       : record.intro,
   }),
+  3: (record) => ({
+    ...record,
+    cover: isRecord(record.cover)
+      ? {
+          ...record.cover,
+          artworkMode: record.cover.artworkMode ?? 'single',
+          characterPortraits: record.cover.characterPortraits ?? [],
+        }
+      : record.cover,
+  }),
 };
 
 export const imageMigrations: MigrationRegistry = {
   0: (record) => ({ ...record, meta: record.meta ?? { source: 'uploaded' } }),
   1: (record) => ({ ...record }),
   2: (record) => ({ ...record }),
+  3: (record) => ({ ...record }),
 };
 
 export const settingsMigrations: MigrationRegistry = {
@@ -45,4 +56,5 @@ export const settingsMigrations: MigrationRegistry = {
     apiKey: record.apiKey ?? null,
   }),
   2: (record) => ({ ...record }),
+  3: (record) => ({ ...record }),
 };

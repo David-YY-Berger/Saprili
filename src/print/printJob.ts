@@ -122,9 +122,10 @@ export function buildPrintDocument(
       {
         trim: { widthMm: cutRect.width, heightMm: cutRect.height },
         bleedMm: COVER_BLEED_MM,
-        cropMark: printSpec.cropMark,
+        // The bindery template (BOOK-BIND) wants exactly cut + bleed (466 x 327 mm) and no marks or scales.
+        cropMark: { lengthMm: 0, offsetMm: 0 },
       },
-      spec.sheetMode,
+      'exact',
     );
     return {
       sheets: [

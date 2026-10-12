@@ -49,3 +49,22 @@ export function computeIntroPhotoLayout(
   const [a, b] = split(pictureRect, cross, 0.5, gapMm);
   return [...split(a, direction, 0.5, gapMm), ...split(b, direction, 0.5, gapMm)];
 }
+
+/** Character portraits share the intro collage arrangement, extended to six characters. */
+export function computeCharacterPortraitLayout(count: number, pictureRect: Rect): Rect[] {
+  if (count <= 0) return [];
+  if (count <= INTRO_COLLAGE_MAX) {
+    return computeIntroPhotoLayout(count, 'collage', pictureRect);
+  }
+  const columns = 2;
+  const rows = Math.ceil(count / columns);
+  const gap = INTRO_COLLAGE_GAP_MM;
+  const cellWidth = (pictureRect.width - gap * (columns - 1)) / columns;
+  const cellHeight = (pictureRect.height - gap * (rows - 1)) / rows;
+  return Array.from({ length: count }, (_, index) => ({
+    x: pictureRect.x + (index % columns) * (cellWidth + gap),
+    y: pictureRect.y + Math.floor(index / columns) * (cellHeight + gap),
+    width: cellWidth,
+    height: cellHeight,
+  }));
+}

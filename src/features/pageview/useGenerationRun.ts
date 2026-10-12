@@ -10,7 +10,7 @@ import { systemClock } from '@/shared/clock';
 import { AppError, toAppError } from '@/shared/errors';
 import { bookRepository, getSettingsRepository, imageRepository } from '@/storage/repositories';
 
-export type GenerationAction = 'illustration' | 'colouring' | 'cover';
+export type GenerationAction = 'illustration' | 'colouring' | 'cover' | 'coverCharacters';
 
 export function useGenerationRun(
   bookId: string,
@@ -82,9 +82,11 @@ export function useGenerationRun(
         const result =
           action === 'cover'
             ? await service.generateCoverIllustration(bookId, options)
-            : action === 'illustration'
-              ? await service.generateIllustrationForPage(bookId, pageId!, options)
-              : await service.generateColouringForPage(bookId, pageId!);
+            : action === 'coverCharacters'
+              ? await service.generateCoverCharacterPortraits(bookId, options)
+              : action === 'illustration'
+                ? await service.generateIllustrationForPage(bookId, pageId!, options)
+                : await service.generateColouringForPage(bookId, pageId!);
         setOmittedPhotoCount(result.omittedPhotoCount);
         await onComplete(result.book);
       } catch (runError) {

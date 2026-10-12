@@ -8,6 +8,7 @@ import { Button } from '@/ui/Button';
 import { Spinner } from '@/ui/Spinner';
 import { undoManager } from '@/ui/UndoManager';
 import { useToast } from '@/ui/ToastHost';
+import { getCoverImageIds } from '@/layout/render/pageImages';
 import { BookCard } from './BookCard';
 import { EmptyLibraryState } from './EmptyLibraryState';
 import { useBookSummaries } from './useBookSummaries';
@@ -31,10 +32,7 @@ export function LibraryPage() {
             pageCount: book.pageCount,
             modifiedAt: copy.modifiedAt,
             thumbImageId:
-              copy.cover.illustration.currentImageId ??
-              copy.cover.ownImageId ??
-              copy.intro.photos[0]?.originalImageId ??
-              null,
+              getCoverImageIds(copy)[0] ?? copy.intro.photos[0]?.originalImageId ?? null,
           },
         ].sort((a, b) => b.modifiedAt.localeCompare(a.modifiedAt)),
       );

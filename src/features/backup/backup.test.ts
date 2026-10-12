@@ -49,6 +49,7 @@ async function createFixture() {
   const second = createStoryPage({ id: 'story-2' });
   book.storyPages = [first, second];
   book.cover.ownImageId = 'cover-own';
+  book.cover.characterPortraits = [{ characterId: 'miriam', imageId: 'cover-character' }];
   book.colophon.qrImageId = 'qr';
   await bookRepository.createBook(book);
   const images = [
@@ -60,6 +61,7 @@ async function createFixture() {
     image('old-illustration', book.id, 'illustration', 'older art'),
     image('colouring', book.id, 'colouring', 'line art'),
     image('cover-own', book.id, 'coverUserImage', 'cover photo'),
+    image('cover-character', book.id, 'coverIllustration', 'AI character portrait'),
     image('qr', book.id, 'qr', 'qr data'),
   ];
   for (const record of images) await imageRepository.putImage(record);
@@ -84,6 +86,7 @@ describe('book backup and restore', () => {
     const archive = unzipSync(new Uint8Array(await backup.arrayBuffer()));
     expect(Object.keys(archive)).toContain('pages/00-intro/text-he.txt');
     expect(Object.keys(archive)).toContain('pages/01-story/illustration-history-1.png');
+    expect(Object.keys(archive)).toContain('cover/character-1.png');
 
     await bookRepository.deleteBook(book.id);
     const result = await restoreBookBackup(await asFile(backup));

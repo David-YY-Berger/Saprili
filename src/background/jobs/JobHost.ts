@@ -51,7 +51,15 @@ export function createJobExecutor(deps: JobHostDeps) {
     if (job.kind === 'coverIllustration') {
       const book = await deps.bookRepository.getBook(job.bookId);
       const customPrompt = book?.cover.illustration.customPrompt.trim();
-      await service.generateCoverIllustration(job.bookId, { customPrompt: customPrompt || undefined });
+      if (book?.cover.artworkMode === 'characterPortraits') {
+        await service.generateCoverCharacterPortraits(job.bookId, {
+          customPrompt: customPrompt || undefined,
+        });
+      } else {
+        await service.generateCoverIllustration(job.bookId, {
+          customPrompt: customPrompt || undefined,
+        });
+      }
       return;
     }
     if (job.target.kind !== 'story') {
@@ -76,8 +84,12 @@ export function createHasOutputSince(deps: Pick<JobHostDeps, 'bookRepository' | 
     const book = await deps.bookRepository.getBook(job.bookId);
     if (!book) return false;
     let imageId: string | null | undefined;
-    if (job.kind === 'coverIllustration') imageId = book.cover.illustration.currentImageId;
-    else if (job.target.kind === 'story') {
+    if (job.kind === 'coverIllustration') {
+      imageId =
+        book.cover.artworkMode === 'characterPortraits'
+          ? book.cover.characterPortraits[0]?.imageId
+          : book.cover.illustration.currentImageId;
+    } else if (job.target.kind === 'story') {
       const page = book.storyPages.find((candidate) => candidate.id === (job.target as { pageId: string }).pageId);
       imageId = job.kind === 'colouring' ? page?.colouring.imageId : page?.illustration.currentImageId;
     }

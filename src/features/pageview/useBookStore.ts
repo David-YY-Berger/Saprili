@@ -35,6 +35,8 @@ function withGenerated(target: Book, stored: Book): Book {
         currentImageId: stored.cover.illustration.currentImageId,
         history: stored.cover.illustration.history,
       },
+      characterPortraits: stored.cover.characterPortraits,
+      artworkMode: stored.cover.artworkMode,
     },
     storyPages: target.storyPages.map((page) => {
       const saved = storedPages.get(page.id);

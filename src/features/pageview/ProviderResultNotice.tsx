@@ -5,9 +5,11 @@ import { Banner } from '@/ui/Banner';
 export function ProviderResultNotice({
   error,
   omittedPhotoCount = 0,
+  omittedReferenceLabel = 'photo',
 }: {
   error: AppError | null;
   omittedPhotoCount?: number;
+  omittedReferenceLabel?: string;
 }) {
   return (
     <>
@@ -23,9 +25,13 @@ export function ProviderResultNotice({
         </Banner>
       )}
       {omittedPhotoCount > 0 && (
-        <Banner type="warning" title="Some photos were not sent">
-          {omittedPhotoCount} photo{omittedPhotoCount === 1 ? ' was' : 's were'} above the provider
-          limit and not included in that request.
+        <Banner
+          type="warning"
+          title={`Some ${omittedReferenceLabel}${omittedPhotoCount === 1 ? '' : 's'} were not sent`}
+        >
+          {omittedPhotoCount} {omittedReferenceLabel}
+          {omittedPhotoCount === 1 ? ' was' : 's were'} above the provider limit and not included in
+          that request.
         </Banner>
       )}
     </>

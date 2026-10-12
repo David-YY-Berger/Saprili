@@ -9,6 +9,7 @@ import { BorderLayer } from './BorderLayer';
 import { ColouringMarker } from './ColouringMarker';
 import { PictureLayer } from './PictureLayer';
 import { rectStyle } from './layerStyle';
+import { computeCharacterPortraitLayout, computeIntroPhotoLayout } from './introPhotos';
 
 function CoverText({
   rect,
@@ -66,7 +67,7 @@ export function CoverFront({
   bleedMm,
   theme,
   fits,
-  imageUrl,
+  imageUrls,
   canvasRect,
   showMarker,
 }: {
@@ -75,11 +76,16 @@ export function CoverFront({
   bleedMm: number;
   theme: ResolvedTheme;
   fits: CoverTextFits;
-  imageUrl: string | null;
+  imageUrls: (string | null)[];
   canvasRect: Rect;
   showMarker: boolean;
 }) {
   const fontId = book.typography.hebrewFontId;
+  const collage = book.cover.ownImageId === null && book.cover.artworkMode !== 'single';
+  const cells =
+    book.cover.artworkMode === 'introCollage'
+      ? computeIntroPhotoLayout(imageUrls.length, book.intro.photoLayout, geometry.frontPictureRect)
+      : computeCharacterPortraitLayout(imageUrls.length, geometry.frontPictureRect);
   return (
     <div data-panel="front" style={{ position: 'absolute', inset: 0 }}>
       <BorderLayer
@@ -108,12 +114,33 @@ export function CoverFront({
         text={book.cover.subtitleHe}
         weight={400}
       />
-      <PictureLayer
-        bleedMm={bleedMm}
-        imageUrl={imageUrl}
-        rect={geometry.frontPictureRect}
-        theme={theme}
-      />
+      {collage ? (
+        cells.length > 0 ? (
+          cells.map((rect, index) => (
+            <PictureLayer
+              key={index}
+              bleedMm={bleedMm}
+              imageUrl={imageUrls[index] ?? null}
+              rect={rect}
+              theme={theme}
+            />
+          ))
+        ) : (
+          <PictureLayer
+            bleedMm={bleedMm}
+            imageUrl={null}
+            rect={geometry.frontPictureRect}
+            theme={theme}
+          />
+        )
+      ) : (
+        <PictureLayer
+          bleedMm={bleedMm}
+          imageUrl={imageUrls[0] ?? null}
+          rect={geometry.frontPictureRect}
+          theme={theme}
+        />
+      )}
       {showMarker && (
         <ColouringMarker
           bleedMm={bleedMm}
