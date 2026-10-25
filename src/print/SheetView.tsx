@@ -41,13 +41,21 @@ export function SheetView({
     <section
       aria-label={
         sheet.isCover
-          ? 'Cover print sheet'
+          ? sheet.coverPanel
+            ? `${sheet.coverPanel === 'front' ? 'Front' : 'Back'} cover print sheet`
+            : 'Cover print sheet'
           : sheet.pageRef
             ? `${sheet.pageRef.kind} print sheet ${pageNumber}`
             : `Blank fallback print sheet ${pageNumber}`
       }
       className="print-sheet"
-      data-page-kind={sheet.isCover ? 'cover' : (sheet.pageRef?.kind ?? 'blank')}
+      data-page-kind={
+        sheet.isCover
+          ? sheet.coverPanel
+            ? `cover-${sheet.coverPanel}`
+            : 'cover'
+          : (sheet.pageRef?.kind ?? 'blank')
+      }
       style={{
         position: 'relative',
         width: mmToCss(sheet.sheetSizeMm.widthMm),
@@ -70,7 +78,12 @@ export function SheetView({
           }}
         >
           {sheet.isCover ? (
-            <CoverSheet book={book} edition={sheet.edition} images={images} />
+            <CoverSheet
+              book={book}
+              edition={sheet.edition}
+              images={images}
+              panel={sheet.coverPanel}
+            />
           ) : (
             sheet.pageRef && (
               <PageSheet

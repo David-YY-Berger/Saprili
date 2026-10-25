@@ -59,3 +59,9 @@ export interface StoryPage {
   illustration: IllustrationState;
   colouring: ColouringState;
 }
+
+/** The page's main picture: its illustration, else its only original photo (when AI illustration is skipped). */
+export function getMainImageId(page: Pick<StoryPage, 'illustration' | 'photos'>): string | null {
+  if (page.illustration.currentImageId) return page.illustration.currentImageId;
+  return page.photos.length === 1 ? (page.photos[0]?.originalImageId ?? null) : null;
+}

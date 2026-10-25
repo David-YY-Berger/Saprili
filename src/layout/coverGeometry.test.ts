@@ -9,6 +9,7 @@ import {
   COVER_SAFE_INSET_MM,
 } from '@/domain/constants';
 import {
+  computeCoverPanelGeometry,
   computeCoverGeometry,
   computeCoverTextFits,
   fitSpineText,
@@ -54,6 +55,19 @@ describe('cover geometry', () => {
     expect(left.frontPictureRect.x).toBeCloseTo(mirrored, 9);
     expect(left.frontPictureRect.width).toBe(right.frontPictureRect.width);
     expect(left.frontPictureRect.height).toBe(right.frontPictureRect.height);
+  });
+
+  it('maps the front and back panels to standalone trim canvases', () => {
+    const geometry = computeCoverGeometry(makeBook('right'), 40);
+    const front = computeCoverPanelGeometry(geometry, 'front');
+    const back = computeCoverPanelGeometry(geometry, 'back');
+
+    expect(front.cutRect).toEqual({ x: 0, y: 0, width: 206, height: 297 });
+    expect(front.bleedRect).toEqual({ x: -15, y: -15, width: 236, height: 327 });
+    expect(front.safeRects.front.x).toBe(10);
+    expect(back.cutRect).toEqual(front.cutRect);
+    expect(back.bleedRect).toEqual(front.bleedRect);
+    expect(back.safeRects.back.x).toBe(10);
   });
 
   it('keeps every front item inside the safe inset, away from edges and hinges', () => {

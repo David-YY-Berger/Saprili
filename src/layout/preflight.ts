@@ -8,7 +8,7 @@ import {
 import type { ImageRecord } from '@/domain/image';
 import { getPageRefsInReadingOrder } from '@/domain/ordering';
 import { buildSpreads } from '@/domain/spreads';
-import type { PageRef } from '@/domain/page';
+import { getMainImageId, type PageRef } from '@/domain/page';
 import { computePageGeometry, type Rect } from './geometry';
 import { computeCoverGeometry, computeCoverTextFits, fitSpineText } from './coverGeometry';
 import { getBackCoverImageId, getCoverImageIds } from './render/pageImages';
@@ -118,7 +118,7 @@ export function runPreflight(
     if (pageRef.kind === 'story') {
       const page = book.storyPages.find((item) => item.id === pageRef.id);
       if (!page) continue;
-      if (edition === 'colour' && !page.illustration.currentImageId) {
+      if (edition === 'colour' && !getMainImageId(page)) {
         add({
           code: 'MISSING_ILLUSTRATION',
           severity: 'warning',
@@ -139,7 +139,7 @@ export function runPreflight(
       } else if (
         edition === 'colouring' &&
         (page.colouring.outdated ||
-          page.colouring.sourceIllustrationImageId !== page.illustration.currentImageId)
+          page.colouring.sourceIllustrationImageId !== getMainImageId(page))
       ) {
         add({
           code: 'OUTDATED_COLOURING',
@@ -186,7 +186,7 @@ export function runPreflight(
       });
     } else if (pageRef.kind === 'story') {
       const page = book.storyPages.find((item) => item.id === pageRef.id);
-      const id = edition === 'colour' ? page?.illustration.currentImageId : page?.colouring.imageId;
+      const id = edition === 'colour' ? (page ? getMainImageId(page) : null) : page?.colouring.imageId;
       if (id) imageTargets.push({ id, widthMm: geometry.pictureRect.width });
     }
     for (const { id, widthMm } of imageTargets) {

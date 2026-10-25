@@ -17,6 +17,7 @@ export function buildPrintFileName(
   book: Book,
   output: StoredPrintJob['output'],
   coverEdition?: StoredPrintJob['coverEdition'],
+  coverFormat?: StoredPrintJob['coverFormat'],
 ): string {
   const suffix =
     output === 'colouring'
@@ -24,9 +25,9 @@ export function buildPrintFileName(
       : output === 'page'
         ? 'page'
         : output === 'cover'
-          ? coverEdition === 'colouring'
-            ? 'colouring book cover'
-            : 'cover'
+          ? `${coverEdition === 'colouring' ? 'colouring book cover' : 'cover'}${
+              coverFormat === 'separate' ? ' - separate pages' : ''
+            }`
           : 'print book';
   const safeTitle = book.title.replace(/[<>:"/\\|?*]/g, '-').trim() || 'Saprili';
   return `${safeTitle} - ${suffix}`;
@@ -109,7 +110,7 @@ export function PrintApp() {
         heightMm: getPrintSpec(book).trim.heightMm,
       },
     );
-    document.title = buildPrintFileName(book, job.output, job.coverEdition);
+    document.title = buildPrintFileName(book, job.output, job.coverEdition, job.coverFormat);
   }, [book, job, model]);
 
   const print = async () => {

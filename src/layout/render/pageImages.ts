@@ -1,7 +1,7 @@
 // bisiyata dishmaya, leharbot ahava biyisral
 import type { Book } from '@/domain/book';
 import { findPage } from '@/domain/ordering';
-import type { PageRef } from '@/domain/page';
+import { getMainImageId, type PageRef } from '@/domain/page';
 import { getIntroPhotoCount } from './introPhotos';
 import type { Edition } from '../theme';
 
@@ -42,7 +42,7 @@ export function getPageImageIds(book: Book, pageRef: PageRef, edition: Edition):
   if (pageRef.kind === 'story') {
     const page = findPage(book, pageRef);
     if (!page || !('illustration' in page)) return [];
-    const id = edition === 'colouring' ? page.colouring.imageId : page.illustration.currentImageId;
+    const id = edition === 'colouring' ? page.colouring.imageId : getMainImageId(page);
     return id ? [id] : [];
   }
   return book.colophon.qrImageId ? [book.colophon.qrImageId] : [];

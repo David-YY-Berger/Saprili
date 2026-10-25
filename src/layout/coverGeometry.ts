@@ -65,6 +65,47 @@ export interface CoverGeometry {
   colouringMarkerRect: Rect;
 }
 
+export type CoverPanel = 'front' | 'back';
+
+function moveRect(rect: Rect, offsetX: number): Rect {
+  return { ...rect, x: rect.x - offsetX };
+}
+
+/** Maps one cover panel to its own trim origin while preserving the shared cover layout. */
+export function computeCoverPanelGeometry(
+  geometry: CoverGeometry,
+  panel: CoverPanel,
+): CoverGeometry {
+  const panelRect = panel === 'front' ? geometry.frontPanelRect : geometry.backPanelRect;
+  const offsetX = panelRect.x;
+  const move = (rect: Rect) => moveRect(rect, offsetX);
+
+  return {
+    ...geometry,
+    cutRect: { x: 0, y: 0, width: panelRect.width, height: geometry.cutRect.height },
+    bleedRect: {
+      x: -COVER_BLEED_MM,
+      y: -COVER_BLEED_MM,
+      width: panelRect.width + COVER_BLEED_MM * 2,
+      height: geometry.cutRect.height + COVER_BLEED_MM * 2,
+    },
+    frontPanelRect: move(geometry.frontPanelRect),
+    backPanelRect: move(geometry.backPanelRect),
+    spineRect: move(geometry.spineRect),
+    hingeRects: [move(geometry.hingeRects[0]), move(geometry.hingeRects[1])],
+    safeRects: {
+      front: move(geometry.safeRects.front),
+      back: move(geometry.safeRects.back),
+      spine: move(geometry.safeRects.spine),
+    },
+    frontPictureRect: move(geometry.frontPictureRect),
+    titleRect: move(geometry.titleRect),
+    subtitleRect: move(geometry.subtitleRect),
+    spineTextRect: move(geometry.spineTextRect),
+    colouringMarkerRect: move(geometry.colouringMarkerRect),
+  };
+}
+
 /** First table row that holds the page count; past the last row the last width is kept. */
 export function getSpineWidthMm(pageCount: number): number {
   const row = SPINE_WIDTH_TABLE.find((r) => pageCount <= r.pages) ?? SPINE_WIDTH_TABLE.at(-1);

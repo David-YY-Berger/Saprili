@@ -93,6 +93,27 @@ describe('print job layout', () => {
     expect(sheet.trimRect).toEqual({ x: 15, y: 15, width: 436, height: 297 });
   });
 
+  it('builds separate front and back cover pages at panel size with bleed', () => {
+    const book = createEmptyBook({ id: 'cover-panels', nowIso: '2026-01-01T00:00:00.000Z' });
+    const doc = buildPrintDocument(book, {
+      bookId: book.id,
+      output: 'cover',
+      sheetMode: 'exact',
+      coverFormat: 'separate',
+    });
+
+    expect(doc.sheets.map((sheet) => sheet.coverPanel)).toEqual(['front', 'back']);
+    expect(doc.sheets.every((sheet) => sheet.isCover && sheet.bleedMm === 15)).toBe(true);
+    expect(doc.sheets.map((sheet) => sheet.sheetSizeMm)).toEqual([
+      { widthMm: 236, heightMm: 327 },
+      { widthMm: 236, heightMm: 327 },
+    ]);
+    expect(doc.sheets.map((sheet) => sheet.trimRect)).toEqual([
+      { x: 15, y: 15, width: 206, height: 297 },
+      { x: 15, y: 15, width: 206, height: 297 },
+    ]);
+  });
+
   it('prints the cover at exact size even in centredA4 mode', () => {
     const book = createEmptyBook({ id: 'cover3', nowIso: '2026-01-01T00:00:00.000Z' });
     const doc = buildPrintDocument(book, { bookId: book.id, output: 'cover', sheetMode: 'centredA4' });

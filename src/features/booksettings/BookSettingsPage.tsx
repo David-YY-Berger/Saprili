@@ -103,7 +103,10 @@ export function BookSettingsPage({ initialBook }: { initialBook: Book }) {
               <label className="field">
                 <span>Title</span>
                 <input
-                  onChange={(event) => setBook((current) => ({ ...current, title: event.currentTarget.value }))}
+                  onChange={(event) => {
+                    const title = event.currentTarget.value;
+                    setBook((current) => ({ ...current, title }));
+                  }}
                   value={book.title}
                 />
               </label>
@@ -248,13 +251,14 @@ export function BookSettingsPage({ initialBook }: { initialBook: Book }) {
                     {['Large', 'Medium', 'Small'][index]}
                     <input
                       min={book.typography.minFontSizePt}
-                      onChange={(event) =>
+                      onChange={(event) => {
+                        const step = Number(event.currentTarget.value);
                         setBook((current) => {
                           const steps = [...current.typography.sizeStepsPt] as Book['typography']['sizeStepsPt'];
-                          steps[index] = Number(event.currentTarget.value);
+                          steps[index] = step;
                           return { ...current, typography: { ...current.typography, sizeStepsPt: steps } };
-                        })
-                      }
+                        });
+                      }}
                       type="number"
                       value={size}
                     />
@@ -283,15 +287,13 @@ export function BookSettingsPage({ initialBook }: { initialBook: Book }) {
                 <span>Hebrew / English spacing (mm)</span>
                 <input
                   min={0}
-                  onChange={(event) =>
+                  onChange={(event) => {
+                    const spacing = Math.max(0, Number(event.currentTarget.value));
                     setBook((current) => ({
                       ...current,
-                      typography: {
-                        ...current.typography,
-                        hebrewEnglishSpacingMm: Math.max(0, Number(event.currentTarget.value)),
-                      },
-                    }))
-                  }
+                      typography: { ...current.typography, hebrewEnglishSpacingMm: spacing },
+                    }));
+                  }}
                   type="number"
                   value={book.typography.hebrewEnglishSpacingMm}
                 />
@@ -307,7 +309,10 @@ export function BookSettingsPage({ initialBook }: { initialBook: Book }) {
               <label className="field">
                 <span>Art style</span>
                 <textarea
-                  onChange={(event) => setBook((current) => ({ ...current, artStyleText: event.currentTarget.value }))}
+                  onChange={(event) => {
+                    const artStyleText = event.currentTarget.value;
+                    setBook((current) => ({ ...current, artStyleText }));
+                  }}
                   rows={4}
                   value={book.artStyleText}
                 />

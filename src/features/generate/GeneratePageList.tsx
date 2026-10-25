@@ -1,6 +1,7 @@
 // bisiyata dishmaya, leharbot ahava biyisral
 import type { Book } from '@/domain/book';
 import type { Job, JobPlan } from '@/domain/job';
+import { getMainImageId } from '@/domain/page';
 import { getCoverImageIds } from '@/layout/render/pageImages';
 import { StatusPill } from './StatusPill';
 import type { GenerateSelection, JobSwitches } from './jobPlan';
@@ -75,7 +76,7 @@ export function GeneratePageList({
             <label>
               <input
                 checked={selection.pageIds.has(page.id)}
-                disabled={disabled || (colouringOnly && !page.illustration.currentImageId)}
+                disabled={disabled || (colouringOnly && !getMainImageId(page))}
                 onChange={(event) => onToggle(page.id, event.target.checked)}
                 type="checkbox"
               />{' '}
@@ -83,7 +84,11 @@ export function GeneratePageList({
               {page.privateTitle ? ` · ${page.privateTitle}` : ''}
             </label>
             <span className="generate-list__status">
-              {page.illustration.currentImageId ? 'Illustrated' : 'No illustration'}
+              {page.illustration.currentImageId
+                ? 'Illustrated'
+                : getMainImageId(page)
+                  ? 'Using original picture'
+                  : 'No illustration'}
               {page.colouring.imageId ? ' · coloured' : ''}{' '}
               {pill(findJob(jobs, 'illustration', page.id), 'Illustration')}{' '}
               {pill(findJob(jobs, 'colouring', page.id), 'Colouring')}

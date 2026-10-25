@@ -200,7 +200,8 @@ export function BookViewPage({ book: initialBook }: { book: Book }) {
         edition="colour"
         onConfirm={
           printOutput
-            ? ({ coverEdition }) => startPrint(book.id, printOutput, undefined, coverEdition)
+            ? ({ coverEdition, coverFormat }) =>
+                startPrint(book.id, printOutput, undefined, coverEdition, coverFormat)
             : undefined
         }
         onClose={() => {

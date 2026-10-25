@@ -11,7 +11,7 @@ import { Modal } from '@/ui/Modal';
 import { runPreflight, type CoverRef } from '@/layout/preflight';
 import type { Edition } from '@/layout/theme';
 import { CoverEditionSwitch } from './CoverEditionSwitch';
-import type { PrintOutput } from './printJob';
+import type { CoverFormat, PrintOutput } from './printJob';
 
 function pageTitle(book: Book, pageRef: PageRef | CoverRef): string {
   if (pageRef.kind === 'cover') return 'Cover';
@@ -36,7 +36,7 @@ export function PreflightDialog({
   edition: Edition;
   output?: PrintOutput;
   pageId?: string;
-  onConfirm?: (options: { coverEdition: Edition }) => Promise<void>;
+  onConfirm?: (options: { coverEdition: Edition; coverFormat: CoverFormat }) => Promise<void>;
   open: boolean;
   onClose: () => void;
 }) {
@@ -44,6 +44,7 @@ export function PreflightDialog({
   const [error, setError] = useState<unknown>(null);
   const [selectedEdition, setSelectedEdition] = useState(edition);
   const [coverEdition, setCoverEdition] = useState<Edition>('colour');
+  const [coverFormat, setCoverFormat] = useState<CoverFormat>('flat');
   const [confirming, setConfirming] = useState(false);
   const [confirmError, setConfirmError] = useState<unknown>(null);
   const reportEdition: Edition =
@@ -70,13 +71,21 @@ export function PreflightDialog({
     };
   }, [book.id, open]);
 
-  const report = useMemo(
-    () =>
-      images
-        ? runPreflight(book, reportEdition, images, output === 'cover' ? 'cover' : 'interior')
-        : null,
-    [book, images, output, reportEdition],
-  );
+  const report = useMemo(() => {
+    if (!images) return null;
+    const result = runPreflight(
+      book,
+      reportEdition,
+      images,
+      output === 'cover' ? 'cover' : 'interior',
+    );
+    return output === 'cover' && coverFormat === 'separate'
+      ? {
+          ...result,
+          issues: result.issues.filter((issue) => issue.code !== 'COVER_SPINE_TEXT_TOO_WIDE'),
+        }
+      : result;
+  }, [book, coverFormat, images, output, reportEdition]);
   const grouped = useMemo(() => {
     const groups = new Map<
       string,
@@ -109,7 +118,7 @@ export function PreflightDialog({
     setConfirming(true);
     setConfirmError(null);
     try {
-      await onConfirm({ coverEdition });
+      await onConfirm({ coverEdition, coverFormat });
       onClose();
     } catch (printError) {
       setConfirmError(printError);
@@ -150,6 +159,19 @@ export function PreflightDialog({
         </label>
       )}
       {output === 'cover' && <CoverEditionSwitch onChange={setCoverEdition} value={coverEdition} />}
+      {output === 'cover' && (
+        <label className="field">
+          <span>Cover format</span>
+          <select
+            onChange={(event) => setCoverFormat(event.currentTarget.value as CoverFormat)}
+            value={coverFormat}
+          >
+            <option value="flat">Flat wraparound (back, spine and front)</option>
+            <option value="separate">Separate front and back pages (no spine)</option>
+          </select>
+          <small>Choose the format requested by the print shop.</small>
+        </label>
+      )}
       {confirmError !== null && (
         <Banner type="error" title={toAppError(confirmError, 'PRINT_ASSET_FAILED').userMessage}>
           {toAppError(confirmError, 'PRINT_ASSET_FAILED').nextStep}

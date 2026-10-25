@@ -116,6 +116,33 @@ test('prints an exact-size, multi-page interior PDF', async () => {
     await coverClient.detach();
     await coverPage.close();
 
+    await app.getByRole('button', { name: 'Print cover' }).click();
+    await app.getByLabel('Cover format').selectOption('separate');
+    const separateCoverPagePromise = context.waitForEvent('page');
+    await app.getByRole('button', { name: 'Continue to print' }).click();
+    const separateCoverPage = await separateCoverPagePromise;
+    separateCoverPage.on('pageerror', (error) => pageErrors.push(error.message));
+    await separateCoverPage.waitForURL(/print\.html\?job=/);
+    await separateCoverPage.locator('.print-sheet[data-page-kind="cover-front"]').waitFor();
+    await separateCoverPage.locator('.print-sheet[data-page-kind="cover-back"]').waitFor();
+    await separateCoverPage.evaluate(() => document.fonts.ready);
+    assert.equal(await separateCoverPage.locator('.print-sheet').count(), 2);
+    assert.match(await separateCoverPage.title(), /separate pages/);
+    const separateCoverClient = await context.newCDPSession(separateCoverPage);
+    const separateCoverPdf = await separateCoverClient.send('Page.printToPDF', {
+      displayHeaderFooter: false,
+      preferCSSPageSize: true,
+      printBackground: true,
+    });
+    await inspectPdf(Buffer.from(separateCoverPdf.data, 'base64'), {
+      pageCount: 2,
+      widthMm: 236,
+      heightMm: 327,
+      toleranceMm: 0.2,
+    });
+    await separateCoverClient.detach();
+    await separateCoverPage.close();
+
     await app.locator('.story-row__link').first().click();
     await app.getByRole('button', { name: 'Print page' }).click();
     await app.getByRole('button', { name: 'Continue to print' }).waitFor();

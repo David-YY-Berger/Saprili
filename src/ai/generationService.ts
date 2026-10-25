@@ -1,7 +1,7 @@
 // bisiyata dishmaya, leharbot ahava biyisral
 import { ILLUSTRATION_HISTORY_MAX } from '@/domain/constants';
 import type { Book } from '@/domain/book';
-import type { IllustrationState, StoryPage } from '@/domain/page';
+import { getMainImageId, type IllustrationState, type StoryPage } from '@/domain/page';
 import type { ImageRecord } from '@/domain/image';
 import { newId } from '@/shared/ids';
 import { AppError } from '@/shared/errors';
@@ -300,10 +300,10 @@ export function createGenerationService(deps: GenerationServiceDeps) {
   async function generateColouringForPage(bookId: string, pageId: string): Promise<GenerationResult> {
     const { book, apiKey, colouringModelId } = await getBookAndSettings(bookId);
     const page = getStoryPage(book, pageId);
-    if (!page.illustration.currentImageId) {
+    if (!getMainImageId(page)) {
       throw new AppError('AI_BAD_RESPONSE', {
         userMessage: 'Generate an illustration before making a colouring page.',
-        nextStep: 'Create an illustration for this story page first.',
+        nextStep: 'Create an illustration (or add a single original picture) for this story page first.',
       });
     }
     const request = await buildColouringRequest(book, pageId, deps.imageRepository);
@@ -331,7 +331,7 @@ export function createGenerationService(deps: GenerationServiceDeps) {
           ...current,
           colouring: {
             imageId: record.id,
-            sourceIllustrationImageId: current.illustration.currentImageId,
+            sourceIllustrationImageId: getMainImageId(current),
             outdated: false,
           },
         })),

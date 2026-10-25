@@ -8,7 +8,7 @@ import {
   CROP_MARK_LENGTH_MM,
   CROP_MARK_OFFSET_MM,
 } from '@/domain/constants';
-import { computeCoverGeometry } from '@/layout/coverGeometry';
+import { computeCoverGeometry, type CoverPanel } from '@/layout/coverGeometry';
 import { newId } from '@/shared/ids';
 import { AppError } from '@/shared/errors';
 import { bookRepository, metaRepository } from '@/storage/repositories';
@@ -16,6 +16,7 @@ import type { Edition } from '@/layout/theme';
 import { createExportPageModel } from './pageModel';
 
 export type PrintOutput = 'book' | 'colouring' | 'cover' | 'page';
+export type CoverFormat = 'flat' | 'separate';
 
 export interface PrintJobSpec {
   bookId: string;
@@ -23,6 +24,7 @@ export interface PrintJobSpec {
   pageId?: string;
   sheetMode: Book['print']['sheetMode'];
   coverEdition?: Edition;
+  coverFormat?: CoverFormat;
 }
 
 export interface StoredPrintJob extends PrintJobSpec {
@@ -58,6 +60,8 @@ export interface SheetModel extends SheetLayout {
   bleedMm: number;
   /** True for the flat cover sheet, which has no page reference. */
   isCover?: boolean;
+  /** Set when a cover is exported as standalone front/back pages. */
+  coverPanel?: CoverPanel;
 }
 
 export interface PrintDocumentModel {
@@ -117,7 +121,30 @@ export function buildPrintDocument(
   },
 ): PrintDocumentModel {
   if (spec.output === 'cover') {
-    const { cutRect } = computeCoverGeometry(book);
+    const geometry = computeCoverGeometry(book);
+    const { cutRect } = geometry;
+    if (spec.coverFormat === 'separate') {
+      const layout = computeSheetLayout(
+        {
+          trim: { widthMm: geometry.frontPanelRect.width, heightMm: cutRect.height },
+          bleedMm: COVER_BLEED_MM,
+          cropMark: { lengthMm: 0, offsetMm: 0 },
+        },
+        'exact',
+      );
+      const panels: CoverPanel[] = ['front', 'back'];
+      return {
+        sheets: panels.map((coverPanel) => ({
+          ...layout,
+          pageRef: null,
+          side: 'right',
+          edition: spec.coverEdition ?? 'colour',
+          bleedMm: COVER_BLEED_MM,
+          isCover: true,
+          coverPanel,
+        })),
+      };
+    }
     const layout = computeSheetLayout(
       {
         trim: { widthMm: cutRect.width, heightMm: cutRect.height },
@@ -205,6 +232,7 @@ export async function startPrint(
   output: PrintOutput,
   pageId?: string,
   coverEdition?: Edition,
+  coverFormat?: CoverFormat,
 ): Promise<void> {
   const popup = window.open('', '_blank');
   try {
@@ -215,6 +243,7 @@ export async function startPrint(
       output,
       ...(pageId ? { pageId } : {}),
       ...(output === 'cover' ? { coverEdition: coverEdition ?? 'colour' } : {}),
+      ...(output === 'cover' ? { coverFormat: coverFormat ?? 'flat' } : {}),
       sheetMode: book.print.sheetMode,
     };
     const job = await createPrintJob(spec);

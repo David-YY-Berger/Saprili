@@ -40,6 +40,22 @@ describe('CoverSheet', () => {
     expect(html).toContain('ספר צביעה');
   });
 
+  it('renders standalone front and back panels without the spine or opposite panel', () => {
+    const front = render({ panel: 'front' });
+    expect(front).toContain('data-cover-panel="front"');
+    expect(front).toContain('width:236mm');
+    expect(front).toContain('data-panel="front"');
+    expect(front).not.toContain('data-panel="back"');
+    expect(front).not.toContain('data-layer="spine"');
+
+    const back = render({ panel: 'back' });
+    expect(back).toContain('data-cover-panel="back"');
+    expect(back).toContain('width:236mm');
+    expect(back).toContain('data-panel="back"');
+    expect(back).not.toContain('data-panel="front"');
+    expect(back).not.toContain('data-layer="spine"');
+  });
+
   it('does not show a back-cover reminder in the preview or print', () => {
     expect(render()).not.toContain('TODO');
     expect(render()).not.toContain('data-editor-only="true"');

@@ -1,4 +1,5 @@
 // bisiyata dishmaya, leharbot ahava biyisral
+import { getMainImageId } from '@/domain/page';
 import type { Book } from '@/domain/book';
 import type { ImageRepository } from '@/storage/imageRepository';
 import type { ImageGenRequest } from './ImageProvider';
@@ -160,8 +161,9 @@ export async function buildColouringRequest(
 ): Promise<ImageGenRequest> {
   const page = book.storyPages.find((candidate) => candidate.id === pageId);
   if (!page) throw new AppError('STORAGE_FAILED', { detail: `Story page ${pageId} was not found` });
-  if (!page.illustration.currentImageId) throw new AppError('AI_BAD_RESPONSE');
-  const illustration = await imageRepository.getImage(page.illustration.currentImageId);
+  const mainImageId = getMainImageId(page);
+  if (!mainImageId) throw new AppError('AI_BAD_RESPONSE');
+  const illustration = await imageRepository.getImage(mainImageId);
   if (!illustration)
     throw new AppError('STORAGE_FAILED', { detail: 'The illustration is missing' });
   return makeRequest(COLOURING_INSTRUCTIONS, [illustration.blob], getPictureZoneSpec(book).aspect);

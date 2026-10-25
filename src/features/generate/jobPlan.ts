@@ -1,7 +1,7 @@
 // bisiyata dishmaya, leharbot ahava biyisral
 import type { Book } from '@/domain/book';
 import type { JobPlan, PlannedJob, SkippedJob } from '@/domain/job';
-import type { StoryPage } from '@/domain/page';
+import { getMainImageId, type StoryPage } from '@/domain/page';
 import { MAX_AI_CHARACTERS } from '@/domain/constants';
 import { getCoverImageIds } from '@/layout/render/pageImages';
 
@@ -79,7 +79,7 @@ export function getColouringBlockReason(
   page: StoryPage,
   willGenerateIllustrationNow: boolean,
 ): string | null {
-  if (page.illustration.currentImageId !== null || willGenerateIllustrationNow) return null;
+  if (getMainImageId(page) !== null || willGenerateIllustrationNow) return null;
   return 'Needs an illustration first';
 }
 
