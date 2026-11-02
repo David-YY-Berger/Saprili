@@ -1,30 +1,20 @@
-# Saprili
+# Saprili — Your storybook scribe
 
-Chrome extension ("Your storybook scribe") that turns family photos plus short bilingual (Hebrew/English)
-text into a print-ready, hard-cover illustrated children's book and a matching colouring book.
-Each user brings their own Gemini API key.
+Saprili is a cute personal project I’m making to create family books for my beloved family. It brings family photos and stories together in a keepsake book that can be read, shared, and printed.
 
-## Docs
+The project is also here for anyone curious about how it works or interested in reviewing the work behind it.
 
-Spec, architecture and status live in [`ai_src_code_docs/`](ai_src_code_docs/README.md).
-What is still unbuilt or unverified is in [`ai_src_code_docs/TODO.md`](ai_src_code_docs/TODO.md).
+## How it works
 
-## Run locally
+Saprili is a Chrome extension for putting a book together:
 
-1. Install [Node.js](https://nodejs.org/), then run `npm ci`.
-2. Run `npm run dev` to build the extension into `dist/` and rebuild when files change.
-3. In Chrome, open `chrome://extensions`, enable **Developer mode**, select **Load unpacked**, and choose this project's `dist/` folder.
-4. After changes rebuild, click **Reload** on the Saprili card.
+1. Start with story text in English and Hebrew.
+2. Add family photos to the book’s pages.
+3. Optionally use Google’s Gemini AI to create an illustration for each page and a matching colouring page. AI generation uses your own Gemini API key.
+4. Arrange and preview the book, then export PDFs of the book and colouring pages for printing.
 
-For a one-time production build, run `npm run build`.
+Books are saved in the extension on your device. You can also back up and restore your books.
 
-To create a Chrome Web Store upload archive after building, run `npm run package`. This writes
-`saprili-<version>.zip` from `dist/`; review the privacy policy and listing draft before submitting.
-Packaging does not publish or upload the extension.
+## Where the project is now
 
-## Checks
-
-- `npm test` runs unit and component tests.
-- `npm run typecheck` and `npm run lint` check types and source rules.
-- For the extension end-to-end test, run `npx playwright install chromium` once, then `npm run e2e`. It opens a temporary headed browser profile.
-- `npm run e2e:accessibility` runs axe over the UI routes and creates the synthetic, no-family-photo store screenshots in `docs/store-assets/`.
+Saprili is still a personal project in development and is not currently available in the Chrome Web Store. In the future, I might upload it to the Chrome Web Store so others can try it too.
