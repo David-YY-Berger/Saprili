@@ -17,6 +17,8 @@ export interface Cover {
   spineTextHe: string;
   illustration: IllustrationState;
   artworkMode: CoverArtworkMode;
+  /** Book characters used by the cover illustration and character portraits. */
+  characterIds: string[];
   characterPortraits: { characterId: string; imageId: string }[];
   ownImageId: string | null;
   back: BackCover;

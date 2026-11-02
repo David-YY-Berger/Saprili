@@ -1,13 +1,12 @@
 // bisiyata dishmaya, leharbot ahava biyisral
 import type { Book } from '@/domain/book';
 import type {
-  Character,
   IllustrationState,
   IntroPhotoLayout,
   PageRef,
   PhotoRef,
 } from '@/domain/page';
-import { CharactersSection } from './CharactersSection';
+import { CharacterChecklist } from '@/features/characters/CharacterChecklist';
 import { ColouringSection } from './ColouringSection';
 import { EnglishTextField } from './EnglishTextField';
 import { HebrewTextField } from './HebrewTextField';
@@ -24,9 +23,7 @@ export function PageEditorPanel({
   onUpdate,
   onPhotosChange,
   onPhotoRemove,
-  onCharactersChange,
-  onCharacterPhoto,
-  onCharacterRemove,
+  onCharacterIdsChange,
   onImportPhotos,
   onIllustrationChange,
   onDeleteIllustration,
@@ -44,9 +41,7 @@ export function PageEditorPanel({
   }) => void;
   onPhotosChange: (photos: PhotoRef[]) => void;
   onPhotoRemove: (photo: PhotoRef, index: number) => void;
-  onCharactersChange: (characters: Character[]) => void;
-  onCharacterPhoto: (characterId: string, file: File) => void;
-  onCharacterRemove: (character: Character, index: number) => void;
+  onCharacterIdsChange: (characterIds: string[]) => void;
   onImportPhotos: (files: File[]) => void;
   onIllustrationChange: (pageId: string, patch: Partial<IllustrationState>) => void;
   onDeleteIllustration: (pageId: string) => Promise<void>;
@@ -102,17 +97,17 @@ export function PageEditorPanel({
         photoLayout={pageRef.kind === 'intro' ? book.intro.photoLayout : undefined}
         photos={page.photos}
       />
-      {pageRef.kind === 'intro' && (
-        <CharactersSection
-          characters={book.intro.characters}
-          disabled={importDisabled}
-          onChange={onCharactersChange}
-          onPhotoFile={onCharacterPhoto}
-          onRemove={onCharacterRemove}
-        />
-      )}
       {storyPage && (
         <>
+          <section aria-labelledby="page-characters-heading" className="page-editor__section">
+            <h3 id="page-characters-heading">Characters in this illustration</h3>
+            <CharacterChecklist
+              bookId={book.id}
+              characters={book.characters}
+              checkedIds={storyPage.characterIds}
+              onChange={onCharacterIdsChange}
+            />
+          </section>
           <IllustrationSection
             book={book}
             busy={generation.running}

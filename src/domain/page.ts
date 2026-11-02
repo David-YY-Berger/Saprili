@@ -47,7 +47,6 @@ export interface IntroPage {
   textHe: string;
   photos: PhotoRef[];
   photoLayout: IntroPhotoLayout;
-  characters: Character[];
 }
 
 export interface StoryPage {
@@ -56,6 +55,8 @@ export interface StoryPage {
   textEn: string;
   textHe: string;
   photos: PhotoRef[];
+  /** Book characters sent to the AI for this page's illustration. */
+  characterIds: string[];
   illustration: IllustrationState;
   colouring: ColouringState;
 }

@@ -1,6 +1,7 @@
 // bisiyata dishmaya, leharbot ahava biyisral
 import { create } from 'zustand';
 import type { Book } from '@/domain/book';
+import { applyAutoChecks } from '@/domain/characters';
 import { bookRepository } from '@/storage/repositories';
 import type { SaveReason } from '@/storage/bookRepository';
 import { AppError } from '@/shared/errors';
@@ -82,7 +83,7 @@ export const useBookStore = create<BookStoreState>((set, get) => ({
   updateBook(mutator) {
     const current = get().book;
     if (!current) throw new AppError('STORAGE_FAILED', { detail: 'No book is loaded for editing' });
-    const next = mutator(current);
+    const next = applyAutoChecks(current, mutator(current));
     if (next !== current) set({ book: next });
   },
 

@@ -121,6 +121,9 @@ export function BookSettingsPage({ initialBook }: { initialBook: Book }) {
                 </span>
               </label>
               <RecomputeShapeButton onConfirm={recomputeShape} />
+              <a href={`#/book/${encodeURIComponent(book.id)}/characters`}>
+                Characters ({book.characters.length})
+              </a>
               <a href={`#/book/${encodeURIComponent(book.id)}/colophon`}>Edit the colophon page</a>
             </section>
 

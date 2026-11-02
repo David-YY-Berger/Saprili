@@ -138,7 +138,7 @@ describe('AI prompt payload composition', () => {
     const { book, imageRepository } = fixture();
     const records = new Map<string, ImageRecord>();
     for (const id of ['char-ai-1', 'char-ai-2', 'story-ai-1']) records.set(id, imageRecord(id));
-    book.intro.characters = [
+    book.characters = [
       {
         id: 'c1',
         name: 'Miriam עברית',
@@ -152,7 +152,9 @@ describe('AI prompt payload composition', () => {
         description: 'Baby',
         photo: { originalImageId: 'char-o-2', aiCopyImageId: 'char-ai-2' },
       },
+      { id: 'c4', name: 'Grandma', description: 'Unchecked', photo: null },
     ];
+    book.storyPages[0]!.characterIds = ['c1', 'c2', 'c3'];
     book.storyPages[0]!.photos = [{ originalImageId: 'story-o-1', aiCopyImageId: 'story-ai-1' }];
     const request = await buildIllustrationRequest(
       book,
@@ -163,6 +165,7 @@ describe('AI prompt payload composition', () => {
     expect(request.instructions).toContain('- Miriam (reference picture 1): Five years old, curly hair');
     expect(request.instructions).toContain('- Dad (no picture): Tall, glasses');
     expect(request.instructions).toContain('- Shira (reference picture 2): Baby');
+    expect(request.instructions).not.toContain('Grandma');
     expect(request.instructions).not.toMatch(/[\u0590-\u05ff]/);
     expect(await Promise.all(request.referenceImages.map((b) => b.text()))).toEqual([
       'char-ai-1',
@@ -177,7 +180,7 @@ describe('AI prompt payload composition', () => {
     const { book } = fixture();
     const records = new Map<string, ImageRecord>();
     records.set('character-ai', imageRecord('character-ai'));
-    book.intro.characters = [
+    book.characters = [
       {
         id: 'child',
         name: 'Miriam עברית',
@@ -187,6 +190,7 @@ describe('AI prompt payload composition', () => {
       { id: 'parent', name: 'Dad', description: 'Glasses', photo: null },
       { id: 'baby', name: 'Shira', description: 'Baby', photo: null },
     ];
+    book.cover.characterIds = ['child', 'parent', 'baby'];
     const result = await buildCoverCharacterRequests(book, {
       getImage: async (id: string) => records.get(id) ?? null,
     });

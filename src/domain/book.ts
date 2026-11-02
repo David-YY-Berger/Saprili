@@ -1,7 +1,7 @@
 // bisiyata dishmaya, leharbot ahava biyisral
 import type { Colophon } from './colophon';
 import type { Cover } from './cover';
-import type { IntroPage, StoryPage } from './page';
+import type { Character, IntroPage, StoryPage } from './page';
 
 export type TrimPresetId = 'shop-206x291';
 
@@ -71,6 +71,8 @@ export interface Book {
   showPageNumbers: boolean;
   print: PrintSettings;
   artStyleText: string;
+  /** The book's cast; each page and the cover choose which of them the AI sees. */
+  characters: Character[];
   intro: IntroPage;
   /** Always an even number of pages. */
   storyPages: StoryPage[];

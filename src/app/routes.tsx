@@ -15,6 +15,7 @@ import { MySettingsPage } from '@/features/settings/MySettingsPage';
 import { PageViewPage } from '@/features/pageview/PageViewPage';
 import { BookSettingsPage } from '@/features/booksettings/BookSettingsPage';
 import { ColophonEditorPage } from '@/features/colophon/ColophonEditorPage';
+import { CharactersPage } from '@/features/characters/CharactersPage';
 import { CoverEditorPage } from '@/features/cover/CoverEditorPage';
 import { ComingSoonPage } from './ComingSoonPage';
 import { NotFoundPage } from './NotFoundPage';
@@ -86,6 +87,7 @@ function BookRoute({ bookId, subroute }: { bookId: string; subroute: string }) {
   if (subroute === '') return <BookViewPage book={currentBook} />;
   if (subroute === '/settings') return <BookSettingsPage initialBook={currentBook} />;
   if (subroute === '/colophon') return <ColophonEditorPage initialBook={currentBook} />;
+  if (subroute === '/characters') return <CharactersPage initialBook={currentBook} />;
   if (subroute === '/cover') return <CoverEditorPage initialBook={currentBook} />;
   if (subroute.startsWith('/page/')) {
     const pageId = decodeRoutePart(subroute.slice('/page/'.length));
@@ -110,7 +112,7 @@ export function AppRoutes() {
   if (route === '#/import') return <ImportCsvPage />;
 
   const bookMatch =
-    /^#\/book\/([^/]+)(\/setup|\/settings|\/cover|\/colophon|\/page\/[^/]+)?$/.exec(route);
+    /^#\/book\/([^/]+)(\/setup|\/settings|\/cover|\/characters|\/colophon|\/page\/[^/]+)?$/.exec(route);
   if (bookMatch) {
     const bookId = decodeRoutePart(bookMatch[1]!);
     if (bookId === null) return <NotFoundPage />;

@@ -1,6 +1,7 @@
 // bisiyata dishmaya, leharbot ahava biyisral
 import type { Book } from '@/domain/book';
-import { MAX_AI_CHARACTERS } from '@/domain/constants';
+import { getCheckedCharacters, isDefinedCharacter } from '@/domain/characters';
+import { CharacterChecklist } from '@/features/characters/CharacterChecklist';
 import { getCoverPictureZoneSpec } from '@/layout/shape';
 import { CoverImageUpload } from './CoverImageUpload';
 import { GenerateButton } from '@/features/pageview/GenerateButton';
@@ -25,13 +26,9 @@ export function CoverIllustrationControl({
   const hasOwn = book.cover.ownImageId !== null;
   const hasGenerated = book.cover.illustration.currentImageId !== null;
   const hasCharacterPortraits = book.cover.characterPortraits.length > 0;
-  const definedCharacterCount = book.intro.characters.filter(
-    (character) =>
-      character.photo !== null ||
-      character.name.trim() !== '' ||
-      character.description.trim() !== '',
+  const characterCallCount = getCheckedCharacters(book, book.cover.characterIds).filter(
+    isDefinedCharacter,
   ).length;
-  const characterCallCount = Math.min(definedCharacterCount, MAX_AI_CHARACTERS);
   const zone = getCoverPictureZoneSpec(book);
   return (
     <section aria-label="Cover artwork" className="page-editor__section">
@@ -75,11 +72,24 @@ export function CoverIllustrationControl({
         {book.cover.artworkMode === 'characterPortraits' && (
           <span className="field__hint">
             {characterCallCount === 0
-              ? 'Add a main character on the intro page to generate cover portraits.'
-              : `Generates one portrait per main character (${characterCallCount} AI call${characterCallCount === 1 ? '' : 's'}, up to ${MAX_AI_CHARACTERS}).`}
+              ? 'Check a character below to generate cover portraits.'
+              : `Generates one portrait per checked character (${characterCallCount} AI call${characterCallCount === 1 ? '' : 's'}).`}
           </span>
         )}
       </label>
+      {book.cover.artworkMode !== 'introCollage' && (
+        <section aria-label="Characters on the cover">
+          <h4>Characters on the cover</h4>
+          <CharacterChecklist
+            bookId={book.id}
+            characters={book.characters}
+            checkedIds={book.cover.characterIds}
+            onChange={(characterIds) =>
+              onBookChange({ ...book, cover: { ...book.cover, characterIds } })
+            }
+          />
+        </section>
+      )}
       {book.cover.artworkMode === 'single' && book.cover.illustration.currentImageId && (
         <GeneratedImage
           alt="Current cover illustration"
@@ -155,12 +165,7 @@ export function CoverIllustrationControl({
       <ProviderResultNotice
         error={generation.error}
         omittedReferenceLabel={
-          book.intro.characters.some(
-            (character) =>
-              character.photo !== null ||
-              character.name.trim() !== '' ||
-              character.description.trim() !== '',
-          )
+          book.characters.some(isDefinedCharacter)
             ? 'character'
             : 'photo'
         }

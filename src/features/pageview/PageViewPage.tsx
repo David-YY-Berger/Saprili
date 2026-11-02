@@ -1,7 +1,7 @@
 // bisiyata dishmaya, leharbot ahava biyisral
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Book } from '@/domain/book';
-import type { Character, PageRef, PhotoRef } from '@/domain/page';
+import type { PageRef, PhotoRef } from '@/domain/page';
 import { COLOPHON_PAGE_ID } from '@/domain/constants';
 import { photoImportService } from '@/images/importPhoto';
 import { useBeforeUnloadGuard } from '@/app/useBeforeUnloadGuard';
@@ -207,61 +207,15 @@ export function PageViewPage({ book: initialBook, pageId }: { book: Book; pageId
     }
   };
 
-  const handleCharactersChange = (characters: Character[]) => {
-    updateBook((current) => ({ ...current, intro: { ...current.intro, characters } }));
-  };
-
-  const handleCharacterPhoto = async (characterId: string, file: File) => {
-    if (importingRef.current) return;
-    importingRef.current = true;
-    setImporting(true);
-    setImmediateError(null);
-    try {
-      const imported = await photoImportService.importFiles(book.id, [file]);
-      const photo = imported[0];
-      if (!photo) return;
-      updateBook((current) => ({
-        ...current,
-        intro: {
-          ...current.intro,
-          characters: current.intro.characters.map((c) =>
-            c.id === characterId ? { ...c, photo } : c,
-          ),
-        },
-      }));
-      const saved = await commit('userEdit');
-      await imageRepository.purgeOrphanImages(saved);
-    } catch (error) {
-      setImmediateError(error);
-    } finally {
-      importingRef.current = false;
-      setImporting(false);
-    }
-  };
-
-  const handleCharacterRemove = (character: Character, index: number) => {
+  const handleCharacterIdsChange = (characterIds: string[]) => {
+    if (selectedPageRef?.kind !== 'story') return;
+    const targetId = selectedPageRef.id;
     updateBook((current) => ({
       ...current,
-      intro: {
-        ...current.intro,
-        characters: current.intro.characters.filter((c) => c.id !== character.id),
-      },
+      storyPages: current.storyPages.map((page) =>
+        page.id === targetId ? { ...page, characterIds } : page,
+      ),
     }));
-    undoManager.registerUndo({
-      label: 'Character removed',
-      undo: async () => {
-        updateBook((current) => {
-          const restored = [...current.intro.characters];
-          restored.splice(Math.min(index, restored.length), 0, character);
-          return { ...current, intro: { ...current.intro, characters: restored } };
-        });
-        await commit('userEdit');
-      },
-      onExpire: async () => {
-        const saved = await commit('userEdit');
-        await imageRepository.purgeOrphanImages(saved);
-      },
-    });
   };
 
   const handlePhotoRemove = (photo: PhotoRef, index: number) => {
@@ -377,9 +331,7 @@ export function PageViewPage({ book: initialBook, pageId }: { book: Book; pageId
             onDeleteIllustration={deleteIllustration}
             onPhotoRemove={handlePhotoRemove}
             onPhotosChange={handlePhotosChange}
-            onCharactersChange={handleCharactersChange}
-            onCharacterPhoto={(id, file) => void handleCharacterPhoto(id, file)}
-            onCharacterRemove={handleCharacterRemove}
+            onCharacterIdsChange={handleCharacterIdsChange}
             onUpdate={updatePage}
             beforeGeneration={beforeGeneration}
             onGenerationComplete={afterGeneration}

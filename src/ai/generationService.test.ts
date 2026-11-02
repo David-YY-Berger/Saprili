@@ -114,10 +114,11 @@ describe('generation service', () => {
   it('generates and stores a separate cover portrait for each intro character', async () => {
     const book = await books.getBook('book');
     expect(book).not.toBeNull();
-    book!.intro.characters = [
+    book!.characters = [
       { id: 'child', name: 'Miriam', description: 'Curly hair', photo: null },
       { id: 'parent', name: 'Dad', description: 'Glasses', photo: null },
     ];
+    book!.cover.characterIds = ['child', 'parent'];
     await books.save(book!, 'userEdit');
 
     const result = await service.generateCoverCharacterPortraits('book');

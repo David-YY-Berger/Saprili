@@ -12,7 +12,8 @@ import {
   ILLUSTRATION_INSTRUCTIONS,
 } from './promptTemplates';
 import { getPictureZoneSpec, getCoverPictureZoneSpec } from '@/layout/shape';
-import { MAX_AI_CHARACTERS, MAX_AI_PHOTOS_INTRO, MAX_AI_PHOTOS_PAGE } from '@/domain/constants';
+import { MAX_AI_PHOTOS_INTRO, MAX_AI_PHOTOS_PAGE } from '@/domain/constants';
+import { getCheckedCharacters, isDefinedCharacter } from '@/domain/characters';
 import { AppError } from '@/shared/errors';
 import { computeCharacterPortraitLayout } from '@/layout/render/introPhotos';
 import { computeCoverGeometry } from '@/layout/coverGeometry';
@@ -59,15 +60,13 @@ export interface CharacterReference {
   omittedCount: number;
 }
 
-/** Character pictures go first, in order; the text numbers each picture so name/description match it. */
+/** Checked characters' pictures go first, in order; the text numbers each picture so name/description match it. */
 export async function getCharacterReference(
   book: Book,
+  characterIds: readonly string[],
   imageRepository: Pick<ImageRepository, 'getImage'>,
 ): Promise<CharacterReference> {
-  const characters = book.intro.characters.filter(
-    (c) => c.photo !== null || c.name.trim() !== '' || c.description.trim() !== '',
-  );
-  const sent = characters.slice(0, MAX_AI_CHARACTERS);
+  const sent = getCheckedCharacters(book, characterIds).filter(isDefinedCharacter);
   const images: Blob[] = [];
   const lines: string[] = [];
   for (const [index, character] of sent.entries()) {
@@ -89,7 +88,7 @@ export async function getCharacterReference(
   return {
     images,
     text: lines.length > 0 ? `Main characters:\n${lines.join('\n')}` : '',
-    omittedCount: Math.max(0, characters.length - sent.length),
+    omittedCount: 0,
   };
 }
 
@@ -111,13 +110,17 @@ function makeRequest(
   };
 }
 
-/** Character profiles are the reference; intro photos are used only when no characters are defined. */
+/**
+ * Only the checked characters are the reference. Intro photos are a fallback solely for books that
+ * have no characters at all, so unchecking everyone never sneaks the intro photos in.
+ */
 async function getIntroReference(
   book: Book,
+  characterIds: readonly string[],
   imageRepository: Pick<ImageRepository, 'getImage'>,
 ): Promise<CharacterReference> {
-  const characters = await getCharacterReference(book, imageRepository);
-  if (characters.text) return characters;
+  const characters = await getCharacterReference(book, characterIds, imageRepository);
+  if (characters.text || book.characters.some(isDefinedCharacter)) return characters;
   const photos = await getAiPhotoSelection(book.intro.photos, imageRepository, MAX_AI_PHOTOS_INTRO);
   return { images: photos.images, text: '', omittedCount: photos.omittedCount };
 }
@@ -131,7 +134,7 @@ export async function buildIllustrationRequest(
   const page = book.storyPages.find((candidate) => candidate.id === pageId);
   if (!page) throw new AppError('STORAGE_FAILED', { detail: `Story page ${pageId} was not found` });
   const [introReference, pagePhotos] = await Promise.all([
-    getIntroReference(book, imageRepository),
+    getIntroReference(book, page.characterIds, imageRepository),
     getAiPhotoSelection(page.photos, imageRepository, MAX_AI_PHOTOS_PAGE),
   ]);
   const instructions = [
@@ -173,7 +176,7 @@ export async function buildCoverIllustrationRequest(
   book: Book,
   imageRepository: Pick<ImageRepository, 'getImage'>,
 ): Promise<ImageGenRequest & { omittedPhotoCount: number }> {
-  const introReference = await getIntroReference(book, imageRepository);
+  const introReference = await getIntroReference(book, book.cover.characterIds, imageRepository);
   const instructions = [
     COVER_INSTRUCTIONS,
     introReference.text,
@@ -216,17 +219,11 @@ export async function buildCoverCharacterRequests(
   requests: { characterId: string; request: ImageGenRequest }[];
   omittedCount: number;
 }> {
-  const characters = book.intro.characters.filter(
-    (character) =>
-      character.photo !== null ||
-      character.name.trim() !== '' ||
-      character.description.trim() !== '',
-  );
-  const selected = characters.slice(0, MAX_AI_CHARACTERS);
+  const selected = getCheckedCharacters(book, book.cover.characterIds).filter(isDefinedCharacter);
   if (selected.length === 0) {
     throw new AppError('AI_BAD_RESPONSE', {
-      userMessage: 'Add at least one main character before generating cover portraits.',
-      nextStep: 'Add a character on the intro page, then try again.',
+      userMessage: 'Check at least one character before generating cover portraits.',
+      nextStep: 'Check a character in the cover artwork section, then try again.',
     });
   }
   const geometry = computeCoverGeometry(book);
@@ -245,7 +242,7 @@ export async function buildCoverCharacterRequests(
       }
       const name =
         stripHebrew(character.name).trim() ||
-        `Character ${book.intro.characters.indexOf(character) + 1}`;
+        `Character ${book.characters.indexOf(character) + 1}`;
       const description = stripHebrew(character.description).trim();
       const instructions = [
         COVER_CHARACTER_INSTRUCTIONS,
@@ -267,7 +264,7 @@ export async function buildCoverCharacterRequests(
       };
     }),
   );
-  return { requests, omittedCount: Math.max(0, characters.length - selected.length) };
+  return { requests, omittedCount: 0 };
 }
 
 export async function buildEditRequest(

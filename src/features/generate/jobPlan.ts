@@ -2,7 +2,7 @@
 import type { Book } from '@/domain/book';
 import type { JobPlan, PlannedJob, SkippedJob } from '@/domain/job';
 import { getMainImageId, type StoryPage } from '@/domain/page';
-import { MAX_AI_CHARACTERS } from '@/domain/constants';
+import { getCheckedCharacters, isDefinedCharacter } from '@/domain/characters';
 import { getCoverImageIds } from '@/layout/render/pageImages';
 
 export interface GenerateSelection {
@@ -166,15 +166,7 @@ export function buildJobPlan(
   const portraitCalls = jobs.some(
     (job) => job.kind === 'coverIllustration' && book.cover.artworkMode === 'characterPortraits',
   )
-    ? Math.min(
-        book.intro.characters.filter(
-          (character) =>
-            character.photo !== null ||
-            character.name.trim() !== '' ||
-            character.description.trim() !== '',
-        ).length,
-        MAX_AI_CHARACTERS,
-      ) - 1
+    ? getCheckedCharacters(book, book.cover.characterIds).filter(isDefinedCharacter).length - 1
     : 0;
   return {
     bookId: book.id,

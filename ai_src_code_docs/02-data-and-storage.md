@@ -13,7 +13,7 @@
 - **IndexedDB** DB `saprili`, stores `books`, `images`, `thumbs`, `jobs`, `batches`, `meta`. One record per book (text, order, settings), one per image, thumbnails separate, full images loaded on demand.
 - **`chrome.storage.local`** holds only `userSettings` (key `userSettings`).
 - `StorageProvider` is a small typed port (`get`, `getAll`, `getAllByIndex`, `getAllKeysByIndex`, atomic `apply(ops)`); repositories are factories so tests inject a fake clock and `fake-indexeddb`.
-- Records carry `schemaVersion` (current **5**; v3 adds `intro.characters`, v4 adds cover artwork modes and per-character portraits, v5 adds back-cover artwork fields). Reads always pass through `migrateBookRecord` / `migrateImageRecord` / `migrateSettings`.
+- Records carry `schemaVersion` (current **6**; v3 added `intro.characters`, v4 adds cover artwork modes and per-character portraits, v5 adds back-cover artwork fields, v6 moves characters to `book.characters` and adds `storyPage.characterIds` / `cover.characterIds`, auto-checking characters already named in each page's English text). Reads always pass through `migrateBookRecord` / `migrateImageRecord` / `migrateSettings`.
 - Storage failures throw `AppError` `STORAGE_FAILED` or `STORAGE_QUOTA`.
 - `MetaRepository` is a generic key/value used for `printJob:<id>`, `jobHostMode`, and flags.
 - `chrome.storage.session` holds a flag used to tell a worker idle-restart from a browser restart (`storage/sessionFlag.ts`).
@@ -31,15 +31,16 @@
 - Generated images are stored as returned (plus the centre-crop in [06](./06-ai-generation.md)).
 
 ## Entities (`src/domain`)
-- **Book**: `id`, `schemaVersion`, `title` (default "book1"), `createdAt`, `modifiedAt`, `format`, `shape`, `bindingSide` (`right` default | `left`), `theme {presetId: sky|mint|peach|lavender, borderStyle: scalloped|dotted|clouds|stars, textPanel}`, `layout {marginTopMm, marginBottomMm, marginOuterMm, gutterMm, pictureTextGapMm}`, `typography {hebrewFontId, englishFontId, sizeStepsPt[3], alignment: start|center, hebrewEnglishSpacingMm, minFontSizePt}`, `showPageNumbers`, `print {sheetMode: exact|centredA4}`, `artStyleText`, `intro`, `storyPages[]` (always even), `colophon`, `cover`, `lastBackupAt`.
+- **Book**: `id`, `schemaVersion`, `title` (default "book1"), `createdAt`, `modifiedAt`, `format`, `shape`, `bindingSide` (`right` default | `left`), `theme {presetId: sky|mint|peach|lavender, borderStyle: scalloped|dotted|clouds|stars, textPanel}`, `layout {marginTopMm, marginBottomMm, marginOuterMm, gutterMm, pictureTextGapMm}`, `typography {hebrewFontId, englishFontId, sizeStepsPt[3], alignment: start|center, hebrewEnglishSpacingMm, minFontSizePt}`, `showPageNumbers`, `print {sheetMode: exact|centredA4}`, `artStyleText`, `characters[]`, `intro`, `storyPages[]` (always even), `colophon`, `cover`, `lastBackupAt`.
 - **PageFormat**: `trimWidthMm` 206, `trimHeightMm` 291, `orientation` portrait, `textPosition` below, `presetId` `shop-206x291`, `lockedAt` (ISO or null until Setup confirms).
 - **BookShape** (computed once): `textZoneHeightMm`, `pictureAspect` (w/h), `computedAt`.
 - **PageRef** `{kind: intro|story|colophon, id}`; the colophon id is the constant `COLOPHON_PAGE_ID = 'colophon'`. **PhotoRef** `{originalImageId, aiCopyImageId}`.
-- **IntroPage**: `id`, `privateTitle`, `textEn`, `textHe`, `photos`, `photoLayout` (`firstLarge` | `collage` up to 4), `characters[]`.
-- **Character** `{id, name, description, photo: PhotoRef | null}`: a main character; the profile picture (stored like any photo: original + AI copy + thumb) and the English description are what the AI prompt uses. Characters are not printed.
+- **IntroPage**: `id`, `privateTitle`, `textEn`, `textHe`, `photos`, `photoLayout` (`firstLarge` | `collage` up to 4).
+- **StoryPage** also has `characterIds[]`: the book characters checked for that page's illustration (empty by default; names found in `textEn` are auto-checked, see [06](./06-ai-generation.md)).
+- **Character** `{id, name, description, photo: PhotoRef | null}`: stored in `book.characters` (edited on the Characters screen); the profile picture (stored like any photo: original + AI copy + thumb) and the English description are what the AI prompt uses when the character is checked. Characters are not printed.
 - **StoryPage**: `id`, `privateTitle`, `textEn`, `textHe`, `photos`, `illustration`, `colouring`.
 - **IllustrationState** (also `Cover.illustration`): `currentImageId`, `history` (≤3 `{imageId, replacedAt}`), `customPrompt`, `useEditMode`. **ColouringState**: `imageId`, `sourceIllustrationImageId`, `outdated`.
-- **Cover**: `titleHe`, `subtitleHe`, `spineTextHe`, `illustration`, `artworkMode` (`single` | `introCollage` | `characterPortraits`), `characterPortraits[]` (`characterId`, `imageId`), `ownImageId`, `back {note, artworkMode, referenceImageId, generatedImageId, ownImageId}`, `colouringMarkerText`. Front own image takes display precedence. Intro-collage mode references the original intro photos and follows its selected photo layout. Back artwork is either AI-generated from its separately uploaded original reference photo (reference is not printed) or a separately uploaded picture used directly.
+- **Cover**: `titleHe`, `subtitleHe`, `spineTextHe`, `illustration`, `artworkMode` (`single` | `introCollage` | `characterPortraits`), `characterPortraits[]` (`characterId`, `imageId`), `characterIds[]` (checked characters for cover generation), `ownImageId`, `back {note, artworkMode, referenceImageId, generatedImageId, ownImageId}`, `colouringMarkerText`. Front own image takes display precedence. Intro-collage mode references the original intro photos and follows its selected photo layout. Back artwork is either AI-generated from its separately uploaded original reference photo (reference is not printed) or a separately uploaded picture used directly.
 - **Colophon**: `dateIso` (defaults to creation date), `place` (default "Jerusalem"), `createdByTextHe`, `qrImageId`.
 - **ImageRecord**: `id`, `bookId`, `kind` (`original|aiCopy|illustration|colouring|coverIllustration|coverUserImage|qr`), `blob`, `mime`, `widthPx`, `heightPx`, `byteSize`, `createdAt`, `meta {source: uploaded|generated, modelId?, generatedAt?}`. **ThumbRecord**: `imageId`, `bookId`, `blob`, `widthPx`, `heightPx`.
 - **Spread**: `index`, `kind` (`intro|pair|colophon`), `left`, `right`; built only by `buildSpreads(book)`.
@@ -60,7 +61,7 @@ Shop-dependent values are listed in `PLACEHOLDER_KEYS` (do not remove until conf
 | `SPINE_WIDTH_TABLE` | one row `{40 pages, 8 mm}` | yes (S6) |
 | `COVER_SAFE_INSET_MM` | 10 | yes |
 | `MAX_AI_PHOTOS_INTRO` / `_PAGE` | 3 / 3 | |
-| `MAX_AI_CHARACTERS` | 6 (characters sent to AI; extras flagged) | |
+| `CHARACTER_WARNING_THRESHOLD` | 4 (more checked characters shows a red warning; nothing is capped) | |
 | `ORIGINAL_LONG_EDGE_PX`, `AI_COPY_LONG_EDGE_PX`, `THUMB_LONG_EDGE_PX` | 2000, 1024, 256 | |
 | `ILLUSTRATION_HISTORY_MAX`, `MAX_AI_CROP_PERCENT` | 3, 3 | |
 | `JOB_CONCURRENCY`, `UNDO_WINDOW_MS`, `AUTOSAVE_DEBOUNCE_MS` | 2, 8000, 500 | |

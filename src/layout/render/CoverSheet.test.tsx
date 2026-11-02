@@ -107,7 +107,7 @@ describe('getCoverImageIds', () => {
       'original-3',
       'original-4',
     ]);
-    book.intro.characters = [
+    book.characters = [
       { id: 'first', name: 'First', description: '', photo: null },
       { id: 'second', name: 'Second', description: '', photo: null },
     ];

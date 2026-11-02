@@ -1,5 +1,7 @@
 // bisiyata dishmaya, leharbot ahava biyisral
 import { DEFAULT_GUTTER_MM } from '@/domain/constants';
+import { findMentionedCharacterIds } from '@/domain/characters';
+import type { Character } from '@/domain/page';
 import { isRecord, type MigrationRegistry } from './runner';
 
 // Version 0 is the pre-release prototype shape: no schemaVersion, `layout.innerMarginMm`
@@ -49,6 +51,40 @@ export const bookMigrations: MigrationRegistry = {
         }
       : record.cover,
   }),
+  // Version 6 moves characters from the intro to the book and adds per-page and cover selections.
+  5: (record) => {
+    const intro = isRecord(record.intro) ? record.intro : {};
+    const { characters: introCharacters, ...introRest } = intro;
+    const characters = Array.isArray(introCharacters) ? introCharacters : [];
+    const cover = isRecord(record.cover) ? record.cover : {};
+    const portraits = Array.isArray(cover.characterPortraits) ? cover.characterPortraits : [];
+    return {
+      ...record,
+      characters: record.characters ?? characters,
+      intro: introRest,
+      storyPages: Array.isArray(record.storyPages)
+        ? record.storyPages.map((page: unknown) =>
+            isRecord(page)
+              ? {
+                  ...page,
+                  characterIds:
+                    page.characterIds ??
+                    findMentionedCharacterIds(
+                      characters.filter(isRecord) as unknown as Character[],
+                      typeof page.textEn === 'string' ? page.textEn : '',
+                    ),
+                }
+              : page,
+          )
+        : record.storyPages,
+      cover: {
+        ...cover,
+        characterIds:
+          cover.characterIds ??
+          portraits.filter(isRecord).map((portrait) => portrait.characterId),
+      },
+    };
+  },
 };
 
 export const imageMigrations: MigrationRegistry = {
@@ -57,6 +93,7 @@ export const imageMigrations: MigrationRegistry = {
   2: (record) => ({ ...record }),
   3: (record) => ({ ...record }),
   4: (record) => ({ ...record }),
+  5: (record) => ({ ...record }),
 };
 
 export const settingsMigrations: MigrationRegistry = {
@@ -75,4 +112,5 @@ export const settingsMigrations: MigrationRegistry = {
   2: (record) => ({ ...record }),
   3: (record) => ({ ...record }),
   4: (record) => ({ ...record }),
+  5: (record) => ({ ...record }),
 };

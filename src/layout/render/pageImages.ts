@@ -17,7 +17,7 @@ export function getCoverImageIds(book: Book): string[] {
     const portraits = new Map(
       book.cover.characterPortraits.map(({ characterId, imageId }) => [characterId, imageId]),
     );
-    return book.intro.characters.flatMap((character) => {
+    return book.characters.flatMap((character) => {
       const imageId = portraits.get(character.id);
       return imageId ? [imageId] : [];
     });

@@ -474,7 +474,7 @@ export function createGenerationService(deps: GenerationServiceDeps) {
     }));
     const saved = await withBookLock(bookId, async () => {
       const latest = await getBook(bookId);
-      const currentCharacterIds = new Set(latest.intro.characters.map((character) => character.id));
+      const currentCharacterIds = new Set(latest.characters.map((character) => character.id));
       const currentPortraits = portraits.filter(({ characterId }) =>
         currentCharacterIds.has(characterId),
       );

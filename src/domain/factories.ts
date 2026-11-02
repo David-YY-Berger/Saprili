@@ -19,7 +19,7 @@ export interface CreateBookInit {
   title?: string;
 }
 
-export type StoryPageInit = Partial<Pick<StoryPage, 'id' | 'privateTitle' | 'textEn' | 'textHe'>>;
+export type StoryPageInit = Partial<Pick<StoryPage, 'id' | 'privateTitle' | 'textEn' | 'textHe' | 'characterIds'>>;
 
 export function createEmptyIllustrationState(): IllustrationState {
   return { currentImageId: null, history: [], customPrompt: '', useEditMode: false };
@@ -37,7 +37,6 @@ export function createIntroPage(init: Partial<Omit<IntroPage, 'photos'>> = {}): 
     textHe: '',
     photos: [],
     photoLayout: 'firstLarge',
-    characters: [],
     ...init,
   };
 }
@@ -49,6 +48,7 @@ export function createStoryPage(init: StoryPageInit = {}): StoryPage {
     textEn: '',
     textHe: '',
     photos: [],
+    characterIds: [],
     illustration: createEmptyIllustrationState(),
     colouring: createEmptyColouringState(),
     ...init,
@@ -75,6 +75,7 @@ export function createDefaultCover(): Cover {
     spineTextHe: 'משפחת ברגר 5787',
     illustration: createEmptyIllustrationState(),
     artworkMode: 'single',
+    characterIds: [],
     characterPortraits: [],
     ownImageId: null,
     back: {
@@ -136,6 +137,7 @@ export function createEmptyBook(init: CreateBookInit): Book {
     print: { sheetMode: 'exact' },
     artStyleText:
       'Cute, simple children\u2019s book cartoon with soft colours and friendly rounded shapes.',
+    characters: [],
     intro: createIntroPage(),
     storyPages: [],
     colophon: createDefaultColophon(init.nowIso),

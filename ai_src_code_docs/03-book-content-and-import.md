@@ -5,7 +5,7 @@
 ## Structure
 - **Interior order is fixed:** Cover (outside the page sequence) → Intro (alone) → story pairs → Colophon (alone). Intro + even story pages + colophon is always even (a blank last page is a fallback only; see [04](./04-layout-and-print.md)).
 - Data supports many books from day one ("book1" is the first). Minimum one story pair.
-- **Intro:** private title, English text, Hebrew text, original photos, **main characters** (name, profile picture, short description; added in the intro editor); no illustration/colouring page. Prints the original photos (first large, or collage ≤4, also in colouring edition) with the free text below; characters are not printed. Its main characters (else its English text + photos) are the AI's character reference.
+- **Intro:** private title, English text, Hebrew text, original photos; no illustration/colouring page. Prints the original photos (first large, or collage ≤4, also in colouring edition) with the free text below. Characters are no longer part of the intro: they live in the book (Characters screen, opened from Book settings) and each story page / the cover picks which are sent to the AI. Intro photos are the AI reference only when the book has no characters.
 - **Story page:** private title (never printed), one English and one Hebrew text (paragraphs allowed, no rich formatting), original photos, illustration, colouring page, remembered custom prompt, ≤3 older illustration versions, image metadata. The page editor can permanently delete an illustration and its version history; dropping files into the illustration area is disabled.
 - **Colophon:** generated, not typed (see [04](./04-layout-and-print.md)). **Cover:** see [04](./04-layout-and-print.md).
 
@@ -24,7 +24,7 @@ Book1 **opens to the right** (spine on the right, Hebrew style): intro alone on 
 - Another format later = duplicate into a new book (deferred; see TODO backlog).
 
 ## Editable settings (Book settings page)
-Binding side, theme preset, border style, margins and gutter (clamped live to the 10 mm floor with an explanation), fonts, 3 text size steps, alignment, Hebrew/English spacing, page numbers, art-style text, book title, colophon link, and an explicit "recompute shape" action (warns that existing illustrations will no longer fit exactly). Page format is read-only. Autosaves; has a live `PagePreview`.
+Binding side, theme preset, border style, margins and gutter (clamped live to the 10 mm floor with an explanation), fonts, 3 text size steps, alignment, Hebrew/English spacing, page numbers, art-style text, book title, colophon link, a **Characters** link (opens the Characters screen), and an explicit "recompute shape" action (warns that existing illustrations will no longer fit exactly). Page format is read-only. Autosaves; has a live `PagePreview`.
 
 ## CSV import (one-time, "Import book1 from CSV")
 - Only offered while no book exists (the route redirects to the Library otherwise). Chosen via file picker.

@@ -103,10 +103,11 @@ describe('buildJobPlan', () => {
   it('counts one cover AI call per character and skips the photo-collage cover', () => {
     const book = sampleBook();
     book.cover.artworkMode = 'characterPortraits';
-    book.intro.characters = [
+    book.characters = [
       { id: 'c1', name: 'Miriam', description: '', photo: null },
       { id: 'c2', name: 'Dad', description: '', photo: null },
     ];
+    book.cover.characterIds = ['c1', 'c2'];
     const portraitPlan = buildJobPlan(book, { cover: true, pageIds: new Set() }, both());
     expect(portraitPlan.summary).toEqual({ illustrations: 1, colourings: 0, totalCalls: 2 });
 
