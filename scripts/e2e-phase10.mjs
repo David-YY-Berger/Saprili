@@ -14,7 +14,6 @@ const extensionPath = join(workDir, 'extension');
 const userDataDir = join(workDir, 'profile');
 const csv = [
   'Title,English,Hebrew',
-  'intro,Meet our family,שלום',
   '---------, ,',
   'one,First story,א',
   'two,Second story,ב',
@@ -85,13 +84,15 @@ try {
 
   const page = await context.newPage();
   await page.goto(appUrl);
-  await page.getByRole('button', { name: 'Import book1 from CSV' }).click();
+  await page.getByRole('button', { name: 'New book' }).click();
+  await page.getByRole('button', { name: 'Confirm book setup' }).click();
+  await page.getByRole('heading', { name: 'book1' }).waitFor();
+  await page.getByRole('button', { name: 'Import pages from CSV' }).click();
   await page.locator('input[type="file"]').setInputFiles({
     name: 'sample.csv',
     mimeType: 'text/csv',
     buffer: Buffer.from(csv),
   });
-  await page.getByRole('button', { name: 'Confirm book setup' }).click();
   await page.getByRole('heading', { name: 'book1' }).waitFor();
   const href = await page.locator('.story-row__link').first().getAttribute('href');
   assert.ok(href);

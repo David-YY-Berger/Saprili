@@ -16,7 +16,7 @@ Find barriers that prevent a person who is not familiar with Saprili or web exte
 
 1. **Open Saprili.** Find the extension and open the app. Explain what you think the Library is for.
 2. **Set up AI access.** Find My settings and explain what an API key does and what information is sent to the provider. Do not ask the participant to reveal or type a personal key.
-3. **Import a book.** Import the supplied UTF-8 CSV. Complete the required page-format setup and find the story pages.
+3. **Start a book.** Create a new book and complete the required page-format setup. Add a character, then import the supplied UTF-8 story-page CSV and find the story pages.
 4. **Add photos.** Open a story page and add the supplied test photo with the file picker. Find where the photo appears.
 5. **Generate or review generation.** Open Generate, identify the call count and overwrite controls, and explain what Start generating will do. Start only if the owner-approved test key and budget are available.
 6. **Fix a page.** Change one English or Hebrew text field, move between the page and the book outline, and verify the change is saved.

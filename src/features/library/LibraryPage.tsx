@@ -12,6 +12,7 @@ import { getCoverImageIds } from '@/layout/render/pageImages';
 import { BookCard } from './BookCard';
 import { EmptyLibraryState } from './EmptyLibraryState';
 import { useBookSummaries } from './useBookSummaries';
+import { NewBookButton } from './NewBookButton';
 import { RestoreBackupButton } from '@/features/backup/RestoreBackupButton';
 
 export function LibraryPage() {
@@ -104,11 +105,12 @@ export function LibraryPage() {
       <div className="library-toolbar">
         <span>{visibleBooks.length ? `${visibleBooks.length} ${visibleBooks.length === 1 ? 'book' : 'books'}` : ''}</span>
         <div className="library-toolbar__actions">
+          {visibleBooks.length > 0 && <NewBookButton />}
           <RestoreBackupButton onRestored={() => void refresh()} />
         </div>
       </div>
       {visibleBooks.length === 0 ? (
-        <EmptyLibraryState allowImport={books.length === 0} />
+        <EmptyLibraryState />
       ) : (
         <>
           <div className="book-grid">

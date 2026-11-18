@@ -8,7 +8,7 @@ import { ToastHost } from '@/ui/ToastHost';
 import { AppRoutes } from './routes';
 
 const validCsv =
-  'Title,eng_descrip,heb_descr\nintro,Meet our family,שלום\n---------,,\none,First story,א\nTwo,Second story,ב\n---------,,\n';
+  'title,english,hebrew\none,First story,a\nTwo,Second story,b\n---------,,\n';
 
 function csvFile(value: string): File {
   const file = new File([value], 'family.csv', { type: 'text/csv' });
@@ -39,10 +39,7 @@ afterEach(() => {
 describe('Phase 3 flow', () => {
   it('imports a CSV, locks setup, reorders, adds a pair, and undoes deletion', async () => {
     renderRoutes();
-    fireEvent.click(await screen.findByRole('button', { name: 'Import book1 from CSV' }));
-    fireEvent.change(await screen.findByLabelText('Choose your CSV file'), {
-      target: { files: [csvFile(validCsv)] },
-    });
+    fireEvent.click(await screen.findByRole('button', { name: 'New book' }));
 
     expect(await screen.findByRole('heading', { name: 'Set up your book' })).toBeTruthy();
     expect(
@@ -53,11 +50,18 @@ describe('Phase 3 flow', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Confirm book setup' }));
     expect(await screen.findByRole('heading', { name: 'book1' })).toBeTruthy();
 
+    fireEvent.click(screen.getByRole('button', { name: 'Import pages from CSV' }));
+    expect(await screen.findByLabelText('CSV directions for your LLM')).toBeTruthy();
+    fireEvent.change(await screen.findByLabelText('Choose your CSV file'), {
+      target: { files: [csvFile(validCsv)] },
+    });
+    expect(await screen.findByRole('heading', { name: 'book1' })).toBeTruthy();
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Import pages from CSV' })).toBeNull());
+
     const imported = await bookRepository.listBookSummaries();
     expect(imported).toHaveLength(1);
     let book = await bookRepository.getBook(imported[0]!.id);
     expect(book?.format.lockedAt).not.toBeNull();
-    expect(book?.intro.textEn).toBe('Meet our family');
     expect(book?.storyPages.map((page) => page.privateTitle)).toEqual(['one', 'Two']);
     expect(screen.getByText('Delete pages').closest('button')?.disabled).toBe(true);
 
@@ -89,14 +93,17 @@ describe('Phase 3 flow', () => {
     expect(screen.getByRole('heading', { name: 'Pair 2' })).toBeTruthy();
   });
 
-  it('keeps the library empty when an invalid CSV is submitted', async () => {
+  it('rejects an invalid CSV and leaves the book without story pages', async () => {
     renderRoutes();
-    fireEvent.click(await screen.findByRole('button', { name: 'Import book1 from CSV' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'New book' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirm book setup' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Import pages from CSV' }));
     fireEvent.change(await screen.findByLabelText('Choose your CSV file'), {
-      target: { files: [csvFile('intro,English,עברית\nonly one story,English,א')] },
+      target: { files: [csvFile('only one story,English,a')] },
     });
 
     expect(await screen.findByText(/wrong number of rows/i)).toBeTruthy();
-    expect(await bookRepository.listBookSummaries()).toEqual([]);
+    const [summary] = await bookRepository.listBookSummaries();
+    expect((await bookRepository.getBook(summary!.id))?.storyPages).toEqual([]);
   });
 });

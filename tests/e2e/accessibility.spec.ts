@@ -147,21 +147,21 @@ test('runs axe on the app routes and print view and follows a page link by keybo
     await app.goto(`${baseUrl}/app.html#/settings`);
     await app.getByRole('heading', { name: 'My settings' }).waitFor();
     await checkAxe(app, 'My settings');
-    await app.goto(`${baseUrl}/app.html#/import`);
-    await app.getByRole('heading', { name: 'Bring in your story' }).waitFor();
+    await app.getByRole('button', { name: 'New book' }).click();
+    await app.getByRole('button', { name: 'Confirm book setup' }).waitFor();
+    await checkAxe(app, 'Book setup');
+    await app.getByRole('button', { name: 'Confirm book setup' }).click();
+    await app.getByRole('heading', { name: 'book1' }).waitFor();
+    await app.getByRole('button', { name: 'Import pages from CSV' }).click();
+    await app.getByRole('heading', { name: 'Import story pages from CSV' }).waitFor();
     await checkAxe(app, 'CSV import');
     await app.locator('input[type="file"]').setInputFiles({
       name: 'accessibility-sample.csv',
       mimeType: 'text/csv',
       buffer: Buffer.from(
-        ['Title,English,Hebrew', 'intro,Meet our family,שלום', 'one,First story,א', 'two,Second story,ב'].join(
-          '\n',
-        ),
+        ['Title,English,Hebrew', 'one,First story,a', 'two,Second story,b'].join('\n'),
       ),
     });
-    await app.getByRole('button', { name: 'Confirm book setup' }).waitFor();
-    await checkAxe(app, 'Book setup');
-    await app.getByRole('button', { name: 'Confirm book setup' }).click();
     await app.getByRole('heading', { name: 'book1' }).waitFor();
     const bookId = new URL(app.url()).hash.match(/^#\/book\/([^/]+)/)?.[1];
     expect(bookId).toBeTruthy();

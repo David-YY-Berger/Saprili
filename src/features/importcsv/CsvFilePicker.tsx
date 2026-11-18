@@ -1,4 +1,4 @@
-// bisiyata dishmaya, leharbot ahava biyisral
+﻿// bisiyata dishmaya, leharbot ahava biyisral
 import { useId } from 'react';
 
 export function CsvFilePicker({
@@ -23,7 +23,7 @@ export function CsvFilePicker({
         }}
         type="file"
       />
-      <p className="field__hint">Use columns for title, English text and Hebrew text.</p>
+      <p className="field__hint">Columns: title, english, hebrew (UTF-8). One row per story page, an even number of rows.</p>
     </div>
   );
 }

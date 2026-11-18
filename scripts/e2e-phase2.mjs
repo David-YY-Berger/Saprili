@@ -30,7 +30,7 @@ try {
   const page = await context.newPage();
   await page.goto(`chrome-extension://${extensionId}/app.html`);
   await page.getByRole('heading', { name: 'Your library' }).waitFor();
-  assert.ok(await page.getByRole('button', { name: 'Import book1 from CSV' }).isVisible());
+  assert.ok(await page.getByRole('button', { name: 'New book' }).isVisible());
 
   await page.getByRole('button', { name: 'My settings' }).click();
   const keyField = page.locator('#api-key');

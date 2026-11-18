@@ -1,7 +1,7 @@
 // bisiyata dishmaya, leharbot ahava biyisral
 import Papa from 'papaparse';
-import type { Book } from '@/domain/book';
-import { createEmptyBook, createStoryPage } from '@/domain/factories';
+import { createStoryPage } from '@/domain/factories';
+import type { StoryPage } from '@/domain/page';
 import { AppError } from '@/shared/errors';
 import type { CsvIssue, CsvValidationResult } from './csvErrors';
 
@@ -182,12 +182,11 @@ export function validateParsedCsv(parsed: ParsedCsv): CsvValidationResult {
       rows: [parsed.blankRows[0] ?? parsed.separatorRows[0]?.rowNumber ?? 1],
     });
   } else {
-    if ((parsed.rows.length - 1) % 2 !== 0) {
+    if (parsed.rows.length % 2 !== 0) {
       issues.push({ code: 'CSV_ODD_ROWS', rows: [parsed.rows[parsed.rows.length - 1]!.rowNumber] });
     }
     for (const separator of parsed.separatorRows) {
-      const storyRowsBefore = separator.dataRowsBefore - 1;
-      if (separator.dataRowsBefore < 1 || storyRowsBefore % 2 !== 0) {
+      if (separator.dataRowsBefore % 2 !== 0) {
         issues.push({ code: 'CSV_ODD_ROWS', rows: [separator.rowNumber] });
       }
     }
@@ -202,7 +201,8 @@ export function validateParsedCsv(parsed: ParsedCsv): CsvValidationResult {
   return { valid: result.length === 0, issues: result };
 }
 
-export function buildBookFromCsv(parsed: ParsedCsv, nowIso: string): Book {
+// Every CSV row is a story page; the intro is made on its own page, not imported.
+export function buildStoryPagesFromCsv(parsed: ParsedCsv): StoryPage[] {
   const validation = validateParsedCsv(parsed);
   if (!validation.valid) {
     const firstIssue = validation.issues[0]!;
@@ -210,18 +210,7 @@ export function buildBookFromCsv(parsed: ParsedCsv, nowIso: string): Book {
       detail: firstIssue.rows.length > 0 ? `CSV rows ${firstIssue.rows.join(', ')}` : undefined,
     });
   }
-
-  const [introRow, ...storyRows] = parsed.rows;
-  if (!introRow) throw new AppError('CSV_EMPTY_ROWS');
-  const book = createEmptyBook({ nowIso, title: 'book1' });
-  book.intro = {
-    ...book.intro,
-    privateTitle: introRow.title,
-    textEn: introRow.textEn,
-    textHe: introRow.textHe,
-  };
-  book.storyPages = storyRows.map((row) =>
+  return parsed.rows.map((row) =>
     createStoryPage({ privateTitle: row.title, textEn: row.textEn, textHe: row.textHe }),
   );
-  return book;
 }

@@ -22,6 +22,7 @@ import { startPrint, type PrintOutput } from '@/print/printJob';
 import { GenerateDialog } from '@/features/generate/GenerateDialog';
 import { GenerateStatusChip } from '@/features/generate/GenerateStatusChip';
 import { useBookJobs } from '@/features/generate/useBookJobs';
+import { isStoryBodyUntouched } from '@/features/importcsv/importBook';
 import { BackupButton } from '@/features/backup/BackupButton';
 
 export function BookViewPage({ book: initialBook }: { book: Book }) {
@@ -133,6 +134,16 @@ export function BookViewPage({ book: initialBook }: { book: Book }) {
             disabled={hasPendingDelete}
             lastBackupAt={book.lastBackupAt}
           />
+        }
+        onCharacters={() => {
+          window.location.hash = `#/book/${encodeURIComponent(book.id)}/characters`;
+        }}
+        onImport={
+          isStoryBodyUntouched(book)
+            ? () => {
+                window.location.hash = `#/book/${encodeURIComponent(book.id)}/import`;
+              }
+            : undefined
         }
         onSettings={() => {
           window.location.hash = `#/book/${encodeURIComponent(book.id)}/settings`;

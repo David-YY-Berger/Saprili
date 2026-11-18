@@ -1,6 +1,6 @@
-// bisiyata dishmaya, leharbot ahava biyisral
-import { useEffect, useRef, useState } from 'react';
-import { bookRepository } from '@/storage/repositories';
+﻿// bisiyata dishmaya, leharbot ahava biyisral
+import { useState } from 'react';
+import type { Book } from '@/domain/book';
 import { toAppError } from '@/shared/errors';
 import type { AppError } from '@/shared/errors';
 import { Banner } from '@/ui/Banner';
@@ -8,42 +8,23 @@ import { Button } from '@/ui/Button';
 import { Spinner } from '@/ui/Spinner';
 import { CsvFilePicker } from './CsvFilePicker';
 import { ImportErrorList } from './ImportErrorList';
-import { importBookFromCsv } from './importBook';
+import { CSV_LLM_INSTRUCTIONS } from './csvInstructions';
+import { importStoryPagesFromCsv, isStoryBodyUntouched } from './importBook';
 import type { CsvValidationResult } from './csvErrors';
 
-export function ImportCsvPage() {
-  const [checkingLibrary, setCheckingLibrary] = useState(true);
+export function ImportCsvPage({ book }: { book: Book }) {
   const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [validation, setValidation] = useState<CsvValidationResult | null>(null);
   const [error, setError] = useState<AppError | null>(null);
-  const importStarted = useRef(false);
-
-  useEffect(() => {
-    let active = true;
-    void bookRepository
-      .listBookSummaries()
-      .then((books) => {
-        if (!active || importStarted.current) return;
-        if (books.length > 0) window.location.hash = '#/';
-      })
-      .catch((loadError: unknown) => {
-        if (active) setError(toAppError(loadError));
-      })
-      .finally(() => {
-        if (active) setCheckingLibrary(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
+  const bookHash = `#/book/${encodeURIComponent(book.id)}`;
 
   const handleFile = async (file: File) => {
-    importStarted.current = true;
     setBusy(true);
     setValidation(null);
     setError(null);
     try {
-      const result = await importBookFromCsv(file);
+      const result = await importStoryPagesFromCsv(book.id, file);
       if (result) setValidation(result);
     } catch (importError) {
       setError(toAppError(importError));
@@ -52,41 +33,71 @@ export function ImportCsvPage() {
     }
   };
 
-  if (checkingLibrary) {
-    return (
-      <div aria-label="Checking your library" className="surface-card" role="status">
-        <Spinner /> Checking your library…
-      </div>
-    );
-  }
+  const copyInstructions = async () => {
+    try {
+      await navigator.clipboard.writeText(CSV_LLM_INSTRUCTIONS);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  };
 
   return (
     <section aria-labelledby="import-heading">
       <header className="page-heading">
-        <h2 id="import-heading">Bring in your story</h2>
+        <h2 id="import-heading">Import story pages from CSV</h2>
         <p>
-          Your first row becomes the intro. The rows after it become story pages, paired in the
-          order they appear.
+          Every row becomes one story page, paired in the order they appear. The intro page is not
+          part of the CSV.
         </p>
       </header>
+      {!isStoryBodyUntouched(book) && (
+        <Banner type="error" title="This book already has story pages with content.">
+          CSV import is only available before you start the story pages.
+        </Banner>
+      )}
       {error && (
         <Banner type="error" title={error.userMessage}>
           {error.nextStep}
         </Banner>
       )}
       <div className="surface-card settings-form">
-        <CsvFilePicker disabled={busy || error !== null} onFile={(file) => void handleFile(file)} />
+        <h3>1. Copy these directions to your LLM</h3>
+        <p>Paste them together with your story, then upload the CSV it gives you.</p>
+        <textarea
+          aria-label="CSV directions for your LLM"
+          dir="ltr"
+          readOnly
+          rows={16}
+          value={CSV_LLM_INSTRUCTIONS}
+        />
+        <div>
+          <Button onClick={() => void copyInstructions()} variant="secondary">
+            Copy directions
+          </Button>
+          {copied && <span role="status"> Copied.</span>}
+        </div>
+      </div>
+      <div className="surface-card settings-form">
+        <h3>2. Upload the CSV</h3>
+        <CsvFilePicker
+          disabled={busy || !isStoryBodyUntouched(book)}
+          onFile={(file) => void handleFile(file)}
+        />
         {busy && (
-          <div aria-label="Importing book" role="status">
+          <div aria-label="Importing pages" role="status">
             <Spinner /> Checking your file…
           </div>
         )}
         {validation && <ImportErrorList issues={validation.issues} />}
-        {error && (
-          <Button onClick={() => setError(null)} variant="secondary">
-            Try another file
-          </Button>
-        )}
+        <Button
+          onClick={() => {
+            window.location.hash = bookHash;
+          }}
+          variant="secondary"
+        >
+          Back to the book
+        </Button>
       </div>
     </section>
   );

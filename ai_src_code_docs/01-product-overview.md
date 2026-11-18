@@ -33,7 +33,7 @@ Implemented = code and automated tests exist. "Unverified" = needs the human/rea
 |---|---|
 | Scaffold, domain model, storage, migrations | Implemented |
 | UI kit, My settings, Library (duplicate/delete with undo) | Implemented |
-| CSV import, Setup (format lock), Book view (reorder, add/delete pairs) | Implemented, owner-verified on the real CSV |
+| New book, CSV story-page import, Setup (format lock), Book view (reorder, add/delete pairs) | Implemented, owner-verified on the real CSV |
 | Page view (spread editor, photos, text, overlay, autosave) | Implemented; real-phone-photo check pending |
 | Layout engine, theme, borders, fonts | Implemented; visual review and screenshot baselines pending |
 | Previews, Book settings, pre-flight, Hebrew date, colophon | Implemented; owner review pending |

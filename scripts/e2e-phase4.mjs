@@ -11,7 +11,6 @@ const extensionPath = resolve(root, 'dist');
 const userDataDir = await mkdtemp(join(tmpdir(), 'saprili-phase4-e2e-'));
 const csv = [
   'Title,English,Hebrew',
-  'intro,Meet our family,שלום',
   '---------, ,',
   'one,First story,א',
   'two,Second story,ב',
@@ -123,14 +122,15 @@ try {
   const pageErrors = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
   await page.goto(`chrome-extension://${extensionId}/app.html`);
-  await page.getByRole('button', { name: 'Import book1 from CSV' }).click();
+  await page.getByRole('button', { name: 'New book' }).click();
+  await page.getByRole('button', { name: 'Confirm book setup' }).click();
+  await page.getByRole('heading', { name: 'book1' }).waitFor();
+  await page.getByRole('button', { name: 'Import pages from CSV' }).click();
   await page.locator('input[type="file"]').setInputFiles({
     name: 'sample.csv',
     mimeType: 'text/csv',
     buffer: Buffer.from(csv),
   });
-  await page.getByRole('button', { name: 'Confirm book setup' }).waitFor();
-  await page.getByRole('button', { name: 'Confirm book setup' }).click();
   await page.getByRole('heading', { name: 'book1' }).waitFor();
 
   const storyLink = page.locator('.story-row__link').first();

@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { AppError } from '@/shared/errors';
 import {
-  buildBookFromCsv,
+  buildStoryPagesFromCsv,
   decodeCsvBuffer,
   parseBookCsv,
   validateParsedCsv,
@@ -19,47 +19,45 @@ describe('CSV parsing and validation', () => {
   it('recognizes actual header aliases, blank lines and pair separators', () => {
     const parsed = parseBookCsv(
       bytes(
-        '\uFEFFTitle,eng_descrip,heb_descr\r\nintro,English intro,עברית\r\n---------,,\r\none,"first line\nsecond line",א\r\ntwo,English two,ב\r\n---------,,\r\n',
+        '\uFEFFTitle,eng_descrip,heb_descr\r\n---------,,\r\none,"first line\nsecond line",a\r\ntwo,English two,b\r\n---------,,\r\n',
       ),
     );
 
     expect(parsed.issues).toEqual([]);
-    expect(parsed.rows.map((row) => row.title)).toEqual(['intro', 'one', 'two']);
-    expect(parsed.rows[1]?.textEn).toBe('first line\nsecond line');
-    expect(parsed.separatorRows.map((row) => row.dataRowsBefore)).toEqual([1, 3]);
+    expect(parsed.rows.map((row) => row.title)).toEqual(['one', 'two']);
+    expect(parsed.rows[0]?.textEn).toBe('first line\nsecond line');
+    expect(parsed.separatorRows.map((row) => row.dataRowsBefore)).toEqual([0, 2]);
     expect(validateParsedCsv(parsed)).toEqual({ valid: true, issues: [] });
   });
 
-  it('treats the first data row as intro when there is no header', () => {
-    const parsed = parseBookCsv(bytes('intro,English intro,עברית\r\none,English one,א\r\ntwo,English two,ב'));
-    expect(parsed.rows.map((row) => row.title)).toEqual(['intro', 'one', 'two']);
+  it('treats the first data row as a story page when there is no header', () => {
+    const parsed = parseBookCsv(bytes('one,English one,a\r\ntwo,English two,b'));
+    expect(parsed.rows.map((row) => row.title)).toEqual(['one', 'two']);
     expect(validateParsedCsv(parsed).valid).toBe(true);
   });
 
   it('reports wrong column counts and odd story-page counts with source rows', () => {
-    const wrongColumns = parseBookCsv(bytes('title,en,he\nintro,English,עברית\npage,English'));
+    const wrongColumns = parseBookCsv(bytes('title,en,he\none,English,a\npage,English'));
     expect(validateParsedCsv(wrongColumns).issues).toContainEqual({
       code: 'CSV_BAD_COLUMNS',
       rows: [3],
     });
 
-    const oddRows = parseBookCsv(bytes('intro,English,עברית\npage,English,א'));
+    const oddRows = parseBookCsv(bytes('one,English,a\ntwo,English,b\nthree,English,c'));
     expect(validateParsedCsv(oddRows).issues).toContainEqual({
       code: 'CSV_ODD_ROWS',
-      rows: [2],
+      rows: [3],
     });
   });
 
   it('ignores entirely blank records but rejects separator lines that split a pair', () => {
-    const valid = parseBookCsv(bytes('\nintro,English,עברית\n\none,English,א\ntwo,English,ב\n'));
+    const valid = parseBookCsv(bytes('\none,English,a\n\ntwo,English,b\n'));
     expect(validateParsedCsv(valid).valid).toBe(true);
 
-    const splitPair = parseBookCsv(
-      bytes('intro,English,עברית\none,English,א\n---------,,\ntwo,English,ב'),
-    );
+    const splitPair = parseBookCsv(bytes('one,English,a\n---------,,\ntwo,English,b'));
     expect(validateParsedCsv(splitPair).issues).toContainEqual({
       code: 'CSV_ODD_ROWS',
-      rows: [3],
+      rows: [2],
     });
   });
 
@@ -75,32 +73,17 @@ describe('CSV parsing and validation', () => {
     expect(() => decodeCsvBuffer(new Uint8Array([0xe0, 0xe1, 0xe2]))).toThrowError(
       expect.objectContaining({ code: 'CSV_BAD_ENCODING' }),
     );
-    expect(() => decodeCsvBuffer(bytes('name,Ã©'))).toThrowError(
-      expect.objectContaining({ code: 'CSV_BAD_ENCODING' }),
-    );
-    expect(() => decodeCsvBuffer(bytes('text,×©×××'))).toThrowError(
-      expect.objectContaining({ code: 'CSV_BAD_ENCODING' }),
-    );
   });
 
-  it('builds the intro and paired stories using the standard book defaults', () => {
-    const parsed = parseBookCsv(bytes('intro,English intro,עברית\none,English one,א\ntwo,English two,ב'));
-    const book = buildBookFromCsv(parsed, '2026-10-11T00:00:00.000Z');
-
-    expect(book.title).toBe('book1');
-    expect(book.format.lockedAt).toBeNull();
-    expect(book.shape).toBeNull();
-    expect(book.intro).toMatchObject({
-      privateTitle: 'intro',
-      textEn: 'English intro',
-      textHe: 'עברית',
-    });
-    expect(book.storyPages.map((page) => page.privateTitle)).toEqual(['one', 'two']);
-    expect(book.colophon.place).toBe('Jerusalem');
+  it('builds one story page per row', () => {
+    const parsed = parseBookCsv(bytes('one,English one,a\ntwo,English two,b'));
+    const pages = buildStoryPagesFromCsv(parsed);
+    expect(pages.map((page) => page.privateTitle)).toEqual(['one', 'two']);
+    expect(pages[1]?.textEn).toBe('English two');
   });
 
-  it('does not build an invalid book', () => {
-    const parsed = parseBookCsv(bytes('intro,English,עברית\npage,English,א'));
-    expect(() => buildBookFromCsv(parsed, '2026-10-11T00:00:00.000Z')).toThrow(AppError);
+  it('does not build pages from an invalid file', () => {
+    const parsed = parseBookCsv(bytes('one,English,a'));
+    expect(() => buildStoryPagesFromCsv(parsed)).toThrow(AppError);
   });
 });

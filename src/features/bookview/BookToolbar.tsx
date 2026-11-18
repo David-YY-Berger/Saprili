@@ -9,6 +9,8 @@ export function BookToolbar({
   onAdd,
   onDelete,
   onSettings,
+  onCharacters,
+  onImport,
   onPreflight,
   onPrintBook,
   onPrintColouring,
@@ -22,6 +24,8 @@ export function BookToolbar({
   onAdd: () => void;
   onDelete: () => void;
   onSettings: () => void;
+  onCharacters: () => void;
+  onImport?: () => void;
   onPreflight: () => void;
   onPrintBook: () => void;
   onPrintColouring: () => void;
@@ -49,6 +53,14 @@ export function BookToolbar({
       <Button disabled={disabled} onClick={onPreflight} variant="secondary">
         Pre-flight
       </Button>
+      <Button disabled={disabled} onClick={onCharacters} variant="secondary">
+        Characters
+      </Button>
+      {onImport && (
+        <Button disabled={disabled} onClick={onImport} variant="secondary">
+          Import pages from CSV
+        </Button>
+      )}
       <Button disabled={disabled} onClick={onAdd} variant="secondary">
         Add pages
       </Button>

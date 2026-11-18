@@ -8,8 +8,8 @@ Generated from [`src/i18n/en.ts`](../src/i18n/en.ts) by `node scripts/generate-e
 | `STORAGE_QUOTA` | There is not enough space left to save. | Free up disk space, then try again. |
 | `MIGRATION_FAILED` | Saprili could not open data saved by a different version. | Update Saprili to the latest version and try again. |
 | `CSV_BAD_COLUMNS` | The file does not have the expected columns. | Use three columns: title, English text and Hebrew text. |
-| `CSV_ODD_ROWS` | The file has the wrong number of rows. | Use one intro row followed by an even number of story rows. |
-| `CSV_EMPTY_ROWS` | The file does not contain any book rows. | Add an intro row and choose the file again. |
+| `CSV_ODD_ROWS` | The file has the wrong number of rows. | Use one row per story page, with an even number of rows (pages come in pairs). |
+| `CSV_EMPTY_ROWS` | The file does not contain any story pages. | Add the story page rows and choose the file again. |
 | `CSV_BAD_ENCODING` | The Hebrew text in the file is not readable. | Save the file as CSV UTF-8 and choose it again. |
 | `IMAGE_DECODE_FAILED` | This picture could not be opened. | Save the picture as JPEG or PNG and add it again. |
 | `IMAGE_TOO_LARGE` | This picture is too large to use. | Choose a smaller version of the picture. |

@@ -17,9 +17,9 @@ export const en = {
   'errors.CSV_BAD_COLUMNS.message': 'The file does not have the expected columns.',
   'errors.CSV_BAD_COLUMNS.next': 'Use three columns: title, English text and Hebrew text.',
   'errors.CSV_ODD_ROWS.message': 'The file has the wrong number of rows.',
-  'errors.CSV_ODD_ROWS.next': 'Use one intro row followed by an even number of story rows.',
-  'errors.CSV_EMPTY_ROWS.message': 'The file does not contain any book rows.',
-  'errors.CSV_EMPTY_ROWS.next': 'Add an intro row and choose the file again.',
+  'errors.CSV_ODD_ROWS.next': 'Use one row per story page, with an even number of rows (pages come in pairs).',
+  'errors.CSV_EMPTY_ROWS.message': 'The file does not contain any story pages.',
+  'errors.CSV_EMPTY_ROWS.next': 'Add the story page rows and choose the file again.',
   'errors.CSV_BAD_ENCODING.message': 'The Hebrew text in the file is not readable.',
   'errors.CSV_BAD_ENCODING.next': 'Save the file as CSV UTF-8 and choose it again.',
 

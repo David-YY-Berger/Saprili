@@ -14,7 +14,6 @@ test('prints an exact-size, multi-page interior PDF', async () => {
   const userDataDir = await mkdtemp(join(tmpdir(), 'saprili-print-e2e-'));
   const csv = [
     'Title,English,Hebrew',
-    'intro,Meet our family,שלום',
     '---------, ,',
     'one,First story,א',
     'two,Second story,ב',
@@ -40,14 +39,15 @@ test('prints an exact-size, multi-page interior PDF', async () => {
     const pageErrors: string[] = [];
     app.on('pageerror', (error) => pageErrors.push(error.message));
     await app.goto(`chrome-extension://${extensionId}/app.html`);
-    await app.getByRole('button', { name: 'Import book1 from CSV' }).click();
+    await app.getByRole('button', { name: 'New book' }).click();
+    await app.getByRole('button', { name: 'Confirm book setup' }).click();
+    await app.getByRole('heading', { name: 'book1' }).waitFor();
+    await app.getByRole('button', { name: 'Import pages from CSV' }).click();
     await app.locator('input[type="file"]').setInputFiles({
       name: 'print-sample.csv',
       mimeType: 'text/csv',
       buffer: Buffer.from(csv),
     });
-    await app.getByRole('button', { name: 'Confirm book setup' }).waitFor();
-    await app.getByRole('button', { name: 'Confirm book setup' }).click();
     await app.getByRole('heading', { name: 'book1' }).waitFor();
 
     await app.getByRole('button', { name: 'Print book' }).click();

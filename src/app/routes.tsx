@@ -87,6 +87,7 @@ function BookRoute({ bookId, subroute }: { bookId: string; subroute: string }) {
   if (subroute === '') return <BookViewPage book={currentBook} />;
   if (subroute === '/settings') return <BookSettingsPage initialBook={currentBook} />;
   if (subroute === '/colophon') return <ColophonEditorPage initialBook={currentBook} />;
+  if (subroute === '/import') return <ImportCsvPage book={currentBook} />;
   if (subroute === '/characters') return <CharactersPage initialBook={currentBook} />;
   if (subroute === '/cover') return <CoverEditorPage initialBook={currentBook} />;
   if (subroute.startsWith('/page/')) {
@@ -109,10 +110,9 @@ export function AppRoutes() {
   const route = useHashRoute();
   if (route === '#/' || route === '#') return <LibraryPage />;
   if (route === '#/settings') return <MySettingsPage />;
-  if (route === '#/import') return <ImportCsvPage />;
 
   const bookMatch =
-    /^#\/book\/([^/]+)(\/setup|\/settings|\/cover|\/characters|\/colophon|\/page\/[^/]+)?$/.exec(route);
+    /^#\/book\/([^/]+)(\/setup|\/settings|\/import|\/cover|\/characters|\/colophon|\/page\/[^/]+)?$/.exec(route);
   if (bookMatch) {
     const bookId = decodeRoutePart(bookMatch[1]!);
     if (bookId === null) return <NotFoundPage />;

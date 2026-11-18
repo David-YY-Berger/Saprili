@@ -10,7 +10,7 @@ Docs describe the system **as built**; anything not built or not verified is onl
 | [TODO.md](./TODO.md) | **Everything not done**: verification, code gaps, release steps, backlog |
 | [01-product-overview.md](./01-product-overview.md) | What Saprili is, non-goals, vocabulary, cross-cutting rules, build status |
 | [02-data-and-storage.md](./02-data-and-storage.md) | Platform, permissions, storage, entities, constants, errors |
-| [03-book-content-and-import.md](./03-book-content-and-import.md) | Book structure, binding, setup, settings, page operations, CSV import |
+| [03-book-content-and-import.md](./03-book-content-and-import.md) | Book structure, binding, setup, settings, page operations, new-book flow, CSV import |
 | [04-layout-and-print.md](./04-layout-and-print.md) | Layout engine, page geometry, theme, fonts, pre-flight, colophon, cover, PDF export |
 | [05-screens.md](./05-screens.md) | Routes and screen behaviour |
 | [06-ai-generation.md](./06-ai-generation.md) | Gemini provider, prompts, retry/history, background job queue |
