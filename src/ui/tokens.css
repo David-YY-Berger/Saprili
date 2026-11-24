@@ -569,7 +569,12 @@ a {
 
 .page-view {
   display: grid;
-  gap: 1rem;
+  gap: 0.65rem;
+}
+
+.app-content:has(.page-view) {
+  width: min(96rem, 100%);
+  padding: 1.25rem clamp(1rem, 2vw, 2rem) 3rem;
 }
 
 .page-view__heading {
@@ -577,6 +582,21 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  margin-block-end: 0;
+}
+
+.page-view__heading h2 {
+  font-size: 1.6rem;
+}
+
+.page-view__heading p {
+  margin-block-start: 0.2rem;
+}
+
+.page-view__workspace {
+  display: grid;
+  gap: 1rem;
+  align-items: start;
 }
 
 .page-save-status {
@@ -709,6 +729,117 @@ a {
 
 .page-editor {
   align-content: start;
+}
+
+.page-view .page-editor {
+  gap: 0.7rem;
+  padding: 1rem;
+}
+
+.page-view .page-editor h2 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.page-editor__text-fields,
+.page-editor__creative {
+  display: grid;
+  gap: 0.8rem;
+  min-width: 0;
+}
+
+.page-editor__creative > * {
+  min-width: 0;
+}
+
+.page-view .page-editor__section {
+  align-content: start;
+  gap: 0.6rem;
+  padding-block: 0.75rem;
+}
+
+.page-view .page-editor .field textarea {
+  height: 5rem;
+  min-height: 5rem;
+}
+
+.page-view .field__check {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.page-view .field__check input {
+  width: auto;
+  min-height: 0;
+}
+
+.page-view .photo-drop-zone {
+  padding: 0.7rem;
+}
+
+@media (min-width: 60rem) {
+  .page-view__workspace {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  }
+
+  .page-view .spread-editor {
+    position: sticky;
+    inset-block-start: 1rem;
+    gap: 0.65rem;
+    min-width: 0;
+  }
+
+  .page-view .spread-frame {
+    min-height: 0;
+    padding: 0.5rem;
+  }
+
+  .page-view .spread-navigator .button {
+    padding: 0.5rem 0.65rem;
+    font-size: 0.85rem;
+  }
+
+  .page-view .page-slot {
+    min-height: 0;
+    padding: 1.5rem 0.4rem 0.4rem;
+  }
+
+  .page-view .page-preview {
+    zoom: 0.75;
+  }
+
+  .page-editor__text-fields,
+  .page-editor__creative {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 60rem) and (max-width: 70rem) {
+  .page-view .page-preview {
+    zoom: 0.65;
+  }
+}
+
+@media (max-width: 38rem) {
+  .page-view__heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .page-view .spread-frame {
+    min-height: 0;
+    padding: 0.5rem;
+  }
+
+  .page-view .page-slot {
+    min-height: 0;
+    padding: 1.5rem 0.25rem 0.4rem;
+  }
+
+  .page-view .page-preview {
+    zoom: 0.5;
+  }
 }
 
 .page-editor__section {

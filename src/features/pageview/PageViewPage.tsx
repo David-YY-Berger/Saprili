@@ -334,7 +334,7 @@ export function PageViewPage({ book: initialBook, pageId }: { book: Book; pageId
         </p>
       )}
       {selectedPageRef && (
-        <>
+        <div className="page-view__workspace">
           <SpreadEditor
             book={book}
             onSelectPage={setSelectedPageRef}
@@ -355,7 +355,7 @@ export function PageViewPage({ book: initialBook, pageId }: { book: Book; pageId
             onGenerationComplete={afterGeneration}
             pageRef={activePage}
           />
-        </>
+        </div>
       )}
     </section>
   );

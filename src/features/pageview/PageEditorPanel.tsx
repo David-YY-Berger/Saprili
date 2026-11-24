@@ -83,31 +83,24 @@ export function PageEditorPanel({
         onChange={(privateTitle) => onUpdate({ privateTitle })}
         value={page.privateTitle}
       />
-      <HebrewTextField onChange={(textHe) => onUpdate({ textHe })} value={page.textHe} />
-      <EnglishTextField onChange={(textEn) => onUpdate({ textEn })} value={page.textEn} />
-      <PhotosSection
-        disabled={importDisabled}
-        isIntro={pageRef.kind === 'intro'}
-        onChange={onPhotosChange}
-        onFiles={onImportPhotos}
-        onLayoutChange={
-          pageRef.kind === 'intro' ? (photoLayout) => onUpdate({ photoLayout }) : undefined
-        }
-        onRemove={onPhotoRemove}
-        photoLayout={pageRef.kind === 'intro' ? book.intro.photoLayout : undefined}
-        photos={page.photos}
-      />
-      {storyPage && (
-        <>
-          <section aria-labelledby="page-characters-heading" className="page-editor__section">
-            <h3 id="page-characters-heading">Characters in this illustration</h3>
-            <CharacterChecklist
-              bookId={book.id}
-              characters={book.characters}
-              checkedIds={storyPage.characterIds}
-              onChange={onCharacterIdsChange}
-            />
-          </section>
+      <div className="page-editor__text-fields">
+        <HebrewTextField onChange={(textHe) => onUpdate({ textHe })} value={page.textHe} />
+        <EnglishTextField onChange={(textEn) => onUpdate({ textEn })} value={page.textEn} />
+      </div>
+      <div className="page-editor__creative">
+        <PhotosSection
+          disabled={importDisabled}
+          isIntro={pageRef.kind === 'intro'}
+          onChange={onPhotosChange}
+          onFiles={onImportPhotos}
+          onLayoutChange={
+            pageRef.kind === 'intro' ? (photoLayout) => onUpdate({ photoLayout }) : undefined
+          }
+          onRemove={onPhotoRemove}
+          photoLayout={pageRef.kind === 'intro' ? book.intro.photoLayout : undefined}
+          photos={page.photos}
+        />
+        {storyPage && (
           <IllustrationSection
             book={book}
             busy={generation.running}
@@ -129,6 +122,19 @@ export function PageEditorPanel({
             onUpload={(file) => void generation.runLocal(storyPage.id, file)}
             pageId={storyPage.id}
           />
+        )}
+      </div>
+      {storyPage && (
+        <>
+          <section aria-labelledby="page-characters-heading" className="page-editor__section">
+            <h3 id="page-characters-heading">Characters in this illustration</h3>
+            <CharacterChecklist
+              bookId={book.id}
+              characters={book.characters}
+              checkedIds={storyPage.characterIds}
+              onChange={onCharacterIdsChange}
+            />
+          </section>
           <ColouringSection
             busy={generation.running}
             disabled={!generation.settingsLoaded}
