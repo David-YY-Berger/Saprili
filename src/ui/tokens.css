@@ -1114,6 +1114,12 @@ a {
   margin-block-end: 0.75rem;
 }
 
+.selection-shortcuts__note {
+  flex-basis: 100%;
+  color: var(--color-ink-soft);
+  font-size: 0.9rem;
+}
+
 .job-switch {
   display: flex;
   flex-wrap: wrap;

@@ -113,7 +113,7 @@ export function GenerateDialog({
         </Button>
         {!active && (
           <Button disabled={busy || plan.jobs.length === 0} onClick={() => void start()}>
-            Start generating
+            {busy ? 'Starting...' : 'Start generating'}
           </Button>
         )}
       </div>

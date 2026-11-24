@@ -10,11 +10,7 @@ export function JobSwitches({
   disabled: boolean;
   onChange: (next: Switches) => void;
 }) {
-  const row = (
-    key: keyof Switches,
-    label: string,
-    overwriteLabel: string,
-  ) => (
+  const row = (key: keyof Switches, label: string, overwriteLabel: string) => (
     <div className="job-switch">
       <label>
         <input
@@ -43,8 +39,8 @@ export function JobSwitches({
   return (
     <fieldset className="job-switches" disabled={disabled}>
       <legend>What to make</legend>
-      {row('illustrations', 'Illustrations', 'Overwrite existing')}
-      {row('colouring', 'Colouring pages', 'Overwrite existing')}
+      {row('illustrations', 'Illustrations', 'Overwrite existing illustrations')}
+      {row('colouring', 'Colouring pages', 'Overwrite existing colouring pages')}
     </fieldset>
   );
 }

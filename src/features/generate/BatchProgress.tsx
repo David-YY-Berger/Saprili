@@ -5,12 +5,17 @@ import { Button } from '@/ui/Button';
 
 export function summarizeJobs(jobs: readonly Job[]) {
   const count = (status: Job['status']) => jobs.filter((job) => job.status === status).length;
+  const done = count('succeeded');
+  const failed = count('failed');
+  const cancelled = count('cancelled');
   return {
     total: jobs.length,
-    done: count('succeeded'),
-    failed: count('failed'),
-    cancelled: count('cancelled'),
+    done,
+    failed,
+    cancelled,
     working: count('running'),
+    waiting: count('queued') + count('paused'),
+    finished: done + failed + cancelled,
   };
 }
 
@@ -40,10 +45,19 @@ export function BatchProgress({
 
   return (
     <section aria-label="Batch progress" className="batch-progress">
-      <progress aria-label="Batch progress" max={counts.total} value={counts.done + counts.failed + counts.cancelled} />
+      <progress
+        aria-label="Batch progress"
+        aria-valuetext={`${counts.finished} of ${counts.total} finished`}
+        max={counts.total}
+        value={counts.finished}
+      />
       <p aria-live="polite">
-        {stateText} · {counts.done} of {counts.total} done
+        {stateText} · {counts.finished} of {counts.total} finished
+        {counts.done > 0 ? ` · ${counts.done} done` : ''}
         {counts.failed > 0 ? ` · ${counts.failed} failed` : ''}
+        {counts.cancelled > 0 ? ` · ${counts.cancelled} cancelled` : ''}
+        {counts.working > 0 ? ` · ${counts.working} working` : ''}
+        {counts.waiting > 0 ? ` · ${counts.waiting} waiting` : ''}
       </p>
       {batch.state === 'paused' && batch.pauseReason && (
         <Banner type="warning">{batch.pauseReason}</Banner>

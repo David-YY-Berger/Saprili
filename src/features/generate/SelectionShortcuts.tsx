@@ -31,14 +31,14 @@ export function SelectionShortcuts({
   return (
     <div className="selection-shortcuts">
       <Button disabled={disabled} onClick={() => onSelect(selectAll(book))} variant="secondary">
-        Select all
+        Select entire book
       </Button>
       <Button
         disabled={disabled}
         onClick={() => onSelect(selectMissingIllustration(book))}
         variant="secondary"
       >
-        Select pages missing an illustration
+        Select missing illustrations
       </Button>
       <form
         className="selection-shortcuts__range"
@@ -53,7 +53,10 @@ export function SelectionShortcuts({
             aria-describedby={error ? 'page-range-error' : undefined}
             aria-invalid={error !== null}
             disabled={disabled}
-            onChange={(event) => setText(event.target.value)}
+            onChange={(event) => {
+              setText(event.target.value);
+              setError(null);
+            }}
             placeholder="3-6, 9"
             value={text}
           />
@@ -67,6 +70,9 @@ export function SelectionShortcuts({
           </p>
         )}
       </form>
+      <small className="selection-shortcuts__note">
+        Page ranges select story pages only. The cover is selected separately.
+      </small>
     </div>
   );
 }
