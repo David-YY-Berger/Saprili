@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Book } from '@/domain/book';
 import type { Character } from '@/domain/page';
 import { newId } from '@/shared/ids';
-import { toAppError } from '@/shared/errors';
+import { AppError, toAppError } from '@/shared/errors';
 import { useThumb } from '@/images/useThumb';
 import { photoImportService } from '@/images/importPhoto';
 import { imageRepository } from '@/storage/repositories';
@@ -15,6 +15,7 @@ import { Spinner } from '@/ui/Spinner';
 import { SaveStatusBar } from '@/features/pageview/SaveStatusBar';
 import { useBookAutosave } from '@/features/pageview/useBookAutosave';
 import { useBookStore } from '@/features/pageview/useBookStore';
+import { parseCharacterCsv } from './characterCsv';
 
 function CharacterPicture({ character }: { character: Character }) {
   const { url } = useThumb(character.photo?.originalImageId ?? null);
@@ -106,8 +107,11 @@ export function CharactersPage({ initialBook }: { initialBook: Book }) {
   const [storeReady, setStoreReady] = useState(false);
   const [immediateError, setImmediateError] = useState<unknown>(null);
   const [importing, setImporting] = useState(false);
+  const [importingCsv, setImportingCsv] = useState(false);
+  const [importedCount, setImportedCount] = useState<number | null>(null);
   const [leaving, setLeaving] = useState(false);
   const importingRef = useRef(false);
+  const importingCsvRef = useRef(false);
   const autosave = useBookAutosave(book, commit, storeReady && loadedBook?.id === initialBook.id);
   useBeforeUnloadGuard(autosave.status);
 
@@ -138,6 +142,37 @@ export function CharactersPage({ initialBook }: { initialBook: Book }) {
       ...characters,
       { id: newId(), name: '', description: '', photo: null },
     ]);
+
+  const importCharacters = async (file: File) => {
+    if (importingCsvRef.current) return;
+    importingCsvRef.current = true;
+    setImportingCsv(true);
+    setImmediateError(null);
+    setImportedCount(null);
+    try {
+      let buffer: ArrayBuffer;
+      try {
+        buffer = await file.arrayBuffer();
+      } catch (error) {
+        throw new AppError('STORAGE_FAILED', {
+          userMessage: 'The character CSV could not be read.',
+          nextStep: 'Check the file and choose it again.',
+          cause: error,
+        });
+      }
+      const characters = parseCharacterCsv(buffer);
+      setCharacters((existing) => [
+        ...existing,
+        ...characters.map((character) => ({ ...character, id: newId(), photo: null })),
+      ]);
+      setImportedCount(characters.length);
+    } catch (error) {
+      setImmediateError(error);
+    } finally {
+      importingCsvRef.current = false;
+      setImportingCsv(false);
+    }
+  };
 
   const leave = async (destination: string) => {
     setLeaving(true);
@@ -237,7 +272,7 @@ export function CharactersPage({ initialBook }: { initialBook: Book }) {
         <div>
           <button
             className="button button--secondary"
-            disabled={leaving || importing}
+            disabled={leaving || importing || importingCsv}
             onClick={() => void leave(`#/book/${encodeURIComponent(book.id)}`)}
             type="button"
           >
@@ -245,7 +280,7 @@ export function CharactersPage({ initialBook }: { initialBook: Book }) {
           </button>{' '}
           <button
             className="button button--secondary"
-            disabled={leaving || importing}
+            disabled={leaving || importing || importingCsv}
             onClick={() => void leave(`#/book/${encodeURIComponent(book.id)}/settings`)}
             type="button"
           >
@@ -267,6 +302,27 @@ export function CharactersPage({ initialBook }: { initialBook: Book }) {
           Preparing picture…
         </p>
       )}
+      <div className="field">
+        <label htmlFor="character-csv">Import characters from CSV</label>
+        <input
+          accept=".csv,text/csv"
+          disabled={leaving || importingCsv}
+          id="character-csv"
+          onChange={(event) => {
+            const file = event.currentTarget.files?.[0];
+            event.currentTarget.value = '';
+            if (file) void importCharacters(file);
+          }}
+          type="file"
+        />
+        <p className="field__hint">
+          UTF-8 CSV with headers name,desc. Each row adds a character; existing characters are kept.
+        </p>
+        {importingCsv && <p role="status">Importing characters…</p>}
+        {importedCount !== null && (
+          <p role="status">Added {importedCount} character{importedCount === 1 ? '' : 's'}.</p>
+        )}
+      </div>
       {book.characters.length === 0 && <p>No characters yet.</p>}
       {book.characters.length > 0 && (
         <ul aria-label="Characters" className="character-list">

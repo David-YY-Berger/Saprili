@@ -20,6 +20,7 @@ Book1 **opens to the right** (spine on the right, Hebrew style): intro alone on 
 ## Creating a book (Library → New book)
 - **New book** (Library header, or the empty-state button) creates an empty book (title "bookN", `format.lockedAt = null`, `shape = null`, no characters, empty intro, **no story pages**, default colophon and cover) and opens Setup.
 - Intended order: **Setup → Characters (Book view toolbar or Book settings) → Intro page (Book view → Intro row) → Import story pages from CSV (or Add pages) → edit story pages.**
+- On the Characters screen, import a UTF-8 CSV with headers `name,desc` to append characters without pictures. Names are required, descriptions may be empty, blank records are ignored, and invalid files import nothing. Existing characters are preserved; newly mentioned characters are automatically checked on story pages.
 
 ## Setup (first open, required before any edit)
 - Choose trim (one preset: 20.6 × 29.1 cm), orientation (**portrait only**; landscape shown disabled), text position (below the picture).
