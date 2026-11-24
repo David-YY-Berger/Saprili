@@ -12,7 +12,7 @@ const userDataDir = await mkdtemp(join(tmpdir(), 'saprili-phase3-e2e-'));
 const csv = [
   'Title,English,Hebrew',
   '---------, ,',
-  'one,First story,א',
+  'one,Maya walks home,א',
   'two,Second story,ב',
   '---------, ,',
 ].join('\n');
@@ -49,13 +49,24 @@ try {
   );
   await page.getByRole('button', { name: 'Confirm book setup' }).click();
   await page.getByRole('heading', { name: 'book1' }).waitFor();
+  await page.getByRole('button', { name: 'Characters' }).click();
+  await page.getByRole('button', { name: 'Add character' }).click();
+  await page.getByLabel('Name', { exact: true }).fill('Maya');
+  await page.getByRole('button', { name: 'Save and return to book' }).click();
+  await page.getByRole('link', { name: /Intro/ }).click();
+  await page.getByLabel('English text').fill('Our family introduction');
+  await page.getByRole('button', { name: 'Save and return to book' }).click();
   await page.getByRole('button', { name: 'Import pages from CSV' }).click();
+  assert.match(await page.getByLabel('CSV directions for your LLM').inputValue(), /title,english,hebrew/);
   await page.locator('input[type="file"]').setInputFiles({
     name: 'sample.csv',
     mimeType: 'text/csv',
     buffer: Buffer.from(csv),
   });
   await page.getByRole('heading', { name: 'book1' }).waitFor();
+  await page.getByRole('link', { name: /Intro/ }).click();
+  assert.equal(await page.getByLabel('English text').inputValue(), 'Our family introduction');
+  await page.getByRole('button', { name: 'Save and return to book' }).click();
   await page.getByRole('button', { name: 'Move one down' }).click();
   await page.locator('.story-row__link').nth(0).getByText('two').waitFor();
   await page.getByRole('button', { name: 'Add pages' }).click();

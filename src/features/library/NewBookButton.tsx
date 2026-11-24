@@ -15,7 +15,10 @@ export function NewBookButton() {
     setBusy(true);
     try {
       const books = await bookRepository.listBookSummaries();
-      const book = createEmptyBook({ nowIso: systemClock.nowIso(), title: `book${books.length + 1}` });
+      const titles = new Set(books.map((book) => book.title));
+      let number = 1;
+      while (titles.has(`book${number}`)) number += 1;
+      const book = createEmptyBook({ nowIso: systemClock.nowIso(), title: `book${number}` });
       await bookRepository.createBook(book);
       window.location.hash = `#/book/${encodeURIComponent(book.id)}/setup`;
     } catch (createError) {

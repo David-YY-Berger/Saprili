@@ -106,6 +106,7 @@ export function CharactersPage({ initialBook }: { initialBook: Book }) {
   const [storeReady, setStoreReady] = useState(false);
   const [immediateError, setImmediateError] = useState<unknown>(null);
   const [importing, setImporting] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   const importingRef = useRef(false);
   const autosave = useBookAutosave(book, commit, storeReady && loadedBook?.id === initialBook.id);
   useBeforeUnloadGuard(autosave.status);
@@ -137,6 +138,18 @@ export function CharactersPage({ initialBook }: { initialBook: Book }) {
       ...characters,
       { id: newId(), name: '', description: '', photo: null },
     ]);
+
+  const leave = async (destination: string) => {
+    setLeaving(true);
+    setImmediateError(null);
+    try {
+      await commit('userEdit', book);
+      window.location.hash = destination;
+    } catch (error) {
+      setImmediateError(error);
+      setLeaving(false);
+    }
+  };
 
   const setPhoto = async (characterId: string, file: File) => {
     if (importingRef.current) return;
@@ -221,12 +234,24 @@ export function CharactersPage({ initialBook }: { initialBook: Book }) {
             automatically checks characters whose name appears in its English text.
           </p>
         </div>
-        <a
-          className="button button--secondary"
-          href={`#/book/${encodeURIComponent(book.id)}/settings`}
-        >
-          Back to book settings
-        </a>
+        <div>
+          <button
+            className="button button--secondary"
+            disabled={leaving || importing}
+            onClick={() => void leave(`#/book/${encodeURIComponent(book.id)}`)}
+            type="button"
+          >
+            Save and return to book
+          </button>{' '}
+          <button
+            className="button button--secondary"
+            disabled={leaving || importing}
+            onClick={() => void leave(`#/book/${encodeURIComponent(book.id)}/settings`)}
+            type="button"
+          >
+            Back to book settings
+          </button>
+        </div>
       </header>
       <SaveStatusBar lastSavedAt={autosave.lastSavedAt} status={autosave.status} />
       {autosave.status === 'failed' && (

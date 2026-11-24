@@ -4,7 +4,7 @@
 
 ## Structure
 - **Interior order is fixed:** Cover (outside the page sequence) → Intro (alone) → story pairs → Colophon (alone). Intro + even story pages + colophon is always even (a blank last page is a fallback only; see [04](./04-layout-and-print.md)).
-- Data supports many books from day one ("book1" is the first). Minimum one story pair.
+- Data supports many books from day one ("book1" is the first). A new book starts without story pages; story pages are added in pairs.
 - **Intro:** private title, English text, Hebrew text, original photos; no illustration/colouring page. Prints the original photos (first large, or collage ≤4, also in colouring edition) with the free text below. Characters are no longer part of the intro: they live in the book (Characters screen, opened from Book settings) and each story page / the cover picks which are sent to the AI. Intro photos are the AI reference only when the book has no characters.
 - **Story page:** private title (never printed), one English and one Hebrew text (paragraphs allowed, no rich formatting), original photos, illustration, colouring page, remembered custom prompt, ≤3 older illustration versions, image metadata. The page editor can permanently delete an illustration and its version history; dropping files into the illustration area is disabled.
 - **Colophon:** generated, not typed (see [04](./04-layout-and-print.md)). **Cover:** see [04](./04-layout-and-print.md).
@@ -31,13 +31,13 @@ Book1 **opens to the right** (spine on the right, Hebrew style): intro alone on 
 Binding side, theme preset, border style, margins and gutter (clamped live to the 10 mm floor with an explanation), fonts, 3 text size steps, alignment, Hebrew/English spacing, page numbers, art-style text, book title, colophon link, a **Characters** link (opens the Characters screen), and an explicit "recompute shape" action (warns that existing illustrations will no longer fit exactly). Page format is read-only. Autosaves; has a live `PagePreview`.
 
 ## CSV import of story pages ("Import pages from CSV")
-- Route `#/book/:id/import`, button in the Book view toolbar. Only offered while the story body is **untouched** (`isStoryBodyUntouched`: every story page has no title, text, photos, illustration or colouring page; an empty book qualifies). Otherwise the button is hidden and the screen refuses the file. The import **replaces** the (empty) story pages. Chosen via file picker.
+- Route `#/book/:id/import`, button in the Book view toolbar. Only offered while the story body is **untouched** (`isStoryBodyUntouched`: story pages have no content, character selections or illustration settings; an empty book qualifies). Otherwise the button is hidden and the screen refuses the file. The import **replaces** the (empty) story pages. Chosen via file picker.
 - The screen shows copiable, succinct directions (`csvInstructions.ts`, `CSV_LLM_INSTRUCTIONS`, with a Copy button) that the user pastes to his LLM; they describe the exact format below.
 - Columns: title, English text, Hebrew text (exactly 3, header recommended: `title,english,hebrew`). Headers optional and case-insensitive; aliases include `Title`, `eng_descrip`, `heb_descr`. UTF-8 with or without BOM; legacy Hebrew codepage (e.g. Windows-1255) is detected and rejected as `CSV_BAD_ENCODING`.
 - **Every data row is a story page; there is no intro row** (the intro is made on its own page) and no colophon. Paragraph line breaks are preserved. Characters whose names appear in the English text are auto-checked on each imported page.
 - Entirely blank records are ignored. A row whose title is only hyphens with empty text cells is an ignored **pair separator** (allowed after the intro or after a complete story pair). Remaining rows pair in source order; their count must be even.
 - Errors with row numbers and a next step: wrong columns, odd count or a separator that splits a pair, empty file, bad encoding. **Atomic:** nothing is created on any error.
-- `buildBookFromCsv` creates the book with title "book1", `format.lockedAt = null`, `shape = null`, default colophon and cover, then navigates to Setup.
+- A successful import updates the existing book and returns to its outline, preserving its setup, characters and intro.
 - The old whole-book import (first row = intro) is gone; the root `data.csv` still has an intro row, so remove that row before importing it.
 
 ## Library

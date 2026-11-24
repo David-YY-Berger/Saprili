@@ -49,6 +49,7 @@ describe('LibraryPage', () => {
     renderLibrary();
 
     expect(await screen.findByRole('heading', { name: 'Family stories' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'New book' })).toBeTruthy();
     expect(screen.getByText('2 interior pages')).toBeTruthy();
     expect(screen.getByRole('img', { name: 'Family stories book thumbnail' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Actions for Family stories' })).toBeTruthy();

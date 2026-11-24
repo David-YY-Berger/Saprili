@@ -108,6 +108,12 @@ export function BookViewPage({ book: initialBook }: { book: Book }) {
           {error.nextStep}
         </Banner>
       )}
+      {isStoryBodyUntouched(book) && (
+        <p>
+          Get started: add Characters, open the Intro row to create your intro page, then choose
+          Import pages from CSV to add your story pages. You can also add pages manually.
+        </p>
+      )}
       <BookToolbar
         disabled={hasPendingDelete}
         onAdd={() => setAddOpen(true)}

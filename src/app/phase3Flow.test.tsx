@@ -8,7 +8,7 @@ import { ToastHost } from '@/ui/ToastHost';
 import { AppRoutes } from './routes';
 
 const validCsv =
-  'title,english,hebrew\none,First story,a\nTwo,Second story,b\n---------,,\n';
+  'title,english,hebrew\none,Maya walks home,a\nTwo,Second story,b\n---------,,\n';
 
 function csvFile(value: string): File {
   const file = new File([value], 'family.csv', { type: 'text/csv' });
@@ -37,7 +37,7 @@ afterEach(() => {
 });
 
 describe('Phase 3 flow', () => {
-  it('imports a CSV, locks setup, reorders, adds a pair, and undoes deletion', async () => {
+  it('creates characters and an intro before importing story pages, then edits the outline', async () => {
     renderRoutes();
     fireEvent.click(await screen.findByRole('button', { name: 'New book' }));
 
@@ -50,8 +50,24 @@ describe('Phase 3 flow', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Confirm book setup' }));
     expect(await screen.findByRole('heading', { name: 'book1' })).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Import pages from CSV' }));
-    expect(await screen.findByLabelText('CSV directions for your LLM')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Characters' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Add character' }));
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Maya' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save and return to book' }));
+    expect(await screen.findByRole('heading', { name: 'book1' })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('link', { name: /Intro/ }));
+    fireEvent.change(await screen.findByLabelText('English text'), {
+      target: { value: 'Our family introduction' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save and return to book' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Import pages from CSV' }));
+    const directions = await screen.findByLabelText('CSV directions for your LLM');
+    expect((directions as HTMLTextAreaElement).value).toContain('title,english,hebrew');
+    fireEvent.click(screen.getByRole('button', { name: 'Copy directions' }));
+    expect((await screen.findByRole('alert')).textContent).toContain(
+      'Could not copy automatically. Select and copy the directions above.',
+    );
     fireEvent.change(await screen.findByLabelText('Choose your CSV file'), {
       target: { files: [csvFile(validCsv)] },
     });
@@ -62,6 +78,9 @@ describe('Phase 3 flow', () => {
     expect(imported).toHaveLength(1);
     let book = await bookRepository.getBook(imported[0]!.id);
     expect(book?.format.lockedAt).not.toBeNull();
+    expect(book?.intro.textEn).toBe('Our family introduction');
+    expect(book?.characters[0]?.name).toBe('Maya');
+    expect(book?.storyPages[0]?.characterIds).toEqual([book?.characters[0]?.id]);
     expect(book?.storyPages.map((page) => page.privateTitle)).toEqual(['one', 'Two']);
     expect(screen.getByText('Delete pages').closest('button')?.disabled).toBe(true);
 

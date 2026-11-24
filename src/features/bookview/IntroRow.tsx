@@ -10,7 +10,7 @@ export function IntroRow({ book }: { book: Book }) {
       href={`#/book/${encodeURIComponent(book.id)}/page/${encodeURIComponent(book.intro.id)}`}
     >
       <span className="book-row__title">Intro</span>
-      <span className="book-row__summary">{book.intro.privateTitle || 'Character introduction'}</span>
+      <span className="book-row__summary">{book.intro.privateTitle || 'Edit intro text and pictures'}</span>
       <RowIndicators status={getRowStatus(book.intro)} />
     </a>
   );

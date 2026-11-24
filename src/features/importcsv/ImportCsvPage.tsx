@@ -15,6 +15,7 @@ import type { CsvValidationResult } from './csvErrors';
 export function ImportCsvPage({ book }: { book: Book }) {
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
   const [validation, setValidation] = useState<CsvValidationResult | null>(null);
   const [error, setError] = useState<AppError | null>(null);
   const bookHash = `#/book/${encodeURIComponent(book.id)}`;
@@ -37,8 +38,10 @@ export function ImportCsvPage({ book }: { book: Book }) {
     try {
       await navigator.clipboard.writeText(CSV_LLM_INSTRUCTIONS);
       setCopied(true);
+      setCopyFailed(false);
     } catch {
       setCopied(false);
+      setCopyFailed(true);
     }
   };
 
@@ -76,10 +79,16 @@ export function ImportCsvPage({ book }: { book: Book }) {
             Copy directions
           </Button>
           {copied && <span role="status"> Copied.</span>}
+          {copyFailed && (
+            <p role="alert">Could not copy automatically. Select and copy the directions above.</p>
+          )}
         </div>
       </div>
       <div className="surface-card settings-form">
         <h3>2. Upload the CSV</h3>
+        {book.storyPages.length > 0 && isStoryBodyUntouched(book) && (
+          <p>Importing replaces the existing empty story pages.</p>
+        )}
         <CsvFilePicker
           disabled={busy || !isStoryBodyUntouched(book)}
           onFile={(file) => void handleFile(file)}

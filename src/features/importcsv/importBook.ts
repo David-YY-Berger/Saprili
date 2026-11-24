@@ -14,9 +14,14 @@ export function isStoryBodyUntouched(book: Book): boolean {
       page.textEn.trim() === '' &&
       page.textHe.trim() === '' &&
       page.photos.length === 0 &&
+      page.characterIds.length === 0 &&
       page.illustration.currentImageId === null &&
       page.illustration.history.length === 0 &&
-      page.colouring.imageId === null,
+      page.illustration.customPrompt.trim() === '' &&
+      !page.illustration.useEditMode &&
+      page.colouring.imageId === null &&
+      page.colouring.sourceIllustrationImageId === null &&
+      !page.colouring.outdated,
   );
 }
 
@@ -25,6 +30,10 @@ export async function importStoryPagesFromCsv(
   bookId: string,
   file: File,
 ): Promise<CsvValidationResult | null> {
+  const parsed = parseBookCsv(await file.arrayBuffer());
+  const validation = validateParsedCsv(parsed);
+  if (!validation.valid) return validation;
+
   const book = await bookRepository.getBook(bookId);
   if (!book) throw new AppError('STORAGE_FAILED', { detail: `Book ${bookId} does not exist` });
   if (!isStoryBodyUntouched(book)) {
@@ -33,10 +42,6 @@ export async function importStoryPagesFromCsv(
       nextStep: 'CSV import is only available before you start the story pages.',
     });
   }
-  const parsed = parseBookCsv(await file.arrayBuffer());
-  const validation = validateParsedCsv(parsed);
-  if (!validation.valid) return validation;
-
   const storyPages = buildStoryPagesFromCsv(parsed).map((page) => ({
     ...page,
     characterIds: findMentionedCharacterIds(book.characters, page.textEn),

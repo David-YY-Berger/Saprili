@@ -59,10 +59,23 @@ export function PageViewPage({ book: initialBook, pageId }: { book: Book; pageId
   const [selectedPageRef, setSelectedPageRef] = useState<PageRef | null>(initialPageRef);
   const [immediateError, setImmediateError] = useState<unknown>(null);
   const [importing, setImporting] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   const importingRef = useRef(false);
   const canEditPhotos = storeReady && selectedPageRef?.kind !== 'colophon';
   const beforeGeneration = useCallback(() => commit('userEdit'), [commit]);
   const afterGeneration = useCallback(() => loadBook(initialBook.id), [initialBook.id, loadBook]);
+
+  const backToBook = async () => {
+    setLeaving(true);
+    setImmediateError(null);
+    try {
+      await commit('userEdit', book);
+      window.location.hash = `#/book/${encodeURIComponent(book.id)}`;
+    } catch (error) {
+      setImmediateError(error);
+      setLeaving(false);
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -297,9 +310,14 @@ export function PageViewPage({ book: initialBook, pageId }: { book: Book; pageId
           <h2 id="page-view-heading">{book.title}</h2>
           <p>Edit text and pictures. Changes are saved automatically.</p>
         </div>
-        <a className="button button--secondary" href={`#/book/${encodeURIComponent(book.id)}`}>
-          Back to book
-        </a>
+        <button
+          className="button button--secondary"
+          disabled={leaving || importing}
+          onClick={() => void backToBook()}
+          type="button"
+        >
+          Save and return to book
+        </button>
       </header>
       <SaveStatusBar lastSavedAt={autosave.lastSavedAt} status={autosave.status} />
       {autosave.status === 'failed' && (
