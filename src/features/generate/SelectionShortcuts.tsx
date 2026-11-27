@@ -71,7 +71,7 @@ export function SelectionShortcuts({
         )}
       </form>
       <small className="selection-shortcuts__note">
-        Page ranges select story pages only. The cover is selected separately.
+        Page ranges select story pages only. The cover and intro are selected separately.
       </small>
     </div>
   );

@@ -1,6 +1,7 @@
 // bisiyata dishmaya, leharbot ahava biyisral
 import { ILLUSTRATION_HISTORY_MAX } from '@/domain/constants';
 import type { Book } from '@/domain/book';
+import { findIllustratedPage } from '@/domain/ordering';
 import { getMainImageId, type IllustrationState, type StoryPage } from '@/domain/page';
 import type { ImageRecord } from '@/domain/image';
 import { newId } from '@/shared/ids';
@@ -43,7 +44,7 @@ export interface GenerationOptions extends PromptOptions {
   useEditMode?: boolean;
   apiKey?: string;
   modelId?: string;
-  referenceImageId?: string;
+  referenceImageIds?: string[];
 }
 
 export interface GenerationResult {
@@ -72,12 +73,15 @@ export function markColouringOutdated(page: StoryPage): StoryPage {
 }
 
 function getStoryPage(book: Book, pageId: string): StoryPage {
-  const page = book.storyPages.find((candidate) => candidate.id === pageId);
+  const page = findIllustratedPage(book, pageId);
   if (!page) throw new AppError('STORAGE_FAILED', { detail: `Story page ${pageId} was not found` });
   return page;
 }
 
 function setStoryPage(book: Book, pageId: string, update: (page: StoryPage) => StoryPage): Book {
+  if (book.intro.id === pageId) {
+    return { ...book, intro: { ...book.intro, ...update(book.intro) } };
+  }
   return {
     ...book,
     storyPages: book.storyPages.map((page) => (page.id === pageId ? update(page) : page)),
@@ -383,13 +387,15 @@ export function createGenerationService(deps: GenerationServiceDeps) {
 
   async function generateBackCoverIllustration(
     bookId: string,
-    referenceImageId: string,
+    referenceImageIds: readonly string[],
+    options: PromptOptions = {},
   ): Promise<GenerationResult> {
     const { book, apiKey, illustrationModelId } = await getBookAndSettings(bookId);
     const request = await buildBackCoverIllustrationRequest(
       book,
-      referenceImageId,
+      referenceImageIds,
       deps.imageRepository,
+      options,
     );
     const result = await deps.providerFactory(illustrationModelId, apiKey).generateImage(request);
     const sourceSize = await postprocess.measureImage(result.image);

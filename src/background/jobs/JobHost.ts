@@ -1,5 +1,6 @@
 // bisiyata dishmaya, leharbot ahava biyisral
 import type { Job } from '@/domain/job';
+import { findIllustratedPage } from '@/domain/ordering';
 import { createGenerationService, type GenerationServiceDeps } from '@/ai/generationService';
 import type { ImageProvider } from '@/ai/ImageProvider';
 import type { Clock } from '@/shared/clock';
@@ -71,7 +72,7 @@ export function createJobExecutor(deps: JobHostDeps) {
       return;
     }
     const book = await deps.bookRepository.getBook(job.bookId);
-    const customPrompt = book?.storyPages.find((page) => page.id === pageId)?.illustration.customPrompt;
+    const customPrompt = book ? findIllustratedPage(book, pageId)?.illustration.customPrompt : undefined;
     await service.generateIllustrationForPage(job.bookId, pageId, {
       customPrompt: customPrompt?.trim() || undefined,
     });
@@ -90,7 +91,7 @@ export function createHasOutputSince(deps: Pick<JobHostDeps, 'bookRepository' | 
           ? book.cover.characterPortraits[0]?.imageId
           : book.cover.illustration.currentImageId;
     } else if (job.target.kind === 'story') {
-      const page = book.storyPages.find((candidate) => candidate.id === (job.target as { pageId: string }).pageId);
+      const page = findIllustratedPage(book, job.target.pageId);
       imageId = job.kind === 'colouring' ? page?.colouring.imageId : page?.illustration.currentImageId;
     }
     if (!imageId) return false;

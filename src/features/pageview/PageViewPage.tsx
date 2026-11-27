@@ -155,6 +155,7 @@ export function PageViewPage({ book: initialBook, pageId }: { book: Book; pageId
     textEn?: string;
     textHe?: string;
     photoLayout?: Book['intro']['photoLayout'];
+    mode?: Book['intro']['mode'];
   }) => {
     if (!selectedPageRef) return;
     updateBook((current) => {
@@ -181,37 +182,46 @@ export function PageViewPage({ book: initialBook, pageId }: { book: Book; pageId
     targetPageId: string,
     patch: Partial<Book['storyPages'][number]['illustration']>,
   ) => {
-    updateBook((current) => ({
-      ...current,
-      storyPages: current.storyPages.map((page) =>
-        page.id === targetPageId
-          ? { ...page, illustration: { ...page.illustration, ...patch } }
-          : page,
-      ),
-    }));
+    updateBook((current) => {
+      if (current.intro.id === targetPageId) {
+        return {
+          ...current,
+          intro: {
+            ...current.intro,
+            illustration: { ...current.intro.illustration, ...patch },
+          },
+        };
+      }
+      return {
+        ...current,
+        storyPages: current.storyPages.map((page) =>
+          page.id === targetPageId
+            ? { ...page, illustration: { ...page.illustration, ...patch } }
+            : page,
+        ),
+      };
+    });
   };
 
   const deleteIllustration = async (targetPageId: string) => {
-    updateBook((current) => ({
-      ...current,
-      storyPages: current.storyPages.map((page) =>
-        page.id === targetPageId
-          ? {
-              ...page,
-              illustration: {
-                ...page.illustration,
-                currentImageId: null,
-                history: [],
-              },
-              colouring: {
-                ...page.colouring,
-                sourceIllustrationImageId: null,
-                outdated: page.colouring.imageId !== null,
-              },
-            }
-          : page,
-      ),
-    }));
+    updateBook((current) => {
+      const clear = <T extends Book['storyPages'][number]>(page: T): T => ({
+        ...page,
+        illustration: { ...page.illustration, currentImageId: null, history: [] },
+        colouring: {
+          ...page.colouring,
+          sourceIllustrationImageId: null,
+          outdated: page.colouring.imageId !== null,
+        },
+      });
+      return {
+        ...current,
+        intro: current.intro.id === targetPageId ? clear(current.intro) : current.intro,
+        storyPages: current.storyPages.map((page) =>
+          page.id === targetPageId ? clear(page) : page,
+        ),
+      };
+    });
     try {
       const saved = await commit('userEdit');
       await imageRepository.purgeOrphanImages(saved);
@@ -221,10 +231,11 @@ export function PageViewPage({ book: initialBook, pageId }: { book: Book; pageId
   };
 
   const handleCharacterIdsChange = (characterIds: string[]) => {
-    if (selectedPageRef?.kind !== 'story') return;
+    if (!selectedPageRef || selectedPageRef.kind === 'colophon') return;
     const targetId = selectedPageRef.id;
     updateBook((current) => ({
       ...current,
+      intro: current.intro.id === targetId ? { ...current.intro, characterIds } : current.intro,
       storyPages: current.storyPages.map((page) =>
         page.id === targetId ? { ...page, characterIds } : page,
       ),

@@ -29,6 +29,15 @@ function withGenerated(target: Book, stored: Book): Book {
   return {
     ...target,
     modifiedAt: stored.modifiedAt,
+    intro: {
+      ...target.intro,
+      illustration: {
+        ...target.intro.illustration,
+        currentImageId: stored.intro.illustration.currentImageId,
+        history: stored.intro.illustration.history,
+      },
+      colouring: stored.intro.colouring,
+    },
     cover: {
       ...target.cover,
       illustration: {

@@ -27,6 +27,16 @@ function image(id: string, widthPx: number): ImageRecord {
 }
 
 describe('preflight', () => {
+  it('checks regular intro artwork rather than the special photo layout', () => {
+    const book = makeBook();
+    book.intro.mode = 'regular';
+    const introIssues = (edition: 'colour' | 'colouring') =>
+      runPreflight(book, edition).issues.filter((issue) => issue.pageRef.kind === 'intro');
+    expect(introIssues('colour').map((issue) => issue.code)).toContain('MISSING_ILLUSTRATION');
+    expect(introIssues('colouring').map((issue) => issue.code)).toContain('MISSING_COLOURING');
+    book.intro.mode = 'special';
+    expect(introIssues('colour').map((issue) => issue.code)).not.toContain('MISSING_ILLUSTRATION');
+  });
   it('calculates effective DPI from physical display width', () => {
     expect(computeEffectiveDpi(300, 25.4)).toBeCloseTo(300);
     expect(() => computeEffectiveDpi(0, 25.4)).toThrow(RangeError);

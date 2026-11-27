@@ -1,6 +1,6 @@
 // bisiyata dishmaya, leharbot ahava biyisral
 import type { Book } from './book';
-import type { Character } from './page';
+import type { Character, StoryPage } from './page';
 
 const HEBREW = /[\u0590-\u05ff\uFB1D-\uFB4F\uFB50-\uFDFF\uFE70-\uFEFF]/g;
 
@@ -50,13 +50,16 @@ export function getCheckedCharacters(book: Book, characterIds: readonly string[]
  * (new text, new page or new/renamed character), so unchecking a mentioned character sticks.
  */
 export function applyAutoChecks(previous: Book, next: Book): Book {
-  if (previous.storyPages === next.storyPages && previous.characters === next.characters) {
+  if (
+    previous.storyPages === next.storyPages &&
+    previous.intro === next.intro &&
+    previous.characters === next.characters
+  ) {
     return next;
   }
   const previousPages = new Map(previous.storyPages.map((page) => [page.id, page]));
   let changed = false;
-  const storyPages = next.storyPages.map((page) => {
-    const before = previousPages.get(page.id);
+  const checkPage = <T extends StoryPage>(page: T, before: StoryPage | undefined): T => {
     if (before === page && previous.characters === next.characters) return page;
     const alreadyMentioned = new Set(
       before ? findMentionedCharacterIds(previous.characters, before.textEn) : [],
@@ -67,6 +70,8 @@ export function applyAutoChecks(previous: Book, next: Book): Book {
     if (added.length === 0) return page;
     changed = true;
     return { ...page, characterIds: [...page.characterIds, ...added] };
-  });
-  return changed ? { ...next, storyPages } : next;
+  };
+  const intro = checkPage(next.intro, previous.intro);
+  const storyPages = next.storyPages.map((page) => checkPage(page, previousPages.get(page.id)));
+  return changed ? { ...next, intro, storyPages } : next;
 }

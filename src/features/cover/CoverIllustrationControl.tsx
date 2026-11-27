@@ -171,7 +171,7 @@ export function CoverIllustrationControl({
         }
         omittedPhotoCount={generation.omittedPhotoCount}
       />
-      <CoverImageUpload bookId={book.id} onUploaded={onOwnImage} />
+      <CoverImageUpload bookId={book.id} onUploaded={(ids) => onOwnImage(ids[0]!)} />
     </section>
   );
 }

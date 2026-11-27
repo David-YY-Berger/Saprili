@@ -93,13 +93,17 @@ export function useGenerationRun(
             result = await service.generateCoverCharacterPortraits(bookId, options);
             break;
           case 'backCover':
-            if (!options.referenceImageId) {
+            if (!options.referenceImageIds?.length) {
               throw new AppError('AI_BAD_RESPONSE', {
                 userMessage: 'Upload an original photo before generating back-cover artwork.',
                 nextStep: 'Choose a reference photo, then try again.',
               });
             }
-            result = await service.generateBackCoverIllustration(bookId, options.referenceImageId);
+            result = await service.generateBackCoverIllustration(
+              bookId,
+              options.referenceImageIds,
+              options,
+            );
             break;
           case 'illustration':
             if (!pageId) throw new AppError('STORAGE_FAILED', { detail: 'Missing story page id' });

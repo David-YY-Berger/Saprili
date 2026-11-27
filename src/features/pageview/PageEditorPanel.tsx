@@ -38,6 +38,7 @@ export function PageEditorPanel({
     textEn?: string;
     textHe?: string;
     photoLayout?: IntroPhotoLayout;
+    mode?: Book['intro']['mode'];
   }) => void;
   onPhotosChange: (photos: PhotoRef[]) => void;
   onPhotoRemove: (photo: PhotoRef, index: number) => void;
@@ -72,13 +73,34 @@ export function PageEditorPanel({
       : book.storyPages.find((candidate) => candidate.id === pageRef.id);
   if (!page) return null;
   const storyPage =
-    pageRef.kind === 'story'
-      ? book.storyPages.find((candidate) => candidate.id === pageRef.id)
-      : null;
+    pageRef.kind === 'intro' && book.intro.mode === 'regular'
+      ? book.intro
+      : pageRef.kind === 'story'
+        ? book.storyPages.find((candidate) => candidate.id === pageRef.id)
+        : null;
 
   return (
     <section aria-labelledby="page-editor-heading" className="page-editor surface-card">
       <h2 id="page-editor-heading">{pageRef.kind === 'intro' ? 'Intro page' : 'Story page'}</h2>
+      {pageRef.kind === 'intro' && (
+        <label className="field">
+          <span>Intro page style</span>
+          <select
+            aria-label="Intro page style"
+            aria-describedby="intro-style-hint"
+            value={book.intro.mode}
+            onChange={(event) =>
+              onUpdate({ mode: event.currentTarget.value === 'regular' ? 'regular' : 'special' })
+            }
+          >
+            <option value="special">Special intro (original photos)</option>
+            <option value="regular">Regular story page</option>
+          </select>
+          <span className="field__hint" id="intro-style-hint">
+            Switching styles keeps your text, photos and artwork.
+          </span>
+        </label>
+      )}
       <PrivateTitleField
         onChange={(privateTitle) => onUpdate({ privateTitle })}
         value={page.privateTitle}
@@ -90,7 +112,7 @@ export function PageEditorPanel({
       <div className="page-editor__creative">
         <PhotosSection
           disabled={importDisabled}
-          isIntro={pageRef.kind === 'intro'}
+          isIntro={pageRef.kind === 'intro' && book.intro.mode === 'special'}
           onChange={onPhotosChange}
           onFiles={onImportPhotos}
           onLayoutChange={

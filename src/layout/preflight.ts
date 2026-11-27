@@ -115,8 +115,11 @@ export function runPreflight(
       });
     }
 
-    if (pageRef.kind === 'story') {
-      const page = book.storyPages.find((item) => item.id === pageRef.id);
+    if (pageRef.kind === 'story' || (pageRef.kind === 'intro' && book.intro.mode === 'regular')) {
+      const page =
+        pageRef.kind === 'intro'
+          ? book.intro
+          : book.storyPages.find((item) => item.id === pageRef.id);
       if (!page) continue;
       if (edition === 'colour' && !getMainImageId(page)) {
         add({
@@ -174,7 +177,7 @@ export function runPreflight(
     }
 
     const imageTargets: { id: string; widthMm: number }[] = [];
-    if (pageRef.kind === 'intro') {
+    if (pageRef.kind === 'intro' && book.intro.mode === 'special') {
       const cells = computeIntroPhotoLayout(
         book.intro.photos.length,
         book.intro.photoLayout,
@@ -184,8 +187,11 @@ export function runPreflight(
         const cell = cells[index];
         if (cell) imageTargets.push({ id: photo.originalImageId, widthMm: cell.width });
       });
-    } else if (pageRef.kind === 'story') {
-      const page = book.storyPages.find((item) => item.id === pageRef.id);
+    } else if (pageRef.kind === 'story' || pageRef.kind === 'intro') {
+      const page =
+        pageRef.kind === 'intro'
+          ? book.intro
+          : book.storyPages.find((item) => item.id === pageRef.id);
       const id = edition === 'colour' ? (page ? getMainImageId(page) : null) : page?.colouring.imageId;
       if (id) imageTargets.push({ id, widthMm: geometry.pictureRect.width });
     }

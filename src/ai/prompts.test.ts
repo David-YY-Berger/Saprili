@@ -79,6 +79,13 @@ function fixture() {
 }
 
 describe('AI prompt payload composition', () => {
+  it('sends regular intro photos once, as page photos', async () => {
+    const { book, imageRepository } = fixture();
+    book.intro.mode = 'regular';
+    const request = await buildIllustrationRequest(book, book.intro.id, {}, imageRepository);
+    expect(request.referenceImages).toHaveLength(3);
+    expect(request.omittedPhotoCount).toBe(1);
+  });
   it('sends only English intro/page context and capped AI-copy photos', async () => {
     const { book, imageRepository } = fixture();
     const request = await buildIllustrationRequest(
@@ -121,17 +128,29 @@ describe('AI prompt payload composition', () => {
   it('uses only the selected original photo for back-cover generation', async () => {
     const { book } = fixture();
     const reference = imageRecord('back-reference');
-    const request = await buildBackCoverIllustrationRequest(book, reference.id, {
-      getImage: async (id: string) => (id === reference.id ? reference : null),
-    });
-    expect(request.referenceImages).toEqual([reference.blob]);
+    const second = imageRecord('back-reference-2');
+    const request = await buildBackCoverIllustrationRequest(
+      book,
+      [reference.id, second.id],
+      { getImage: async (id: string) => [reference, second].find((item) => item.id === id) ?? null },
+      { customPrompt: 'A sunny garden עברית' },
+    );
+    expect(request.referenceImages).toEqual([reference.blob, second.blob]);
     expect(request.targetAspect).toBeGreaterThan(0);
     expect(request.instructions).toContain('back cover');
+    expect(request.instructions).toContain('Additional back-cover illustration instruction: A sunny garden');
+    expect(request.instructions).toContain('Do not include written text, letters, numbers, captions, or logos.');
+    expect(request.instructions.indexOf('Do not include written text')).toBeGreaterThan(
+      request.instructions.indexOf('A sunny garden'),
+    );
     expect(request.instructions).not.toMatch(/[\u0590-\u05ff]/);
     expect(request.instructions).not.toContain('The family lives near the sea.');
     await expect(
-      buildBackCoverIllustrationRequest(book, 'missing', { getImage: async () => null }),
+      buildBackCoverIllustrationRequest(book, [reference.id, 'missing'], { getImage: async (id) => id === reference.id ? reference : null }),
     ).rejects.toMatchObject({ code: 'STORAGE_FAILED' });
+    await expect(
+      buildBackCoverIllustrationRequest(book, [], { getImage: async () => null }),
+    ).rejects.toMatchObject({ code: 'AI_BAD_RESPONSE' });
   });
 
   it('uses character pictures and descriptions in order instead of intro photos', async () => {

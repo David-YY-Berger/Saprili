@@ -59,7 +59,8 @@ export function PageSheet({
 
   const canvas = geometry.bleedRect;
   const sheet = showBleed ? canvas : geometry.trimRect;
-  const showNumber = book.showPageNumbers && pageRef.kind === 'story';
+  const isRegularIntro = pageRef.kind === 'intro' && book.intro.mode === 'regular';
+  const showNumber = book.showPageNumbers && (pageRef.kind === 'story' || isRegularIntro);
 
   return (
     <div
@@ -93,7 +94,7 @@ export function PageSheet({
           canvasRect={canvas}
           theme={theme}
         />
-        {pageRef.kind === 'intro' && (
+        {pageRef.kind === 'intro' && book.intro.mode === 'special' && (
           <IntroPhotoLayer
             pictureRect={geometry.pictureRect}
             bleedMm={bleedMm}
@@ -102,7 +103,7 @@ export function PageSheet({
             theme={theme}
           />
         )}
-        {pageRef.kind === 'story' && (
+        {(pageRef.kind === 'story' || isRegularIntro) && (
           <PictureLayer
             rect={geometry.pictureRect}
             bleedMm={bleedMm}

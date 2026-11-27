@@ -11,47 +11,60 @@ import { Banner } from '@/ui/Banner';
 export function CoverImageUpload({
   bookId,
   onUploaded,
+  multiple = false,
+  disabled = false,
+  onBusyChange,
   label = 'Use own image',
   hint = 'The image is shown whole, inside the cover frame; it is never cropped.',
 }: {
   bookId: string;
-  onUploaded: (imageId: string) => void;
+  onUploaded: (imageIds: string[]) => void;
+  multiple?: boolean;
+  disabled?: boolean;
+  onBusyChange?: (busy: boolean) => void;
   label?: string;
   hint?: string;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
 
-  const upload = async (file: File | undefined) => {
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      setError(new Error('Choose an image file for the cover.'));
-      return;
-    }
+  const upload = async (files: File[]) => {
+    if (files.length === 0) return;
     setBusy(true);
+    onBusyChange?.(true);
     setError(null);
-    let bitmap: ImageBitmap | null = null;
+    const uploaded: string[] = [];
     try {
-      bitmap = await createImageBitmap(file);
-      const record: ImageRecord = {
-        id: newId(),
-        bookId,
-        kind: 'coverUserImage',
-        blob: file,
-        mime: file.type,
-        widthPx: bitmap.width,
-        heightPx: bitmap.height,
-        byteSize: file.size,
-        createdAt: new Date().toISOString(),
-        meta: { source: 'uploaded' },
-      };
-      await imageRepository.putImage(record, await createThumbnail(file));
-      onUploaded(record.id);
+      for (const file of files) {
+        if (!file.type.startsWith('image/')) {
+          throw new Error('Choose an image file for the cover.');
+        }
+        const bitmap = await createImageBitmap(file);
+        try {
+          const record: ImageRecord = {
+            id: newId(),
+            bookId,
+            kind: 'coverUserImage',
+            blob: file,
+            mime: file.type,
+            widthPx: bitmap.width,
+            heightPx: bitmap.height,
+            byteSize: file.size,
+            createdAt: new Date().toISOString(),
+            meta: { source: 'uploaded' },
+          };
+          await imageRepository.putImage(record, await createThumbnail(file));
+          uploaded.push(record.id);
+        } finally {
+          bitmap.close();
+        }
+      }
     } catch (uploadError) {
       setError(uploadError);
     } finally {
-      bitmap?.close();
+      if (uploaded.length > 0) onUploaded(uploaded);
       setBusy(false);
+      onBusyChange?.(false);
     }
   };
 
@@ -60,10 +73,11 @@ export function CoverImageUpload({
       <span>{label}</span>
       <input
         accept="image/*"
-        disabled={busy}
+        disabled={busy || disabled}
+        multiple={multiple}
         onChange={(event) => {
           const input = event.currentTarget;
-          void upload(input.files?.[0]).then(() => {
+          void upload(Array.from(input.files ?? [])).then(() => {
             input.value = '';
           });
         }}

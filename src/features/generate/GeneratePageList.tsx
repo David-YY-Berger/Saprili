@@ -5,6 +5,7 @@ import { getMainImageId } from '@/domain/page';
 import { getCoverImageIds } from '@/layout/render/pageImages';
 import { StatusPill } from './StatusPill';
 import type { GenerateSelection, JobSwitches } from './jobPlan';
+import { getGeneratablePages } from './jobPlan';
 
 const NEEDS_ILLUSTRATION = 'Needs an illustration first';
 
@@ -66,7 +67,7 @@ export function GeneratePageList({
           {pill(findJob(jobs, 'coverIllustration', null), 'Illustration')}
         </span>
       </li>
-      {book.storyPages.map((page, index) => {
+      {getGeneratablePages(book).map((page, index) => {
         const blocked = isBlocked(page.id);
         return (
           <li
@@ -80,7 +81,7 @@ export function GeneratePageList({
                 onChange={(event) => onToggle(page.id, event.target.checked)}
                 type="checkbox"
               />{' '}
-              Page {index + 1}
+              {page.id === book.intro.id ? 'Intro' : `Page ${index + (book.intro.mode === 'regular' ? 0 : 1)}`}
               {page.privateTitle ? ` · ${page.privateTitle}` : ''}
             </label>
             <span className="generate-list__status">

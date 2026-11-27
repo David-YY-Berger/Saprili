@@ -890,6 +890,12 @@ a {
   list-style: none;
 }
 
+.back-cover-reference-image {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+}
+
 .character-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));

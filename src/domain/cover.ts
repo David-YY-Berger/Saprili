@@ -4,7 +4,8 @@ import type { IllustrationState } from './page';
 export interface BackCover {
   note: string;
   artworkMode: 'generate' | 'upload';
-  referenceImageId: string | null;
+  referenceImageIds: string[];
+  customPrompt: string;
   generatedImageId: string | null;
   ownImageId: string | null;
 }

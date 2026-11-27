@@ -167,6 +167,74 @@ describe('job host', () => {
     expect(book.cover.illustration.currentImageId).not.toBeNull();
   });
 
+  it('uses each saved retry instruction when regenerating the entire book', async () => {
+    const host = makeHost();
+    const book = await loadBook();
+    book.intro.mode = 'regular';
+    book.intro.textEn = 'Introduction story.';
+    await books.save(book, 'userEdit');
+    await host.handle({ type: 'jobs/enqueue', plan: planFor(await loadBook(), illustrationsOnly) });
+    await host.runner.whenIdle();
+
+    const saved = await loadBook();
+    saved.cover.illustration.customPrompt = '  Cover retry instruction  ';
+    saved.intro.illustration.customPrompt = '  Intro retry instruction  ';
+    saved.storyPages[0]!.illustration.customPrompt = '  First page retry instruction  ';
+    saved.storyPages[1]!.illustration.customPrompt = '  Second page retry instruction  ';
+    saved.storyPages[2]!.illustration.customPrompt = '   ';
+    await books.save(saved, 'userEdit');
+    calls.length = 0;
+    const overwrite: JobSwitches = {
+      ...illustrationsOnly,
+      illustrations: { enabled: true, overwrite: true },
+    };
+    await host.handle({ type: 'jobs/enqueue', plan: planFor(await loadBook(), overwrite) });
+    await host.runner.whenIdle();
+
+    expect((await latest(host)).jobs.every((job) => job.status === 'succeeded')).toBe(true);
+    const instructions = calls.map(({ request }) => request.instructions);
+    expect(instructions).toHaveLength(6);
+    for (const [story, prompt] of [
+      ['Introduction story.', 'Intro retry instruction'],
+      ['Story 1.', 'First page retry instruction'],
+      ['Story 2.', 'Second page retry instruction'],
+    ]) {
+      const request = instructions.find((text) => text.includes(`This page’s story: ${story}`));
+      expect(request).toContain(`Additional illustration instruction: ${prompt}`);
+      expect(instructions.filter((text) => text.includes(prompt))).toHaveLength(1);
+    }
+    expect(instructions.filter((text) => text.includes('Additional cover instruction: Cover retry instruction'))).toHaveLength(1);
+    for (const story of ['Story 3.', 'Story 4.']) {
+      const request = instructions.find((text) => text.includes(`This page’s story: ${story}`));
+      expect(request).toBeDefined();
+      expect(request).not.toContain('Additional illustration instruction:');
+    }
+  });
+
+  it('passes the cover retry instruction to every generated character portrait', async () => {
+    const book = await loadBook();
+    book.cover.artworkMode = 'characterPortraits';
+    book.cover.illustration.customPrompt = '  Bright cover background  ';
+    book.characters = [
+      { id: 'one', name: 'Alice', description: '', photo: null },
+      { id: 'two', name: 'Bob', description: '', photo: null },
+    ];
+    book.cover.characterIds = ['one', 'two'];
+    await books.save(book, 'userEdit');
+    const host = makeHost();
+    await host.handle({
+      type: 'jobs/enqueue',
+      plan: buildJobPlan(book, { cover: true, pageIds: new Set() }, illustrationsOnly),
+    });
+    await host.runner.whenIdle();
+
+    expect((await latest(host)).jobs[0]!.status).toBe('succeeded');
+    expect(calls).toHaveLength(2);
+    expect(calls.every(({ request }) =>
+      request.instructions.includes('Additional cover instruction: Bright cover background'),
+    )).toBe(true);
+  });
+
   it('writes job state to storage when a job starts, before it finishes', async () => {
     const host = makeHost();
     let release!: () => void;

@@ -141,12 +141,14 @@ describe('getCoverImageIds', () => {
 
   it('renders selected back-cover artwork and never the AI reference photo', () => {
     const book = createEmptyBook({ nowIso: '2026-01-01T00:00:00.000Z' });
-    book.cover.back.referenceImageId = 'reference';
+    book.cover.back.note = 'Do not print this note';
+    book.cover.back.referenceImageIds = ['reference', 'reference-2'];
     book.cover.back.generatedImageId = 'generated-back';
     const ids = [getBackCoverImageId(book)!];
     const html = render({ book, images: new Map([['generated-back', 'blob:generated']]) });
     expect(ids).toEqual(['generated-back']);
     expect(html).toContain('src="blob:generated"');
+    expect(render({ book, panel: 'back' })).not.toContain('Do not print this note');
 
     book.cover.back.artworkMode = 'upload';
     book.cover.back.ownImageId = 'uploaded-back';

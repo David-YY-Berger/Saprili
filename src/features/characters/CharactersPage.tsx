@@ -211,6 +211,10 @@ export function CharactersPage({ initialBook }: { initialBook: Book }) {
     updateBook((current) => ({
       ...current,
       characters: current.characters.filter((c) => c.id !== character.id),
+      intro: {
+        ...current.intro,
+        characterIds: current.intro.characterIds.filter((id) => id !== character.id),
+      },
       storyPages: current.storyPages.map((page) =>
         page.characterIds.includes(character.id)
           ? { ...page, characterIds: page.characterIds.filter((id) => id !== character.id) }

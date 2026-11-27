@@ -31,6 +31,14 @@ describe('migrations', () => {
     expect(migrateBookRecord(book)).toEqual(book);
   });
 
+  it('migrates existing intros to special mode with empty story artwork', () => {
+    const book = createEmptyBook({ id: 'old', nowIso: '2026-01-01T00:00:00.000Z' });
+    const { mode, characterIds, illustration, colouring, ...oldIntro } = book.intro;
+    expect(mode).toBe('special');
+    const migrated = migrateBookRecord({ ...book, schemaVersion: 6, intro: oldIntro });
+    expect(migrated.intro).toMatchObject({ ...oldIntro, mode, characterIds, illustration, colouring });
+  });
+
   it('adds default cover artwork fields when upgrading version 3 books', () => {
     const book = createEmptyBook({ id: 'old-cover', nowIso: '2026-01-01T00:00:00.000Z' });
     book.schemaVersion = 3;
@@ -43,10 +51,31 @@ describe('migrations', () => {
     expect(migrated.cover.back).toEqual({
       note: '',
       artworkMode: 'generate',
-      referenceImageId: null,
+      referenceImageIds: [],
+      customPrompt: '',
       generatedImageId: null,
       ownImageId: null,
     });
+  });
+
+  it('preserves a version 7 back-cover reference when upgrading to multiple photos', () => {
+    const book = createEmptyBook({ id: 'old-back', nowIso: '2026-01-01T00:00:00.000Z' });
+    const { referenceImageIds, customPrompt, ...back } = book.cover.back;
+    expect(referenceImageIds).toEqual([]);
+    expect(customPrompt).toBe('');
+    const old = {
+      ...book,
+      schemaVersion: 7,
+      cover: { ...book.cover, back: { ...back, referenceImageId: 'original' } },
+    };
+    const migrated = migrateBookRecord(old);
+    expect(migrated.cover.back.referenceImageIds).toEqual(['original']);
+    expect(migrated.cover.back.customPrompt).toBe('');
+    expect(old.cover.back.referenceImageId).toBe('original');
+    expect(migrateBookRecord({
+      ...old,
+      cover: { ...old.cover, back: { ...old.cover.back, referenceImageId: null } },
+    }).cover.back.referenceImageIds).toEqual([]);
   });
 
   it('upgrades image and settings records', () => {

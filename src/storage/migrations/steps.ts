@@ -2,6 +2,7 @@
 import { DEFAULT_GUTTER_MM } from '@/domain/constants';
 import { findMentionedCharacterIds } from '@/domain/characters';
 import type { Character } from '@/domain/page';
+import { createEmptyColouringState, createEmptyIllustrationState } from '@/domain/factories';
 import { isRecord, type MigrationRegistry } from './runner';
 
 // Version 0 is the pre-release prototype shape: no schemaVersion, `layout.innerMarginMm`
@@ -85,6 +86,37 @@ export const bookMigrations: MigrationRegistry = {
       },
     };
   },
+  6: (record) => ({
+    ...record,
+    intro: isRecord(record.intro)
+      ? {
+          mode: 'special',
+          characterIds: [],
+          illustration: createEmptyIllustrationState(),
+          colouring: createEmptyColouringState(),
+          ...record.intro,
+        }
+      : record.intro,
+  }),
+  7: (record) => {
+    if (!isRecord(record.cover) || !isRecord(record.cover.back)) return { ...record };
+    const { referenceImageId, ...back } = record.cover.back;
+    return {
+      ...record,
+      cover: {
+        ...record.cover,
+        back: {
+          ...back,
+          referenceImageIds: Array.isArray(back.referenceImageIds)
+            ? back.referenceImageIds
+            : typeof referenceImageId === 'string'
+              ? [referenceImageId]
+              : [],
+          customPrompt: typeof back.customPrompt === 'string' ? back.customPrompt : '',
+        },
+      },
+    };
+  },
 };
 
 export const imageMigrations: MigrationRegistry = {
@@ -94,6 +126,8 @@ export const imageMigrations: MigrationRegistry = {
   3: (record) => ({ ...record }),
   4: (record) => ({ ...record }),
   5: (record) => ({ ...record }),
+  6: (record) => ({ ...record }),
+  7: (record) => ({ ...record }),
 };
 
 export const settingsMigrations: MigrationRegistry = {
@@ -113,4 +147,6 @@ export const settingsMigrations: MigrationRegistry = {
   3: (record) => ({ ...record }),
   4: (record) => ({ ...record }),
   5: (record) => ({ ...record }),
+  6: (record) => ({ ...record }),
+  7: (record) => ({ ...record }),
 };

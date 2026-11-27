@@ -104,6 +104,24 @@ describe('PageSheet', () => {
     }
   });
 
+  it('renders regular intro artwork and page number, and restores special photos when switched back', () => {
+    const book = makeBook();
+    book.intro.mode = 'regular';
+    book.intro.illustration.currentImageId = 'intro-art';
+    book.intro.colouring.imageId = 'intro-colouring';
+    const images = new Map([['p1', 'blob:photo'], ['intro-art', 'blob:art'], ['intro-colouring', 'blob:colouring']]);
+    const sheet = (edition: 'colour' | 'colouring') => renderToStaticMarkup(
+      <PageSheet book={book} pageRef={{ kind: 'intro', id: 'intro' }} side="left" edition={edition} images={images} measurer={measurer} />,
+    );
+    expect(sheet('colour')).toContain('blob:art');
+    expect(sheet('colour')).toMatch(/data-layer="page-number"[^>]*>1</);
+    expect(sheet('colouring')).toContain('blob:colouring');
+    book.intro.mode = 'special';
+    expect(sheet('colour')).toContain('blob:photo');
+    expect(sheet('colour')).not.toContain('blob:art');
+    expect(book.intro.illustration.currentImageId).toBe('intro-art');
+  });
+
   it('renders the colophon without picture or text yet', () => {
     const html = render({ pageRef: { kind: 'colophon', id: 'colophon' } });
     expect(html).toContain('data-layer="border"');

@@ -56,7 +56,9 @@ export function StoryRow({
           className="story-row__link"
           href={`#/book/${encodeURIComponent(bookId)}/page/${encodeURIComponent(page.id)}`}
         >
-          <span className="book-row__title">{page.privateTitle || `Page ${pageNumber}`}</span>
+          <span className="book-row__title">
+            Page {pageNumber}{page.privateTitle ? ` · ${page.privateTitle}` : ''}
+          </span>
           <span className="book-row__summary">
             {page.textEn || page.textHe || 'No text yet'}
           </span>

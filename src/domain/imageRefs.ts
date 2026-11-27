@@ -19,6 +19,9 @@ export function listReferencedImageIds(book: Book): Set<string> {
   };
 
   addPhotos(book.intro.photos);
+  addIllustration(book.intro.illustration);
+  add(book.intro.colouring.imageId);
+  add(book.intro.colouring.sourceIllustrationImageId);
   addPhotos(book.characters.flatMap((c) => (c.photo ? [c.photo] : [])));
   for (const page of book.storyPages) {
     addPhotos(page.photos);
@@ -29,7 +32,7 @@ export function listReferencedImageIds(book: Book): Set<string> {
   addIllustration(book.cover.illustration);
   book.cover.characterPortraits.forEach((portrait) => add(portrait.imageId));
   add(book.cover.ownImageId);
-  add(book.cover.back.referenceImageId);
+  book.cover.back.referenceImageIds.forEach(add);
   add(book.cover.back.generatedImageId);
   add(book.cover.back.ownImageId);
   add(book.colophon.qrImageId);
@@ -60,6 +63,12 @@ export function remapImageIds(book: Book, mapping: ReadonlyMap<string, string>):
     intro: {
       ...book.intro,
       photos: mapPhotos(book.intro.photos),
+      illustration: mapIllustration(book.intro.illustration),
+      colouring: {
+        ...book.intro.colouring,
+        imageId: mapNullable(book.intro.colouring.imageId),
+        sourceIllustrationImageId: mapNullable(book.intro.colouring.sourceIllustrationImageId),
+      },
     },
     storyPages: book.storyPages.map((page) => ({
       ...page,
@@ -81,7 +90,7 @@ export function remapImageIds(book: Book, mapping: ReadonlyMap<string, string>):
       ownImageId: mapNullable(book.cover.ownImageId),
       back: {
         ...book.cover.back,
-        referenceImageId: mapNullable(book.cover.back.referenceImageId),
+        referenceImageIds: book.cover.back.referenceImageIds.map(map),
         generatedImageId: mapNullable(book.cover.back.generatedImageId),
         ownImageId: mapNullable(book.cover.back.ownImageId),
       },

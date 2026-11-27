@@ -11,7 +11,7 @@ export interface RowStatus {
 }
 
 export function getRowStatus(page: IntroPage | StoryPage): RowStatus {
-  const isStory = 'illustration' in page;
+  const isStory = !('mode' in page) || page.mode === 'regular';
   return {
     hasEnglish: page.textEn.trim().length > 0,
     hasHebrew: page.textHe.trim().length > 0,

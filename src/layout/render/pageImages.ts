@@ -32,9 +32,13 @@ export function getBackCoverImageId(book: Book): string | null {
     : book.cover.back.generatedImageId;
 }
 
-/** Image ids the page needs for the given edition. Intro always prints the original photos. */
+/** Image ids the page needs for the given edition. */
 export function getPageImageIds(book: Book, pageRef: PageRef, edition: Edition): string[] {
   if (pageRef.kind === 'intro') {
+    if (book.intro.mode === 'regular') {
+      const id = edition === 'colouring' ? book.intro.colouring.imageId : getMainImageId(book.intro);
+      return id ? [id] : [];
+    }
     return book.intro.photos
       .slice(0, getIntroPhotoCount(book.intro.photos.length, book.intro.photoLayout))
       .map((p) => p.originalImageId);

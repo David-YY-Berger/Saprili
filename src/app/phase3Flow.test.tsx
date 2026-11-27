@@ -37,6 +37,29 @@ afterEach(() => {
 });
 
 describe('Phase 3 flow', () => {
+  it('persists the intro style and shows the matching editor controls', async () => {
+    renderRoutes();
+    fireEvent.click(await screen.findByRole('button', { name: 'New book' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirm book setup' }));
+    fireEvent.click(await screen.findByRole('link', { name: /Intro/ }));
+    const style = await screen.findByLabelText('Intro page style');
+    expect((style as HTMLSelectElement).value).toBe('special');
+    expect(screen.queryByRole('heading', { name: 'Illustration' })).toBeNull();
+    fireEvent.change(style, { target: { value: 'regular' } });
+    expect(screen.getByRole('heading', { name: 'Illustration' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Colouring page' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Save and return to book' }));
+    await screen.findByRole('link', { name: /Intro/ });
+    const [summary] = await bookRepository.listBookSummaries();
+    expect((await bookRepository.getBook(summary!.id))?.intro.mode).toBe('regular');
+    fireEvent.click(await screen.findByRole('link', { name: /Intro/ }));
+    expect((await screen.findByLabelText('Intro page style') as HTMLSelectElement).value).toBe('regular');
+    fireEvent.change(screen.getByLabelText('Intro page style'), { target: { value: 'special' } });
+    expect(screen.queryByRole('heading', { name: 'Illustration' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Save and return to book' }));
+    await screen.findByRole('link', { name: /Intro/ });
+    expect((await bookRepository.getBook(summary!.id))?.intro.mode).toBe('special');
+  });
   it('creates characters and an intro before importing story pages, then edits the outline', async () => {
     renderRoutes();
     fireEvent.click(await screen.findByRole('button', { name: 'New book' }));
@@ -82,12 +105,16 @@ describe('Phase 3 flow', () => {
     expect(book?.characters[0]?.name).toBe('Maya');
     expect(book?.storyPages[0]?.characterIds).toEqual([book?.characters[0]?.id]);
     expect(book?.storyPages.map((page) => page.privateTitle)).toEqual(['one', 'Two']);
+    expect(screen.getByRole('link', { name: /Page 1 · one/ })).toBeTruthy();
+    expect(screen.getByRole('link', { name: /Page 2 · Two/ })).toBeTruthy();
     expect(screen.getByText('Delete pages').closest('button')?.disabled).toBe(true);
 
     fireEvent.click(screen.getByRole('button', { name: 'Move one down' }));
     await waitFor(async () => {
       book = await bookRepository.getBook(imported[0]!.id);
       expect(book?.storyPages.map((page) => page.privateTitle)).toEqual(['Two', 'one']);
+      expect(screen.getByRole('link', { name: /Page 1 · Two/ })).toBeTruthy();
+      expect(screen.getByRole('link', { name: /Page 2 · one/ })).toBeTruthy();
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Add pages' }));
@@ -98,6 +125,9 @@ describe('Phase 3 flow', () => {
     await waitFor(async () => {
       book = await bookRepository.getBook(imported[0]!.id);
       expect(book?.storyPages).toHaveLength(4);
+      expect(screen.getByRole('link', { name: /^Page 1No text yet/ })).toBeTruthy();
+      expect(screen.getByRole('link', { name: /Page 3 · Two/ })).toBeTruthy();
+      expect(screen.getByRole('link', { name: /Page 4 · one/ })).toBeTruthy();
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Delete pages' }));

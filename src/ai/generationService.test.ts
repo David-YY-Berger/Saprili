@@ -106,9 +106,25 @@ describe('generation service', () => {
       sourceIllustrationImageId: illustration.imageId,
       outdated: false,
     });
+
     expect(await (await images.getImage(result.imageId))!.blob.text()).toBe(
       'pure black and white',
     );
+  });
+
+  it('generates, colours and restores artwork on a regular intro', async () => {
+    const book = (await books.getBook('book'))!;
+    book.intro.mode = 'regular';
+    book.intro.textEn = 'The introduction.';
+    await books.save(book, 'userEdit');
+    const first = await service.generateIllustrationForPage('book', book.intro.id);
+    const second = await service.generateIllustrationForPage('book', book.intro.id);
+    const colouring = await service.generateColouringForPage('book', book.intro.id);
+    expect(colouring.book.intro.colouring.sourceIllustrationImageId).toBe(second.imageId);
+    const restored = await service.restoreIllustrationVersion('book', book.intro.id, first.imageId);
+    expect(restored.intro.illustration.currentImageId).toBe(first.imageId);
+    expect(restored.intro.colouring.outdated).toBe(true);
+    expect((await books.getBook('book'))!.intro.mode).toBe('regular');
   });
 
   it('generates and stores a separate cover portrait for each intro character', async () => {
@@ -148,17 +164,35 @@ describe('generation service', () => {
       createdAt: T0,
       meta: { source: 'uploaded' },
     });
+    const secondReference = new Blob(['second photo'], { type: 'image/jpeg' });
+    await images.putImage({
+      id: 'back-reference-2',
+      bookId: 'book',
+      kind: 'coverUserImage',
+      blob: secondReference,
+      mime: secondReference.type,
+      widthPx: 1200,
+      heightPx: 1600,
+      byteSize: secondReference.size,
+      createdAt: T0,
+      meta: { source: 'uploaded' },
+    });
     const book = await books.getBook('book');
-    book!.cover.back.referenceImageId = 'back-reference';
+    book!.cover.back.referenceImageIds = ['back-reference', 'back-reference-2'];
+    book!.cover.back.customPrompt = 'A sunny garden';
     await books.save(book!, 'userEdit');
 
-    const result = await service.generateBackCoverIllustration('book', 'back-reference');
+    const result = await service.generateBackCoverIllustration('book', book!.cover.back.referenceImageIds, {
+      customPrompt: 'A sunny garden',
+    });
     expect(calls).toHaveLength(1);
-    expect(calls[0]!.referenceImages).toEqual([reference]);
+    expect(calls[0]!.referenceImages).toEqual([reference, secondReference]);
     expect(calls[0]!.instructions).toContain('back cover');
+    expect(calls[0]!.instructions).toContain('A sunny garden');
     expect(result.book.cover.back).toMatchObject({
       artworkMode: 'generate',
-      referenceImageId: 'back-reference',
+      referenceImageIds: ['back-reference', 'back-reference-2'],
+      customPrompt: 'A sunny garden',
       generatedImageId: result.imageId,
     });
     expect((await images.getImage(result.imageId))?.meta.source).toBe('generated');

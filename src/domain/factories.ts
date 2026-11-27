@@ -36,7 +36,11 @@ export function createIntroPage(init: Partial<Omit<IntroPage, 'photos'>> = {}): 
     textEn: '',
     textHe: '',
     photos: [],
+    mode: 'special',
     photoLayout: 'firstLarge',
+    characterIds: [],
+    illustration: createEmptyIllustrationState(),
+    colouring: createEmptyColouringState(),
     ...init,
   };
 }
@@ -81,7 +85,8 @@ export function createDefaultCover(): Cover {
     back: {
       note: '',
       artworkMode: 'generate',
-      referenceImageId: null,
+      referenceImageIds: [],
+      customPrompt: '',
       generatedImageId: null,
       ownImageId: null,
     },

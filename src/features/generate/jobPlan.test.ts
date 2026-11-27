@@ -48,6 +48,16 @@ describe('parsePageRange', () => {
 });
 
 describe('selection shortcuts', () => {
+  it('includes only regular intros in full-book batch jobs', () => {
+    const book = sampleBook();
+    expect(selectAll(book).pageIds.has(book.intro.id)).toBe(false);
+    book.intro.mode = 'regular';
+    expect(selectAll(book).pageIds.has(book.intro.id)).toBe(true);
+    expect(selectMissingIllustration(book).pageIds.has(book.intro.id)).toBe(true);
+    const plan = buildJobPlan(book, selectAll(book), both());
+    expect(plan.jobs.filter((job) => job.target.kind === 'story' && job.target.pageId === book.intro.id).map((job) => job.kind)).toEqual(['illustration', 'colouring']);
+    expect(selectPageNumbers(book, [1]).pageIds).toEqual(new Set(['p1']));
+  });
   it('selects everything, pages missing an illustration, or listed numbers', () => {
     const book = sampleBook();
     expect(selectAll(book)).toEqual({ cover: true, pageIds: new Set(['p1', 'p2', 'p3', 'p4']) });

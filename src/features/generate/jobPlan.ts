@@ -25,6 +25,10 @@ export const DEFAULT_SWITCHES: JobSwitches = {
   colouring: { enabled: false, overwrite: false },
 };
 
+export function getGeneratablePages(book: Book): StoryPage[] {
+  return book.intro.mode === 'regular' ? [book.intro, ...book.storyPages] : book.storyPages;
+}
+
 export interface PageRangeResult {
   /** 1-based story page numbers, sorted and unique. */
   numbers: number[];
@@ -52,14 +56,14 @@ export function parsePageRange(text: string, maxIndex: number): PageRangeResult 
 }
 
 export function selectAll(book: Book): GenerateSelection {
-  return { cover: true, pageIds: new Set(book.storyPages.map((page) => page.id)) };
+  return { cover: true, pageIds: new Set(getGeneratablePages(book).map((page) => page.id)) };
 }
 
 export function selectMissingIllustration(book: Book): GenerateSelection {
   return {
     cover: book.cover.artworkMode !== 'introCollage' && getCoverImageIds(book).length === 0,
     pageIds: new Set(
-      book.storyPages
+      getGeneratablePages(book)
         .filter((page) => page.illustration.currentImageId === null)
         .map((page) => page.id),
     ),
@@ -123,7 +127,7 @@ export function buildJobPlan(
     }
   }
 
-  for (const page of book.storyPages) {
+  for (const page of getGeneratablePages(book)) {
     if (!selection.pageIds.has(page.id)) continue;
     const target = { kind: 'story', pageId: page.id } as const;
     let illustrationKey: string | null = null;

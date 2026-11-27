@@ -36,6 +36,7 @@ export function validateBook(book: Book): BookProblem[] {
 
   const histories: [string, number][] = [
     ['cover.illustration.history', book.cover.illustration.history.length],
+    ['intro.illustration.history', book.intro.illustration.history.length],
     ...book.storyPages.map((p, i): [string, number] => [
       `storyPages[${i}].illustration.history`,
       p.illustration.history.length,

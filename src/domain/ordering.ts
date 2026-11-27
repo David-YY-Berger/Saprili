@@ -35,6 +35,13 @@ export function findPage(book: Book, ref: PageRef): IntroPage | StoryPage | Colo
   }
 }
 
+/** An editable illustrated page, including the intro. */
+export function findIllustratedPage(book: Book, pageId: string): StoryPage | undefined {
+  return book.intro.id === pageId
+    ? book.intro
+    : book.storyPages.find((page) => page.id === pageId);
+}
+
 /** Zero-based index among story pages, or -1 when not found. */
 export function getStoryPageIndex(book: Book, pageId: string): number {
   return book.storyPages.findIndex((p) => p.id === pageId);

@@ -11,13 +11,13 @@
 - **Fixed picture:** same size/shape on every page. Shape is computed once per book at Setup (`BookShape`) and never recomputed silently. Margin changes scale the picture zone uniformly (aspect never changes). Pictures are framed with rounded corners and shown `object-fit: contain` (never cropped/stretched).
 - **Text zone** is sized once from the real text of **every** page measured at the minimum size (Hebrew above English, with spacing), taking the maximum plus padding, capped at 40% of the page (warns if capped). Before a shape exists, a provisional 60 mm text zone is used.
 - **Text fit:** 3 fixed size steps (default 22 / 18 / 14 pt) chosen by text length distribution; shrink to `minFontSizePt` (14 pt), then flag overflow. Text is **never cut**. Hebrew RTL in its own font above English; optional soft white rounded text panel (off by default).
-- Page numbers: only story pages show one (position in the printed interior, intro = 1).
+- Page numbers: story pages and regular intros show one (position in the printed interior, intro = 1); special intros do not.
 - Intro photos: `computeIntroPhotoLayout(count, mode, pictureRect)`.
 
 ## Theme and fonts
 - Presets (`THEME_PRESETS`): sky `#DCEFFB` (default), mint `#DDF6EA`, peach `#FFE8D9`, lavender `#ECE4FA`, each with sunny/coral/mint/lilac/sky accents. Soft colours keep a later CMYK conversion safe.
 - Border styles are bundled vector shapes (`buildBorderShapes`): scalloped, dotted, clouds, stars. No raster, no AI.
-- **Colouring edition:** white background, black-outline border; intro photos print as-is; colophon included; cover is the colour cover plus a small marker.
+- **Colouring edition:** white background, black-outline border; special intro photos print as-is, while regular intros use their colouring artwork; colophon included; cover is the colour cover plus a small marker.
 - Fonts (packaged woff2, licences in `docs/font-licenses.md`): **Noto Sans Hebrew** 400/700 (nikud) and **Nunito** 400/700. Font ids `hebrew-default` / `english-default`. `ensureFontsLoaded` waits before measuring or printing.
 
 ## Pre-flight (`runPreflight(book, edition, images, scope)`)
@@ -34,7 +34,7 @@ Generated: Hebrew date (browser Hebrew calendar via `shared/hebrewDate.ts`: mont
 - Front stack (168 × 259 mm inside safe+border inset): title 38, gap 4, subtitle 16 mm (22 mm when it contains a manual line break), gap 6, picture 168 × 181 (175 mm high with a split subtitle), gap 4, 10 mm band reserved for the colouring marker. Title/subtitle/marker use `fitTextInZone` (never cut). Hebrew only on the front; text is typeset by the app, never drawn by AI.
 - Spine text: `fitSpineText` shrinks 14 → 6 pt, one rotated line (`SPINE_TEXT_ROTATION_DEG = -90`, counter-clockwise, Hebrew reads top to bottom; placeholder direction); warns if it cannot fit.
 - Cover picture: the user's own image (`ownImageId`) wins over the selected artwork mode; shown whole (`contain`) in the theme frame, not running to the edge. Artwork may be one AI illustration, the exact original-photo collage/layout used by the intro, or up to six separately generated character portraits in collage cells. The same `CoverSheet` renderer is used by preview and print.
-- Back cover: themed background and border plus a picture inside the safe area. The owner chooses either AI generation from a separately uploaded original reference photo (the source is sent to Google and not printed) or direct upload (not sent to AI). Preview and cover PDF use the same renderer; selected image resolution is checked in cover pre-flight.
+- Back cover: themed background and border plus a picture inside the safe area. The owner chooses either AI generation from separately uploaded original reference photos (the sources are sent to Google and not printed) or direct upload (not sent to AI). Preview and cover PDF use the same renderer; selected image resolution is checked in cover pre-flight.
 
 ## PDF export (`src/print`, `print.html`)
 - Method: the app saves a `PrintJobSpec` (`bookId`, `output` book|colouring|cover|page, `pageId?`, `sheetMode`, `coverEdition?`, `coverFormat?`) through `MetaRepository` (`printJob:<id>`), opens `print.html?job=<id>`, which renders one interior page or cover panel per sheet with exact `@page` size, zero margin and forced backgrounds. The user clicks Print and chooses **Save as PDF, Margins: None, Background graphics: on** (`PrintHelpDialog` explains this). Browser print is used so Hebrew RTL, mixed text and nikud render correctly and no `debugger` permission is needed.

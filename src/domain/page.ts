@@ -40,12 +40,8 @@ export interface Character {
   photo: PhotoRef | null;
 }
 
-export interface IntroPage {
-  id: string;
-  privateTitle: string;
-  textEn: string;
-  textHe: string;
-  photos: PhotoRef[];
+export interface IntroPage extends StoryPage {
+  mode: 'special' | 'regular';
   photoLayout: IntroPhotoLayout;
 }
 

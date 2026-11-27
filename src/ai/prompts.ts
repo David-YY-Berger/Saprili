@@ -1,6 +1,7 @@
 // bisiyata dishmaya, leharbot ahava biyisral
 import { getMainImageId } from '@/domain/page';
 import type { Book } from '@/domain/book';
+import { findIllustratedPage } from '@/domain/ordering';
 import type { ImageRepository } from '@/storage/imageRepository';
 import type { ImageGenRequest } from './ImageProvider';
 import {
@@ -131,10 +132,12 @@ export async function buildIllustrationRequest(
   options: PromptOptions,
   imageRepository: Pick<ImageRepository, 'getImage'>,
 ): Promise<ImageGenRequest & { omittedPhotoCount: number }> {
-  const page = book.storyPages.find((candidate) => candidate.id === pageId);
+  const page = findIllustratedPage(book, pageId);
   if (!page) throw new AppError('STORAGE_FAILED', { detail: `Story page ${pageId} was not found` });
   const [introReference, pagePhotos] = await Promise.all([
-    getIntroReference(book, page.characterIds, imageRepository),
+    pageId === book.intro.id
+      ? getCharacterReference(book, page.characterIds, imageRepository)
+      : getIntroReference(book, page.characterIds, imageRepository),
     getAiPhotoSelection(page.photos, imageRepository, MAX_AI_PHOTOS_PAGE),
   ]);
   const instructions = [
@@ -162,7 +165,7 @@ export async function buildColouringRequest(
   pageId: string,
   imageRepository: Pick<ImageRepository, 'getImage'>,
 ): Promise<ImageGenRequest> {
-  const page = book.storyPages.find((candidate) => candidate.id === pageId);
+  const page = findIllustratedPage(book, pageId);
   if (!page) throw new AppError('STORAGE_FAILED', { detail: `Story page ${pageId} was not found` });
   const mainImageId = getMainImageId(page);
   if (!mainImageId) throw new AppError('AI_BAD_RESPONSE');
@@ -193,11 +196,20 @@ export async function buildCoverIllustrationRequest(
 
 export async function buildBackCoverIllustrationRequest(
   book: Book,
-  referenceImageId: string,
+  referenceImageIds: readonly string[],
   imageRepository: Pick<ImageRepository, 'getImage'>,
+  options: PromptOptions = {},
 ): Promise<ImageGenRequest> {
-  const reference = await imageRepository.getImage(referenceImageId);
-  if (!reference) {
+  if (referenceImageIds.length === 0) {
+    throw new AppError('AI_BAD_RESPONSE', {
+      userMessage: 'Upload an original photo before generating back-cover artwork.',
+      nextStep: 'Choose a reference photo, then try again.',
+    });
+  }
+  const references = await Promise.all(
+    referenceImageIds.map((id) => imageRepository.getImage(id)),
+  );
+  if (references.some((reference) => !reference)) {
     throw new AppError('STORAGE_FAILED', {
       detail: 'The back-cover reference photo is missing from storage',
     });
@@ -205,10 +217,19 @@ export async function buildBackCoverIllustrationRequest(
   const { safeRects } = computeCoverGeometry(book);
   const pictureRect = insetRect(safeRects.back, CONTENT_INSET_MM);
   const instructions = [
+    textPart('Art style', options.artStyleText ?? book.artStyleText),
+    options.customPrompt?.trim()
+      ? `Additional back-cover illustration instruction: ${stripHebrew(options.customPrompt.trim())}`
+      : '',
     BACK_COVER_INSTRUCTIONS,
-    textPart('Art style', book.artStyleText),
-  ].join('\n\n');
-  return makeRequest(instructions, [reference.blob], pictureRect.width / pictureRect.height);
+  ]
+    .filter(Boolean)
+    .join('\n\n');
+  return makeRequest(
+    instructions,
+    references.map((reference) => reference!.blob),
+    pictureRect.width / pictureRect.height,
+  );
 }
 
 export async function buildCoverCharacterRequests(
@@ -273,7 +294,7 @@ export async function buildEditRequest(
   customPrompt: string,
   imageRepository: Pick<ImageRepository, 'getImage'>,
 ): Promise<ImageGenRequest> {
-  const page = book.storyPages.find((candidate) => candidate.id === pageId);
+  const page = findIllustratedPage(book, pageId);
   if (!page?.illustration.currentImageId) throw new AppError('AI_BAD_RESPONSE');
   const illustration = await imageRepository.getImage(page.illustration.currentImageId);
   if (!illustration)

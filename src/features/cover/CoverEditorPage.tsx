@@ -1,6 +1,7 @@
 // bisiyata dishmaya, leharbot ahava biyisral
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Book } from '@/domain/book';
+import { listReferencedImageIds } from '@/domain/imageRefs';
 import type { Edition } from '@/layout/theme';
 import { useAutosave } from '@/shared/useAutosave';
 import { useBeforeUnloadGuard } from '@/app/useBeforeUnloadGuard';
@@ -24,36 +25,70 @@ export function CoverEditorPage({ initialBook }: { initialBook: Book }) {
   const [showGuides, setShowGuides] = useState(true);
   const [error, setError] = useState<unknown>(null);
   const purgeAfterSaveRef = useRef<string | null>(null);
+  const pendingImageDeletions = useRef(new Set<string>());
   const saveBook = useCallback(async (next: Book) => {
     await bookRepository.save(next, 'userEdit');
   }, []);
   const autosave = useAutosave(book, saveBook);
   useBeforeUnloadGuard(autosave.status);
 
-  // A replaced or removed own image is deleted only after the book no longer points at it.
   useEffect(() => {
     if (autosave.status !== 'saved' || purgeAfterSaveRef.current === null) return;
     if (autosave.lastSavedAt === purgeAfterSaveRef.current) return;
     purgeAfterSaveRef.current = null;
-    void imageRepository.purgeOrphanImages(book).catch((purgeError: unknown) => {
-      setError(purgeError);
-    });
+    const referenced = listReferencedImageIds(book);
+    const toDelete = [...pendingImageDeletions.current].filter((id) => !referenced.has(id));
+    pendingImageDeletions.current.clear();
+    void Promise.all(toDelete.map((id) => imageRepository.deleteImage(id))).catch(
+      (purgeError: unknown) => {
+        setError(purgeError);
+      },
+    );
   }, [autosave.lastSavedAt, autosave.status, book]);
 
+  const deleteAfterSave = (ids: (string | null)[]) => {
+    const removed = ids.filter((id): id is string => id !== null);
+    if (removed.length === 0) return;
+    removed.forEach((id) => pendingImageDeletions.current.add(id));
+    purgeAfterSaveRef.current = autosave.lastSavedAt ?? '';
+  };
   const updateCover = (patch: Partial<Book['cover']>) => {
     setBook((current) => ({ ...current, cover: { ...current.cover, ...patch } }));
   };
   const setOwnImage = (imageId: string | null) => {
-    purgeAfterSaveRef.current = autosave.lastSavedAt ?? '';
+    if (imageId !== book.cover.ownImageId) deleteAfterSave([book.cover.ownImageId]);
     updateCover({ ownImageId: imageId });
   };
-  const updateBackCover = (patch: Partial<Book['cover']['back']>) => {
-    purgeAfterSaveRef.current = autosave.lastSavedAt ?? '';
+  const updateBackCover = (patch: Partial<Book['cover']['back']>, purge = false) => {
+    if (purge) {
+      const previous = book.cover.back;
+      const nextReferences = patch.referenceImageIds;
+      deleteAfterSave([
+        ...(nextReferences
+          ? previous.referenceImageIds.filter((id) => !nextReferences.includes(id))
+          : []),
+        ...(patch.ownImageId !== undefined && patch.ownImageId !== previous.ownImageId
+          ? [previous.ownImageId]
+          : []),
+      ]);
+    }
     setBook((current) => ({
       ...current,
       cover: {
         ...current.cover,
         back: { ...current.cover.back, ...patch },
+      },
+    }));
+  };
+  const addBackReferences = (imageIds: string[]) => {
+    setBook((current) => ({
+      ...current,
+      cover: {
+        ...current.cover,
+        back: {
+          ...current.cover.back,
+          referenceImageIds: [...current.cover.back.referenceImageIds, ...imageIds],
+        },
       },
     }));
   };
@@ -108,7 +143,19 @@ export function CoverEditorPage({ initialBook }: { initialBook: Book }) {
         <BackCoverNote
           beforeGeneration={() => autosave.flush()}
           book={book}
-          onBookChange={setBook}
+          onBookChange={(generated) =>
+            setBook((current) => ({
+              ...current,
+              cover: {
+                ...current.cover,
+                back: {
+                  ...current.cover.back,
+                  generatedImageId: generated.cover.back.generatedImageId,
+                },
+              },
+            }))
+          }
+          onAddReferences={addBackReferences}
           onUploadedImage={updateBackCover}
         />
         <div className="modal__actions">

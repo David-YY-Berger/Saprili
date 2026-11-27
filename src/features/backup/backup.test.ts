@@ -40,6 +40,11 @@ async function createFixture() {
   book.intro.textEn = 'Meet the family.';
   book.intro.textHe = 'שלום משפחה';
   book.intro.photos = [{ originalImageId: 'original', aiCopyImageId: 'ai-copy' }];
+  book.intro.mode = 'regular';
+  book.intro.illustration.currentImageId = 'intro-illustration';
+  book.intro.illustration.history = [{ imageId: 'intro-old', replacedAt: NOW }];
+  book.intro.colouring.imageId = 'intro-colouring';
+  book.intro.colouring.sourceIllustrationImageId = 'intro-illustration';
   const first = createStoryPage({ id: 'story-1', textEn: 'A day out', textHe: 'יום בחוץ' });
   first.illustration.currentImageId = 'illustration';
   first.illustration.history = [{ imageId: 'old-illustration', replacedAt: NOW }];
@@ -49,7 +54,8 @@ async function createFixture() {
   const second = createStoryPage({ id: 'story-2' });
   book.storyPages = [first, second];
   book.cover.ownImageId = 'cover-own';
-  book.cover.back.referenceImageId = 'cover-back-reference';
+  book.cover.back.referenceImageIds = ['cover-back-reference', 'cover-back-reference-2'];
+  book.cover.back.customPrompt = 'A sunny garden';
   book.cover.back.generatedImageId = 'cover-back-generated';
   book.cover.back.ownImageId = 'cover-back-own';
   book.cover.characterPortraits = [{ characterId: 'miriam', imageId: 'cover-character' }];
@@ -58,6 +64,9 @@ async function createFixture() {
   const images = [
     image('original', book.id, 'original', 'photo bytes'),
     image('ai-copy', book.id, 'aiCopy', 'reduced photo bytes'),
+    image('intro-illustration', book.id, 'illustration', 'intro artwork'),
+    image('intro-old', book.id, 'illustration', 'old intro artwork'),
+    image('intro-colouring', book.id, 'colouring', 'intro line art'),
     image('story-original', book.id, 'original', 'story photo'),
     image('story-ai', book.id, 'aiCopy', 'reduced story photo'),
     image('illustration', book.id, 'illustration', 'current art'),
@@ -65,6 +74,7 @@ async function createFixture() {
     image('colouring', book.id, 'colouring', 'line art'),
     image('cover-own', book.id, 'coverUserImage', 'cover photo'),
     image('cover-back-reference', book.id, 'coverUserImage', 'back reference photo'),
+    image('cover-back-reference-2', book.id, 'coverUserImage', 'second back reference photo'),
     image('cover-back-generated', book.id, 'coverIllustration', 'back generated art'),
     image('cover-back-own', book.id, 'coverUserImage', 'back uploaded art'),
     image('cover-character', book.id, 'coverIllustration', 'AI character portrait'),
@@ -91,9 +101,12 @@ describe('book backup and restore', () => {
     const expectedBook = await bookRepository.getBook(book.id);
     const archive = unzipSync(new Uint8Array(await backup.arrayBuffer()));
     expect(Object.keys(archive)).toContain('pages/00-intro/text-he.txt');
+    expect(Object.keys(archive)).toContain('pages/00-intro/illustration.png');
+    expect(Object.keys(archive)).toContain('pages/00-intro/colouring.png');
     expect(Object.keys(archive)).toContain('pages/01-story/illustration-history-1.png');
     expect(Object.keys(archive)).toContain('cover/character-1.png');
-    expect(Object.keys(archive)).toContain('cover/back-reference.png');
+    expect(Object.keys(archive)).toContain('cover/back-reference-1.png');
+    expect(Object.keys(archive)).toContain('cover/back-reference-2.png');
     expect(Object.keys(archive)).toContain('cover/back-illustration.png');
     expect(Object.keys(archive)).toContain('cover/back-own-image.png');
 
@@ -131,6 +144,9 @@ describe('book backup and restore', () => {
     if (result.status !== 'restored') return;
     expect(result.book.id).not.toBe(book.id);
     expect(result.book.title).toBe('Family story (restored copy)');
+    expect(result.book.intro.illustration.currentImageId).not.toBe('intro-illustration');
+    expect(result.book.intro.colouring.sourceIllustrationImageId).toBe(result.book.intro.illustration.currentImageId);
+    expect(await imageRepository.getImage(result.book.intro.colouring.imageId!)).toMatchObject({ bookId: result.book.id });
     expect(await bookRepository.getBook(book.id)).toMatchObject({ title: 'Edited title' });
 
     const replaced = await restoreBookBackup(file, undefined, { resolution: 'replace' });

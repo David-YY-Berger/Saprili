@@ -63,6 +63,8 @@ function pageImagePaths(book: Book): Map<string, string> {
   };
 
   addPhotos(book.intro.photos, 'pages/00-intro');
+  addIllustration(book.intro.illustration, 'pages/00-intro', 'illustration');
+  if (book.intro.colouring.imageId) paths.set(book.intro.colouring.imageId, 'pages/00-intro/colouring');
   book.characters.forEach((character, index) => {
     if (!character.photo) return;
     const base = `characters/character-${index + 1}`;
@@ -80,8 +82,9 @@ function pageImagePaths(book: Book): Map<string, string> {
     paths.set(portrait.imageId, `cover/character-${index + 1}`);
   });
   if (book.cover.ownImageId) paths.set(book.cover.ownImageId, 'cover/own-image');
-  if (book.cover.back.referenceImageId)
-    paths.set(book.cover.back.referenceImageId, 'cover/back-reference');
+  book.cover.back.referenceImageIds.forEach((id, index) => {
+    paths.set(id, `cover/back-reference-${index + 1}`);
+  });
   if (book.cover.back.generatedImageId)
     paths.set(book.cover.back.generatedImageId, 'cover/back-illustration');
   if (book.cover.back.ownImageId) paths.set(book.cover.back.ownImageId, 'cover/back-own-image');

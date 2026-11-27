@@ -7,7 +7,7 @@ export { AUTOSAVE_DEBOUNCE_MS };
 export const HEADER_COMMENT_TEXT = 'bisiyata dishmaya, leharbot ahava biyisral';
 
 /** Current data version of stored books, images and settings. */
-export const CURRENT_SCHEMA_VERSION = 6;
+export const CURRENT_SCHEMA_VERSION = 8;
 
 export interface TrimPreset {
   id: TrimPresetId;
